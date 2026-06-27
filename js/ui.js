@@ -3,7 +3,7 @@
 import * as db from "./db.js";
 import {
   CATEGORIES, REPEAT_OPTIONS, CURRENCIES, catLabel, catEmoji,
-  blankEntry, fmtMoney, fmtDate, entryTimeMs, toILS,
+  blankEntry, fmtMoney, fmtDate, entryTimeMs, toILS, refreshRates,
 } from "./model.js";
 import * as A from "./analytics.js";
 import * as C from "./charts.js";
@@ -23,6 +23,7 @@ export async function init() {
   dates = await db.getAllDates();
   wireChrome();
   show("log");
+  refreshRates(db.getSetting, db.setSetting);
 }
 
 async function reload() { dates = await db.getAllDates(); }

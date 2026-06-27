@@ -64,6 +64,38 @@ export const CURRENCIES = [
   { key: "GBP", symbol: "£", label: "£ GBP", rate: 3.9 },
 ];
 
+const RATES_URL = "https://api.frankfurter.app/latest?from=ILS&to=USD,EUR,GBP";
+const RATES_MAX_AGE = 6 * 3600000; // refresh every 6 hours
+
+export async function refreshRates(getSetting, setSetting) {
+  const cached = await getSetting("exchangeRates");
+  if (cached && Date.now() - cached.fetchedAt < RATES_MAX_AGE) {
+    applyRates(cached.rates);
+    return;
+  }
+  try {
+    const res = await fetch(RATES_URL);
+    if (!res.ok) throw new Error(res.status);
+    const data = await res.json();
+    // Frankfurter returns how much 1 ILS buys in each currency.
+    // We need the inverse: how many ILS per 1 foreign unit.
+    const rates = {};
+    for (const [key, val] of Object.entries(data.rates)) {
+      rates[key] = Math.round((1 / val) * 1000) / 1000;
+    }
+    applyRates(rates);
+    await setSetting("exchangeRates", { rates, fetchedAt: Date.now() });
+  } catch {
+    if (cached) applyRates(cached.rates);
+  }
+}
+
+function applyRates(rates) {
+  for (const cur of CURRENCIES) {
+    if (cur.key !== "ILS" && rates[cur.key] != null) cur.rate = rates[cur.key];
+  }
+}
+
 export function toILS(amount, currencyKey) {
   if (amount == null || isNaN(amount)) return null;
   const cur = CURRENCIES.find(c => c.key === currencyKey);
