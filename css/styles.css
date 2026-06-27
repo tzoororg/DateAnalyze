@@ -96,6 +96,11 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent-2); 
 .btn:active { transform: translateY(1px); }
 .btn-row { display: flex; gap: 10px; margin-top: 16px; }
 
+/* Cost currency */
+.cost-row { display: flex; gap: 6px; }
+.cost-cur { width: 90px; flex: none; padding: 12px 8px; font-size: 14px; }
+.cost-row input { flex: 1; }
+
 /* Photos */
 .photo-strip { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
 .photo-thumb { position: relative; width: 72px; height: 72px; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); }

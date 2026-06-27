@@ -57,9 +57,22 @@ export function daysBetween(aMs, bMs) {
   return Math.abs(aMs - bMs) / 86400000;
 }
 
+export const CURRENCIES = [
+  { key: "ILS", symbol: "₪", label: "₪ ILS", rate: 1 },
+  { key: "USD", symbol: "$", label: "$ USD", rate: 3.0 },
+  { key: "EUR", symbol: "€", label: "€ EUR", rate: 3.4 },
+  { key: "GBP", symbol: "£", label: "£ GBP", rate: 3.9 },
+];
+
+export function toILS(amount, currencyKey) {
+  if (amount == null || isNaN(amount)) return null;
+  const cur = CURRENCIES.find(c => c.key === currencyKey);
+  return Math.round(Number(amount) * (cur?.rate ?? 1));
+}
+
 export function fmtMoney(n) {
   if (n == null || n === "" || isNaN(n)) return "—";
-  return "$" + Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 });
+  return "₪" + Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 });
 }
 
 export function fmtDate(iso) {

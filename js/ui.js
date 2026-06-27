@@ -2,8 +2,8 @@
 
 import * as db from "./db.js";
 import {
-  CATEGORIES, REPEAT_OPTIONS, catLabel, catEmoji,
-  blankEntry, fmtMoney, fmtDate, entryTimeMs,
+  CATEGORIES, REPEAT_OPTIONS, CURRENCIES, catLabel, catEmoji,
+  blankEntry, fmtMoney, fmtDate, entryTimeMs, toILS,
 } from "./model.js";
 import * as A from "./analytics.js";
 import * as C from "./charts.js";
@@ -16,6 +16,7 @@ let editingId = null;
 let currentTab = "log";
 const sug = { explore: 0.5, budget: null, maxEffort: null, category: null };
 const hist = { sort: "date-desc", category: null, expanded: null };
+let costCurrency = "ILS";
 const urlCache = new Map();      // photoId -> objectURL
 
 export async function init() {
@@ -83,8 +84,11 @@ function renderLog() {
       </div>
 
       <div class="row">
-        <label class="field"><span>Cost ($)</span>
-          <input id="f-cost" type="number" inputmode="decimal" min="0" placeholder="0" value="${draft.cost ?? ""}"/></label>
+        <label class="field"><span>Cost</span>
+          <div class="cost-row">
+            <select id="f-currency" class="cost-cur">${CURRENCIES.map(c => `<option value="${c.key}" ${costCurrency === c.key ? "selected" : ""}>${c.label}</option>`).join("")}</select>
+            <input id="f-cost" type="number" inputmode="decimal" min="0" placeholder="0" value="${draft.cost ?? ""}"/>
+          </div></label>
         <label class="field"><span>Location</span>
           <input id="f-location" type="text" placeholder="optional" value="${escAttr(draft.location)}"/></label>
       </div>
@@ -122,6 +126,7 @@ function wireForm() {
   bind("f-title", "input", e => draft.title = e.target.value);
   bind("f-date", "change", e => draft.date = e.target.value);
   bind("f-cost", "input", e => draft.cost = e.target.value === "" ? null : Number(e.target.value));
+  bind("f-currency", "change", e => costCurrency = e.target.value);
   bind("f-location", "input", e => draft.location = e.target.value);
   bind("f-notes", "input", e => draft.notes = e.target.value);
 
@@ -188,11 +193,14 @@ async function onPhotoPick(e) {
 async function saveDraft() {
   if (!draft.title.trim()) { toast("Add what you did first"); return; }
   draft.title = draft.title.trim();
+  if (draft.cost != null) draft.cost = toILS(draft.cost, costCurrency);
   if (!editingId) draft.createdAt = Date.now();
   await db.putDate(draft);
   await reload();
-  toast(editingId ? "Updated ♥" : "Date saved ♥");
+  const saved = costCurrency !== "ILS" && draft.cost != null ? ` (${fmtMoney(draft.cost)})` : "";
+  toast((editingId ? "Updated ♥" : "Date saved ♥") + saved);
   resetDraft();
+  costCurrency = "ILS";
   renderLog();
 }
 
