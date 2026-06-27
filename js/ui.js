@@ -98,7 +98,8 @@ function renderLog() {
 
       <label class="field"><span>Photos</span></label>
       <div class="photo-strip" id="f-photos"></div>
-      <input id="f-photo-input" type="file" accept="image/*" capture="environment" hidden multiple/>
+      <input id="f-photo-camera" type="file" accept="image/*" capture="environment" hidden/>
+      <input id="f-photo-gallery" type="file" accept="image/*" hidden multiple/>
 
       <div class="btn-row">
         ${isEdit ? `<button class="btn ghost" id="f-cancel">Cancel</button>` : ""}
@@ -152,8 +153,8 @@ function wireForm() {
   });
 
   // photos
-  const input = v.querySelector("#f-photo-input");
-  input.addEventListener("change", onPhotoPick);
+  v.querySelector("#f-photo-camera").addEventListener("change", onPhotoPick);
+  v.querySelector("#f-photo-gallery").addEventListener("change", onPhotoPick);
 
   bind("f-save", "click", saveDraft);
   const cancel = v.querySelector("#f-cancel");
@@ -168,9 +169,27 @@ async function renderPhotoStrip() {
     return `<div class="photo-thumb"><img src="${url}" alt=""/><button data-rm="${id}">✕</button></div>`;
   }));
   strip.innerHTML = thumbs.join("") +
-    `<button class="add-photo" id="f-add-photo" type="button">＋</button>`;
-  strip.querySelector("#f-add-photo").addEventListener("click", () =>
-    viewEl().querySelector("#f-photo-input").click());
+    `<div class="photo-add-wrap">
+      <button class="add-photo" id="f-add-photo" type="button">＋</button>
+      <div class="photo-menu hidden" id="f-photo-menu">
+        <button class="photo-menu-item" data-src="camera">📷 Camera</button>
+        <button class="photo-menu-item" data-src="gallery">🖼️ Gallery</button>
+        <button class="photo-menu-item" data-src="google">📸 Google Photos</button>
+      </div>
+    </div>`;
+  const addBtn = strip.querySelector("#f-add-photo");
+  const menu = strip.querySelector("#f-photo-menu");
+  addBtn.addEventListener("click", () => menu.classList.toggle("hidden"));
+  menu.addEventListener("click", e => {
+    const item = e.target.closest("[data-src]"); if (!item) return;
+    menu.classList.add("hidden");
+    const v = viewEl();
+    if (item.dataset.src === "camera") v.querySelector("#f-photo-camera").click();
+    else v.querySelector("#f-photo-gallery").click();
+  });
+  document.addEventListener("click", e => {
+    if (!addBtn.contains(e.target) && !menu.contains(e.target)) menu.classList.add("hidden");
+  });
   strip.querySelectorAll("[data-rm]").forEach(b => b.addEventListener("click", () => {
     draft.photos = draft.photos.filter(p => p !== b.dataset.rm);
     renderPhotoStrip();
