@@ -1,0 +1,15 @@
+{
+  "name": "Us — Date Tracker",
+  "short_name": "Us ♥",
+  "description": "Log your dates, see what you both love, and get balanced date-idea suggestions.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#14101a",
+  "theme_color": "#e0567a",
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icons/icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

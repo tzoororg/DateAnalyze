@@ -1,0 +1,12 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Us date tracker">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e0567a"/>
+      <stop offset="1" stop-color="#9b6cf0"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <path fill="#ffffff" d="M256 392c-8 0-15-3-21-9l-118-118c-38-38-38-99 0-137 35-35 92-35 127 1l12 12 12-12c35-36 92-36 127-1 38 38 38 99 0 137L277 383c-6 6-13 9-21 9z" opacity="0.96"/>
+  <circle cx="206" cy="232" r="16" fill="#e0567a"/>
+  <circle cx="306" cy="232" r="16" fill="#9b6cf0"/>
+</svg>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#e0567a" />
+  <title>Us — Date Tracker</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icons/icon.svg" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <h1 class="app-title">Us <span class="heart">♥</span></h1>
+    <button id="menuBtn" class="icon-btn" aria-label="Menu">⋯</button>
+  </header>
+
+  <main id="view" class="view"><!-- active tab renders here --></main>
+
+  <nav class="tabbar" role="tablist">
+    <button class="tab" data-tab="log" role="tab" aria-selected="true">
+      <span class="tab-ico">＋</span><span class="tab-lbl">Log</span>
+    </button>
+    <button class="tab" data-tab="history" role="tab" aria-selected="false">
+      <span class="tab-ico">📅</span><span class="tab-lbl">History</span>
+    </button>
+    <button class="tab" data-tab="insights" role="tab" aria-selected="false">
+      <span class="tab-ico">📊</span><span class="tab-lbl">Insights</span>
+    </button>
+    <button class="tab" data-tab="suggest" role="tab" aria-selected="false">
+      <span class="tab-ico">✨</span><span class="tab-lbl">Suggest</span>
+    </button>
+  </nav>
+
+  <!-- Slide-up menu sheet -->
+  <div id="sheet" class="sheet hidden">
+    <div class="sheet-backdrop" data-close></div>
+    <div class="sheet-body">
+      <h2>Menu</h2>
+      <button class="menu-row" id="exportBtn">⬇️ Export data (JSON backup)</button>
+      <label class="menu-row" for="importInput">⬆️ Import data (restore)</label>
+      <input id="importInput" type="file" accept="application/json" hidden />
+      <button class="menu-row" id="seedBtn">🌱 Add sample dates (demo)</button>
+      <button class="menu-row danger" id="wipeBtn">🗑️ Erase everything</button>
+      <button class="menu-row ghost" data-close>Close</button>
+      <p class="muted small">All data lives only on this device.</p>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
