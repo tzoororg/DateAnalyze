@@ -2,7 +2,7 @@
 
 import * as db from "./db.js";
 import {
-  CATEGORIES, REPEAT_OPTIONS, CURRENCIES, catLabel, catEmoji,
+  CATEGORIES, REPEAT_OPTIONS, MOOD_OPTIONS, CURRENCIES, catLabel, catEmoji,
   blankEntry, fmtMoney, fmtDate, entryTimeMs, toILS, refreshRates,
 } from "./model.js";
 import * as A from "./analytics.js";
@@ -76,7 +76,12 @@ function renderLog() {
         <input id="f-date" type="date" value="${draft.date}"/></label>
 
       ${ratingBlock("Enjoyment", "enjoyment", draft.enjoyment, "★")}
-      ${ratingBlock("Mood / vibe", "mood", draft.mood, "")}
+
+      <label class="field"><span>Mood / vibe <span class="muted" style="font-weight:400;font-size:12px">(pick any that fit)</span></span></label>
+      <div class="chips" id="f-mood">
+        ${MOOD_OPTIONS.map(m => `<button class="chip ${Array.isArray(draft.mood) && draft.mood.includes(m.key) ? "on" : ""}" data-mood="${m.key}">${m.emoji} ${m.label}</button>`).join("")}
+      </div>
+
       ${ratingBlock("Effort it took", "effort", draft.effort, "")}
 
       <label class="field"><span>Would you do it again?</span></label>
@@ -144,13 +149,26 @@ function wireForm() {
     draft.wouldRepeat = b.dataset.rep;
     setOn(v.querySelectorAll("#f-repeat .chip"), b);
   });
-  // ratings
+  // ratings (enjoyment, effort)
   v.querySelectorAll("[data-rating-group]").forEach(group => {
     group.addEventListener("click", e => {
       const b = e.target.closest("[data-rating]"); if (!b) return;
       draft[b.dataset.rating] = Number(b.dataset.val);
       setOn(group.querySelectorAll("button"), b);
     });
+  });
+  // mood chips (multi-select toggle)
+  v.querySelector("#f-mood").addEventListener("click", e => {
+    const b = e.target.closest("[data-mood]"); if (!b) return;
+    const key = b.dataset.mood;
+    if (!Array.isArray(draft.mood)) draft.mood = [];
+    if (draft.mood.includes(key)) {
+      draft.mood = draft.mood.filter(k => k !== key);
+      b.classList.remove("on");
+    } else {
+      draft.mood.push(key);
+      b.classList.add("on");
+    }
   });
 
   // photos
@@ -363,7 +381,7 @@ async function renderHistoryList() {
       ${isOpen ? `
       <div class="hist-detail">
         <div class="hist-detail-grid">
-          <div><span class="muted small">Mood</span><br/>${"●".repeat(e.mood)}${"○".repeat(5 - e.mood)}</div>
+          ${Array.isArray(e.mood) && e.mood.length ? `<div style="grid-column:1/-1"><span class="muted small">Mood</span><br/>${e.mood.map(k => { const m = MOOD_OPTIONS.find(o => o.key === k); return m ? `<span class="mood-tag">${m.emoji} ${m.label}</span>` : ""; }).filter(Boolean).join("")}</div>` : ""}
           <div><span class="muted small">Effort</span><br/>${"●".repeat(e.effort)}${"○".repeat(5 - e.effort)}</div>
           <div><span class="muted small">Repeat?</span><br/>${e.wouldRepeat === "yes" ? "Yes!" : e.wouldRepeat === "maybe" ? "Maybe" : "No"}</div>
           ${e.location ? `<div><span class="muted small">Location</span><br/>${escHtml(e.location)}</div>` : ""}

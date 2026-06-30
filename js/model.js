@@ -24,6 +24,17 @@ export const REPEAT_OPTIONS = [
   { key: "no",    label: "No",    weight: 0.0 },
 ];
 
+export const MOOD_OPTIONS = [
+  { key: "romantic",    label: "Romantic",    emoji: "😍" },
+  { key: "fun",         label: "Fun",         emoji: "😄" },
+  { key: "goofy",       label: "Goofy",       emoji: "🤪" },
+  { key: "chill",       label: "Chill",       emoji: "😌" },
+  { key: "exciting",    label: "Exciting",    emoji: "🤩" },
+  { key: "sweet",       label: "Sweet",       emoji: "🥰" },
+  { key: "intimate",    label: "Intimate",    emoji: "🌙" },
+  { key: "silly",       label: "Silly",       emoji: "😜" },
+];
+
 // Create a blank entry with sensible defaults.
 export function blankEntry() {
   return {
@@ -33,7 +44,7 @@ export function blankEntry() {
     title: "",
     category: "dining",
     enjoyment: 4,
-    mood: 4,
+    mood: [],
     effort: 3,
     wouldRepeat: "yes",
     cost: null,
