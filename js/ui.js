@@ -517,6 +517,7 @@ function renderSuggest() {
 
       <div class="btn-row">
         <button class="btn secondary" id="s-shuffle">🎲 Surprise us</button>
+        <button class="btn secondary" id="s-nearby">📍 Find nearby</button>
       </div>
     </section>
 
@@ -574,6 +575,25 @@ function wireSuggest() {
     rerun();
   });
   bind("s-shuffle", "click", () => rerun(true));
+  bind("s-nearby", "click", () => {
+    if (!navigator.geolocation) { toast("Location not supported on this device"); return; }
+    toast("Getting your location…");
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const { latitude: lat, longitude: lng } = pos.coords;
+        const categoryQueries = {
+          dining: "restaurants", outdoors: "parks outdoor activities",
+          movie: "cinema", nightlife: "bars nightlife", culture: "museums",
+          active: "activities", creative: "art classes workshops",
+          travel: "attractions", wellness: "spa massage", special: "unique experiences",
+          athome: "activities",
+        };
+        const q = (sug.category && categoryQueries[sug.category]) || "date ideas";
+        window.open(`https://www.google.com/maps/search/${encodeURIComponent(q)}/@${lat},${lng},14z`, "_blank");
+      },
+      () => toast("Couldn't get location — check browser permissions")
+    );
+  });
   wireLogButtons();
 }
 
