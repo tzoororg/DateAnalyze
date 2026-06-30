@@ -19,6 +19,7 @@ export const CATALOG = [
   { title: "Kayaking / paddle boarding", category: "outdoors", estCost: 150, effort: 4, desc: "On the water together." },
 
   // Movie / Show
+  { title: "Drive-in movie", category: "movie", estCost: 120, effort: 2, desc: "Old-school, snacks allowed in the car." },
   { title: "Outdoor / rooftop cinema", category: "movie", estCost: 105, effort: 2, desc: "A film under the stars." },
   { title: "Comedy night", category: "movie", estCost: 120, effort: 2, desc: "Live stand-up beats a couch." },
   { title: "Theme movie marathon at home", category: "movie", estCost: 45, effort: 1, desc: "A trilogy + themed snacks." },
@@ -49,6 +50,7 @@ export const CATALOG = [
   { title: "Live music / gig", category: "nightlife", estCost: 180, effort: 2, desc: "See a band you half-know." },
   { title: "Trivia night", category: "nightlife", estCost: 90, effort: 2, desc: "Team of two vs the bar." },
   { title: "Dancing out", category: "nightlife", estCost: 120, effort: 3, desc: "Find a floor and stay late." },
+  { title: "Karaoke night", category: "nightlife", estCost: 90, effort: 2, desc: "Duets mandatory." },
 
   // Culture
   { title: "Museum or gallery visit", category: "culture", estCost: 90, effort: 2, desc: "Invent backstories for the art." },
@@ -57,11 +59,18 @@ export const CATALOG = [
   { title: "Bookstore + coffee afternoon", category: "culture", estCost: 75, effort: 1, desc: "Pick a book for each other." },
 
   // Sport / Active
+  { title: "Escape room", category: "active", estCost: 150, effort: 3, desc: "60 minutes to solve it together." },
   { title: "Rock climbing (indoor)", category: "active", estCost: 120, effort: 4, desc: "Belay and trust falls." },
   { title: "Mini golf", category: "active", estCost: 75, effort: 2, desc: "Petty competition, big fun." },
   { title: "Ice / roller skating", category: "active", estCost: 90, effort: 3, desc: "Hold hands, fall gracefully." },
   { title: "Tennis or badminton", category: "active", estCost: 45, effort: 3, desc: "Loser buys smoothies." },
   { title: "Bowling night", category: "active", estCost: 90, effort: 2, desc: "Silly team names required." },
+
+  // Wellness / Spa
+  { title: "Couple's spa day", category: "wellness", estCost: 300, effort: 2, desc: "Side-by-side massages, full switch-off." },
+  { title: "Hot springs or thermal baths", category: "wellness", estCost: 120, effort: 3, desc: "Soak together and fully decompress." },
+  { title: "Yoga or meditation class", category: "wellness", estCost: 90, effort: 2, desc: "Find your calm, together." },
+  { title: "Spa night at home", category: "wellness", estCost: 60, effort: 1, desc: "Face masks, candles, full switch-off." },
 
   // Special / Other
   { title: "Recreate your first date", category: "special", estCost: 150, effort: 2, desc: "Same place, new memories." },

@@ -1,16 +1,17 @@
 // Data model: categories, schema helpers, and small shared utilities.
 
 export const CATEGORIES = [
-  { key: "dining",   label: "Dining",        emoji: "🍽️" },
-  { key: "outdoors", label: "Outdoors",      emoji: "🌳" },
-  { key: "movie",    label: "Movie / Show",  emoji: "🎬" },
-  { key: "travel",   label: "Travel",        emoji: "✈️" },
+  { key: "dining",   label: "Dining",           emoji: "🍽️" },
+  { key: "outdoors", label: "Outdoors",         emoji: "🌳" },
+  { key: "movie",    label: "Movie / Show",     emoji: "🎬" },
+  { key: "travel",   label: "Travel",           emoji: "✈️" },
   { key: "creative", label: "Creative / Class", emoji: "🎨" },
-  { key: "athome",   label: "At home",       emoji: "🏠" },
-  { key: "nightlife",label: "Nightlife",     emoji: "🍸" },
-  { key: "culture",  label: "Culture",       emoji: "🏛️" },
-  { key: "active",   label: "Sport / Active",emoji: "🏃" },
-  { key: "special",  label: "Special / Other", emoji: "💝" },
+  { key: "athome",   label: "At home",          emoji: "🏠" },
+  { key: "nightlife",label: "Nightlife",        emoji: "🍸" },
+  { key: "culture",  label: "Culture",          emoji: "🏛️" },
+  { key: "active",   label: "Sport / Active",   emoji: "🏃" },
+  { key: "wellness", label: "Wellness / Spa",   emoji: "🧘" },
+  { key: "special",  label: "Special / Other",  emoji: "💝" },
 ];
 
 export const CAT_BY_KEY = Object.fromEntries(CATEGORIES.map(c => [c.key, c]));
@@ -25,14 +26,14 @@ export const REPEAT_OPTIONS = [
 ];
 
 export const MOOD_OPTIONS = [
-  { key: "romantic",    label: "Romantic",    emoji: "😍" },
-  { key: "fun",         label: "Fun",         emoji: "😄" },
-  { key: "goofy",       label: "Goofy",       emoji: "🤪" },
-  { key: "chill",       label: "Chill",       emoji: "😌" },
-  { key: "exciting",    label: "Exciting",    emoji: "🤩" },
-  { key: "sweet",       label: "Sweet",       emoji: "🥰" },
-  { key: "intimate",    label: "Intimate",    emoji: "🌙" },
-  { key: "silly",       label: "Silly",       emoji: "😜" },
+  { key: "romantic",   label: "Romantic",   emoji: "💕" },
+  { key: "spicy",      label: "Spicy",      emoji: "🔥" },
+  { key: "playful",    label: "Playful",    emoji: "😄" },
+  { key: "hilarious",  label: "Hilarious",  emoji: "🤣" },
+  { key: "chill",      label: "Chill",      emoji: "😌" },
+  { key: "heartfelt",  label: "Heartfelt",  emoji: "🥰" },
+  { key: "magical",    label: "Magical",    emoji: "✨" },
+  { key: "exciting",   label: "Exciting",   emoji: "🤩" },
 ];
 
 // Create a blank entry with sensible defaults.
