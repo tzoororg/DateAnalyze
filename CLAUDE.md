@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A dependency-free Progressive Web App for tracking dates with a partner. Three tabs: **Log** (post-date form), **Insights** (charts/analytics), **Suggest** (date ideas via UCB1 multi-armed bandit). Pure HTML/CSS/vanilla JS with ES modules — no build step, no framework, no bundler. All data is local-only in IndexedDB.
+A dependency-free Progressive Web App for tracking dates with a partner. Four tabs: **Log** (post-date form), **History** (browse/search past dates, list or photo gallery view), **Insights** (charts/analytics), **Suggest** (date ideas via UCB1 multi-armed bandit). Pure HTML/CSS/vanilla JS with ES modules — no build step, no framework, no bundler. All data is local-only in IndexedDB.
 
 ## Development
 
@@ -22,11 +22,11 @@ There is no build, lint, or test command. To populate the app with demo data: **
 
 Data flows one direction: `db.js` → domain logic → `ui.js` renders.
 
-- **`js/model.js`** — Single source of truth for the data schema. A date entry has: id, date, title, category (one of 10 enum keys), enjoyment/mood/effort (1–5), wouldRepeat (yes/maybe/no), cost, location, notes, photos (array of blob IDs). Categories are defined here; add new ones to the `CATEGORIES` array.
+- **`js/model.js`** — Single source of truth for the data schema. A date entry has: id, date, title, category (one of 11 enum keys), enjoyment/effort (1–5), mood (array of `MOOD_OPTIONS` keys, multi-select), wouldRepeat (yes/maybe/no), cost, location, notes, photos (array of blob IDs). Categories and moods are defined here; add new ones to the `CATEGORIES`/`MOOD_OPTIONS` arrays. Legacy entries may have a numeric `mood` — display/analytics code checks `Array.isArray(e.mood)` before using it.
 - **`js/db.js`** — Thin IndexedDB wrapper. Three object stores: `dates` (keyPath: id), `photos` (blobs stored separately to keep date records lean), `settings`. All CRUD is async. Photos are stored/retrieved by UUID; `deleteDate` cascades to delete associated photos.
 - **`js/suggest.js`** — The core algorithm. Scores every candidate (past activities + unseen catalog ideas) with: `predictedEnjoyment + UCB1_exploration_bonus + novelty − fatigue`. The `explore` parameter (0–1, from the Adventure↔Comfort slider) scales the exploration constant. `ensureMix()` guarantees results contain both exploit and explore candidates when available. Past enjoyment uses recency-weighted averaging (120-day half-life).
-- **`js/catalog.js`** — Seed catalog of ~45 date ideas used as the "explore pool" for cold-start suggestions. Each idea has title, category, estCost, effort, desc.
-- **`js/analytics.js`** — Pure aggregation functions over the dates array (no side effects). Used by both the Insights tab and the suggestion engine.
+- **`js/catalog.js`** — Seed catalog of ~49 date ideas used as the "explore pool" for cold-start suggestions. Each idea has title, category, estCost, effort, desc.
+- **`js/analytics.js`** — Pure aggregation functions over the dates array (no side effects). Used by the Insights tab and the suggestion engine. Includes `byMood()` (frequency + avg enjoyment + top category per mood) and `onThisDay()` (entries from today's exact month/day in prior years, used for the Log tab's memory card).
 - **`js/charts.js`** — Hand-rolled inline SVG chart generators. Each function returns an SVG string using CSS variables for theming.
 - **`js/ui.js`** — Monolithic UI module that renders all three tabs. Manages a `draft` object (the form state) and a `dates` array (reloaded from DB after mutations). Photo blobs are converted to object URLs and cached in `urlCache`.
 - **`app.js`** — Bootstrap: calls `ui.init()` and registers the service worker.

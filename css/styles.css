@@ -169,6 +169,30 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent-2); 
 .hist-photos img { width: 80px; height: 60px; object-fit: cover; border-radius: 10px; border: 1px solid var(--line); flex: none; }
 .mood-tag { display: inline-flex; align-items: center; gap: 3px; font-size: 13px; background: var(--card-2); border: 1px solid var(--line); border-radius: 20px; padding: 2px 8px; margin: 3px 4px 0 0; }
 
+/* On this day memory card */
+.memory-card { border-left: 4px solid var(--accent); background: linear-gradient(135deg, var(--card), var(--card-2)); }
+.memory-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.memory-title { font-weight: 700; font-size: 15px; }
+.memory-dismiss { background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer; padding: 0 4px; }
+.memory-item { margin-bottom: 8px; }
+.memory-item:last-child { margin-bottom: 0; }
+.memory-ago { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--accent); margin-bottom: 4px; }
+
+/* History search & view toggle */
+.h-search { margin: 10px 0 4px; }
+.hist-view-toggle { display: flex; gap: 4px; flex: none; }
+.seg {
+  padding: 8px 12px; border-radius: 10px; border: 1px solid var(--line);
+  background: var(--bg-soft); color: var(--muted); font-size: 13px; cursor: pointer; white-space: nowrap;
+}
+.seg.on { background: var(--card-2); color: var(--text); border-color: var(--accent-2); }
+
+/* Photo gallery */
+.hist-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-bottom: 14px; }
+.gallery-tile { position: relative; aspect-ratio: 1; overflow: hidden; border-radius: 10px; cursor: pointer; background: var(--card-2); }
+.gallery-tile img { width: 100%; height: 100%; object-fit: cover; }
+.gallery-label { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,.6)); color: #fff; font-size: 11px; padding: 16px 6px 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
 /* Empty state */
 .empty { text-align: center; color: var(--muted); padding: 40px 20px; }
 .empty .big { font-size: 46px; }

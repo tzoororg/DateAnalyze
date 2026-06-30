@@ -115,10 +115,45 @@ export function explorationStats(dates) {
   return { novelCount: novel, ratio, recentNew, recentTotal: recent.length };
 }
 
+// Mood frequency + per-mood stats, sorted by count desc.
+export function byMood(dates) {
+  const map = new Map();
+  for (const d of dates) {
+    for (const m of (Array.isArray(d.mood) ? d.mood : [])) {
+      if (!map.has(m)) map.set(m, []);
+      map.get(m).push(d);
+    }
+  }
+  return [...map.entries()].map(([key, items]) => ({
+    key,
+    count: items.length,
+    avgEnjoyment: mean(items.map(i => i.enjoyment)),
+    topCategory: modeBy(items, i => i.category),
+  })).sort((a, b) => b.count - a.count);
+}
+
+// Entries from exactly today's month/day in prior years, newest first.
+export function onThisDay(dates, now = new Date()) {
+  const mm = now.getMonth(), dd = now.getDate(), yy = now.getFullYear();
+  return dates
+    .filter(d => {
+      const t = new Date(entryTimeMs(d));
+      return t.getMonth() === mm && t.getDate() === dd && t.getFullYear() < yy;
+    })
+    .sort((a, b) => entryTimeMs(b) - entryTimeMs(a));
+}
+
 // ---- helpers ----
 export function mean(arr) {
   const v = arr.filter(x => x != null && !isNaN(x)).map(Number);
   return v.length ? v.reduce((s, x) => s + x, 0) / v.length : 0;
+}
+function modeBy(arr, fn) {
+  const counts = new Map();
+  for (const x of arr) { const k = fn(x); counts.set(k, (counts.get(k) || 0) + 1); }
+  let best = null, max = 0;
+  for (const [k, n] of counts) if (n > max) { best = k; max = n; }
+  return best;
 }
 function meanDefined(arr) {
   const v = arr.filter(x => x != null && !isNaN(x)).map(Number);

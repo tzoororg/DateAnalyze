@@ -15,7 +15,8 @@ let draft = blankEntry();        // the entry currently being composed/edited
 let editingId = null;
 let currentTab = "log";
 const sug = { explore: 0.5, budget: null, maxEffort: null, category: null };
-const hist = { sort: "date-desc", category: null, expanded: null };
+const hist = { sort: "date-desc", category: null, mood: null, query: "", view: "list", expanded: null };
+let memoryDismissed = false;
 let costCurrency = "ILS";
 const urlCache = new Map();      // photoId -> objectURL
 
@@ -59,7 +60,27 @@ function show(tab) {
 function renderLog() {
   const v = viewEl();
   const isEdit = !!editingId;
-  v.innerHTML = `
+  const memories = (!memoryDismissed && !isEdit) ? A.onThisDay(dates) : [];
+  const memoryCard = memories.length ? `
+    <section class="card memory-card">
+      <div class="memory-header">
+        <span class="memory-title">On this day ✨</span>
+        <button class="memory-dismiss" id="memory-dismiss">✕</button>
+      </div>
+      ${memories.map(e => {
+        const yearsAgo = new Date().getFullYear() - new Date(entryTimeMs(e)).getFullYear();
+        return `<div class="memory-item">
+          <div class="memory-ago">${yearsAgo} year${yearsAgo !== 1 ? "s" : ""} ago</div>
+          <div class="entry" style="pointer-events:none">
+            <div class="thumb">${catEmoji(e.category)}</div>
+            <div class="meta"><h4>${escHtml(e.title)}</h4>
+              <div class="sub">${fmtDate(e.date)} · ${"★".repeat(e.enjoyment)}</div>
+            </div>
+          </div>
+        </div>`;
+      }).join("")}
+    </section>` : "";
+  v.innerHTML = memoryCard + `
     <section class="card">
       <h2 style="margin:0 0 4px">${isEdit ? "Edit date" : "How was the date?"}</h2>
       <p class="muted small" style="margin:0">${isEdit ? "Update the details below." : "Fill this in after a date — it feeds your insights & suggestions."}</p>
@@ -129,6 +150,7 @@ function ratingBlock(label, field, value, unit) {
 
 function wireForm() {
   const v = viewEl();
+  bind("memory-dismiss", "click", () => { memoryDismissed = true; renderLog(); });
   // text-ish inputs update the draft without re-rendering (keeps focus/caret)
   bind("f-title", "input", e => draft.title = e.target.value);
   bind("f-date", "change", e => draft.date = e.target.value);
@@ -316,12 +338,21 @@ function renderHistory() {
             <option value="title-asc" ${hist.sort === "title-asc" ? "selected" : ""}>Title (A–Z)</option>
           </select>
         </label>
-        <span class="hist-count" id="h-count">${dates.length} date${dates.length !== 1 ? "s" : ""}</span>
+        <div class="hist-view-toggle">
+          <button class="seg ${hist.view === "list" ? "on" : ""}" data-view="list">☰ List</button>
+          <button class="seg ${hist.view === "gallery" ? "on" : ""}" data-view="gallery">⊞ Gallery</button>
+        </div>
       </div>
+      <input class="h-search" id="h-search" type="text" placeholder="Search title, notes, place…" value="${escAttr(hist.query)}"/>
       <div class="chips hist-chips" id="h-cat">
         <button class="chip ${!hist.category ? "on" : ""}" data-hcat="">All</button>
         ${CATEGORIES.map(c => `<button class="chip ${hist.category === c.key ? "on" : ""}" data-hcat="${c.key}">${c.emoji} ${c.label}</button>`).join("")}
       </div>
+      <div class="chips hist-chips" id="h-mood" style="margin-top:6px">
+        <button class="chip ${!hist.mood ? "on" : ""}" data-hmood="">Any vibe</button>
+        ${MOOD_OPTIONS.map(m => `<button class="chip ${hist.mood === m.key ? "on" : ""}" data-hmood="${m.key}">${m.emoji} ${m.label}</button>`).join("")}
+      </div>
+      <span class="hist-count" id="h-count">${dates.length} date${dates.length !== 1 ? "s" : ""}</span>
     </section>
     <div id="hist-list"></div>
   `;
@@ -332,10 +363,23 @@ function renderHistory() {
 function wireHistory() {
   const v = viewEl();
   bind("h-sort", "change", e => { hist.sort = e.target.value; renderHistoryList(); });
+  bind("h-search", "input", e => { hist.query = e.target.value; renderHistoryList(); });
   v.querySelector("#h-cat").addEventListener("click", e => {
     const b = e.target.closest("[data-hcat]"); if (!b) return;
     hist.category = b.dataset.hcat || null;
     setOn(v.querySelectorAll("#h-cat .chip"), b);
+    renderHistoryList();
+  });
+  v.querySelector("#h-mood").addEventListener("click", e => {
+    const b = e.target.closest("[data-hmood]"); if (!b) return;
+    hist.mood = b.dataset.hmood || null;
+    setOn(v.querySelectorAll("#h-mood .chip"), b);
+    renderHistoryList();
+  });
+  v.querySelector(".hist-view-toggle").addEventListener("click", e => {
+    const b = e.target.closest("[data-view]"); if (!b) return;
+    hist.view = b.dataset.view;
+    setOn(v.querySelectorAll(".hist-view-toggle .seg"), b);
     renderHistoryList();
   });
 }
@@ -343,6 +387,15 @@ function wireHistory() {
 function sortedHistory() {
   let list = [...dates];
   if (hist.category) list = list.filter(e => e.category === hist.category);
+  if (hist.mood) list = list.filter(e => Array.isArray(e.mood) && e.mood.includes(hist.mood));
+  if (hist.query) {
+    const q = hist.query.toLowerCase();
+    list = list.filter(e =>
+      (e.title || "").toLowerCase().includes(q) ||
+      (e.notes || "").toLowerCase().includes(q) ||
+      (e.location || "").toLowerCase().includes(q)
+    );
+  }
   const cmp = {
     "date-desc": (a, b) => entryTimeMs(b) - entryTimeMs(a),
     "date-asc":  (a, b) => entryTimeMs(a) - entryTimeMs(b),
@@ -360,11 +413,43 @@ async function renderHistoryList() {
   const host = viewEl().querySelector("#hist-list");
   if (!host) return;
   const list = sortedHistory();
-  if (!list.length) {
-    host.innerHTML = `<div class="empty"><div class="big">🔍</div>No dates in this category.</div>`;
+  const countEl = viewEl().querySelector("#h-count");
+
+  if (hist.view === "gallery") {
+    const photoEntries = list.flatMap(e => (e.photos || []).map(pid => ({ pid, e })));
+    if (countEl) countEl.textContent = `${photoEntries.length} photo${photoEntries.length !== 1 ? "s" : ""}`;
+    if (!photoEntries.length) {
+      host.innerHTML = `<div class="empty"><div class="big">📷</div>No photos for this filter.</div>`;
+      return;
+    }
+    host.innerHTML = `<div class="hist-gallery">${photoEntries.map(({ pid, e }) =>
+      `<div class="gallery-tile" data-entry="${e.id}" data-pid="${pid}">
+        <img src="" data-load="${pid}" alt="${escAttr(e.title)}"/>
+        <div class="gallery-label">${escHtml(e.title)}</div>
+      </div>`).join("")}</div>`;
+    host.querySelectorAll("[data-load]").forEach(async img => {
+      const url = await photoURL(img.dataset.load);
+      if (url) img.src = url;
+    });
+    host.querySelectorAll(".gallery-tile").forEach(tile => tile.addEventListener("click", () => {
+      hist.view = "list";
+      hist.expanded = tile.dataset.entry;
+      const v = viewEl();
+      setOn(v.querySelectorAll(".hist-view-toggle .seg"),
+        v.querySelector(".hist-view-toggle [data-view='list']"));
+      renderHistoryList();
+      setTimeout(() => {
+        const el = host.querySelector(`[data-toggle="${tile.dataset.entry}"]`);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 50);
+    }));
     return;
   }
-  const countEl = viewEl().querySelector("#h-count");
+
+  if (!list.length) {
+    host.innerHTML = `<div class="empty"><div class="big">🔍</div>No dates match this filter.</div>`;
+    return;
+  }
   if (countEl) countEl.textContent = `${list.length} date${list.length !== 1 ? "s" : ""}`;
   host.innerHTML = list.map(e => {
     const isOpen = hist.expanded === e.id;
@@ -437,10 +522,32 @@ function renderInsights() {
   }
   const s = A.summary(dates);
   const cats = A.byCategory(dates);
+  const moods = A.byMood(dates);
   const trend = A.monthlyTrend(dates);
   const vfm = A.valueForMoney(dates, 5);
   const rep = A.repeatWorthy(dates, 5);
   const exp = A.explorationStats(dates);
+
+  const moodSection = moods.length ? (() => {
+    const maxCount = moods[0].count;
+    return `
+    <h3 class="section-title">Your vibes</h3>
+    <div class="card chart-wrap">${C.barChart(moods.map(m => {
+      const opt = MOOD_OPTIONS.find(o => o.key === m.key);
+      return { label: `${opt?.emoji ?? ""} ${opt?.label ?? m.key}`, value: m.count };
+    }), { max: maxCount, unit: "" })}</div>
+    <div class="card tight">${moods.map(m => {
+      const opt = MOOD_OPTIONS.find(o => o.key === m.key);
+      const topCat = m.topCategory ? `${catEmoji(m.topCategory)} ${catLabel(m.topCategory)}` : "";
+      return `<div class="entry" style="padding:6px 0">
+        <div style="font-size:22px;width:52px;text-align:center;flex:none">${opt?.emoji ?? "🎭"}</div>
+        <div class="meta">
+          <h4>${opt?.label ?? m.key}</h4>
+          <div class="sub">felt ${m.count}× · avg ${m.avgEnjoyment.toFixed(1)}★${topCat ? ` · mostly ${topCat}` : ""}</div>
+        </div>
+      </div>`;
+    }).join("")}</div>`;
+  })() : "";
 
   v.innerHTML = `
     <div class="stat-grid">
@@ -452,6 +559,7 @@ function renderInsights() {
 
     <h3 class="section-title">Enjoyment by category</h3>
     <div class="card chart-wrap">${C.barChart(cats.map(c => ({ label: `${c.emoji} ${c.label}`, value: c.avgEnjoyment })))}</div>
+    ${moodSection}
 
     <h3 class="section-title">Trend over time</h3>
     <div class="card chart-wrap">${C.trendChart(trend)}
