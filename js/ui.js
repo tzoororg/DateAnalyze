@@ -88,6 +88,11 @@ function renderLog() {
       <label class="field"><span>What did you do?</span>
         <input id="f-title" type="text" placeholder="e.g. Sunset hike at the cliffs" value="${escAttr(draft.title)}"/></label>
 
+      <label class="field"><span>Photos</span></label>
+      <div class="photo-strip" id="f-photos"></div>
+      <input id="f-photo-camera" type="file" accept="image/*" capture="environment" hidden/>
+      <input id="f-photo-gallery" type="file" accept="image/*" hidden multiple/>
+
       <label class="field"><span>Category</span></label>
       <div class="chips" id="f-category">
         ${CATEGORIES.map(c => `<button class="chip ${draft.category === c.key ? "on" : ""}" data-cat="${c.key}">${c.emoji} ${c.label}</button>`).join("")}
@@ -122,11 +127,6 @@ function renderLog() {
 
       <label class="field"><span>Notes / memories</span>
         <textarea id="f-notes" placeholder="What made it good (or not)?">${escHtml(draft.notes)}</textarea></label>
-
-      <label class="field"><span>Photos</span></label>
-      <div class="photo-strip" id="f-photos"></div>
-      <input id="f-photo-camera" type="file" accept="image/*" capture="environment" hidden/>
-      <input id="f-photo-gallery" type="file" accept="image/*" hidden multiple/>
 
       <div class="btn-row">
         ${isEdit ? `<button class="btn ghost" id="f-cancel">Cancel</button>` : ""}
