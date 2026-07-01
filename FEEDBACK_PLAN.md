@@ -4,10 +4,14 @@
 > (below) before it works end to end.
 
 The ⋯ menu → **Send feedback** opens a text box (+ optional photo). On submit the app
-POSTs to a Cloudflare Worker, which opens a labeled GitHub issue in `tzoororg/DateAnalyze`
-and returns the issue number. A GitHub Action then auto-comments a technical rewording +
-execution plan. **The issue number is the serial** — later, in Claude Code, say
-"implement feedback #7".
+POSTs to a Cloudflare Worker, which opens a `feedback`-labeled GitHub issue in
+`tzoororg/DateAnalyze` and returns the issue number. **The issue number is the serial** —
+later, in Claude Code, say "implement feedback #7".
+
+To get an auto-generated technical rewording + execution plan on an issue, **add the
+`plan` label to it** (in the GitHub issue UI). A GitHub Action then comments the plan.
+This manual gate means the paid Claude API call only fires for items you choose to plan —
+incoming feedback creates a free issue but cannot trigger any API cost on its own.
 
 ## Pieces
 
@@ -43,9 +47,9 @@ execution plan. **The issue number is the serial** — later, in Claude Code, sa
 
 ## Using the serial in Claude Code
 
-Say **"implement feedback #N"**. Claude reads the public issue (title, body, and the
-auto-generated plan comment) and implements it with full repo context. The Action's plan
-is a first pass; the real implementation is refined here.
+Say **"implement feedback #N"**. Claude reads the public issue (title, body, and the plan
+comment if you added the `plan` label) and implements it with full repo context. The
+Action's plan is a first pass; the real implementation is refined here.
 
 ## Notes / tradeoffs
 

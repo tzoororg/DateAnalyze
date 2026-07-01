@@ -1,18 +1,21 @@
 name: Feedback → plan
 
-# When a "feedback" issue is opened (or the label is added), generate a technical
-# rewording + execution plan with the Claude API and post it as a comment.
+# When YOU add the "plan" label to an issue, generate a technical rewording +
+# execution plan with the Claude API and post it as a comment. Gating on a manual
+# label (rather than firing on every opened feedback issue) means the paid API call
+# only happens for items you choose to plan — strangers submitting feedback create a
+# free GitHub issue but cannot trigger any API cost.
 on:
   issues:
-    types: [opened, labeled]
+    types: [labeled]
 
 permissions:
   issues: write
 
 jobs:
   plan:
-    # Only run for issues carrying the "feedback" label.
-    if: contains(join(github.event.issue.labels.*.name, ','), 'feedback')
+    # Only run when the label that was just added is "plan".
+    if: github.event.label.name == 'plan'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
