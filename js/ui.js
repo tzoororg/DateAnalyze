@@ -42,6 +42,11 @@ function wireChrome() {
   document.getElementById("importInput").addEventListener("change", onImport);
   document.getElementById("seedBtn").addEventListener("click", onSeed);
   document.getElementById("wipeBtn").addEventListener("click", onWipe);
+  document.getElementById("feedbackBtn").addEventListener("click", async () => {
+    sheet.classList.add("hidden");
+    const { openFeedback } = await import("./feedback.js");
+    openFeedback();
+  });
 }
 
 function show(tab) {
@@ -861,7 +866,7 @@ async function photoURL(id) {
   return url;
 }
 
-function downscale(file, maxDim, quality) {
+export function downscale(file, maxDim, quality) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
@@ -879,7 +884,7 @@ function downscale(file, maxDim, quality) {
 }
 
 let toastTimer = null;
-function toast(msg) {
+export function toast(msg) {
   const t = document.getElementById("toast");
   t.textContent = msg;
   t.classList.remove("hidden");

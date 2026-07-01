@@ -1,0 +1,114 @@
+// Cloudflare Worker: receives in-app feedback and opens a labeled GitHub issue.
+//
+// Deploy: dash.cloudflare.com → Workers & Pages → Create Worker → paste this file.
+// Bindings (Settings → Variables and Secrets):
+//   GITHUB_TOKEN   (secret)     fine-grained PAT, repo DateAnalyze, Issues+Contents RW
+//   ALLOWED_ORIGIN (plaintext)  your app URL, e.g. https://tzoororg.github.io
+//   FEEDBACK_KEY   (secret)     OPTIONAL shared key; if set, requests must send it
+//                               in the x-feedback-key header (must match the client).
+//
+// The issue number returned is the "serial" the user references in Claude Code.
+
+const REPO = "tzoororg/DateAnalyze";
+const LABEL = "feedback";
+const ASSET_DIR = "feedback-assets";       // photos committed here on the default branch
+const MAX_BODY_BYTES = 8 * 1024 * 1024;    // ~8MB guard (photos are downscaled client-side)
+
+export default {
+  async fetch(request, env) {
+    const origin = env.ALLOWED_ORIGIN || "*";
+    const cors = {
+      "Access-Control-Allow-Origin": origin,
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, x-feedback-key",
+      "Access-Control-Max-Age": "86400",
+    };
+
+    if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
+    if (request.method !== "POST") return json({ error: "method not allowed" }, 405, cors);
+
+    // Optional shared-key gate.
+    if (env.FEEDBACK_KEY && request.headers.get("x-feedback-key") !== env.FEEDBACK_KEY) {
+      return json({ error: "forbidden" }, 403, cors);
+    }
+
+    let payload;
+    try {
+      const raw = await request.text();
+      if (raw.length > MAX_BODY_BYTES) return json({ error: "too large" }, 413, cors);
+      payload = JSON.parse(raw);
+    } catch {
+      return json({ error: "bad json" }, 400, cors);
+    }
+
+    const text = (payload.text || "").toString().trim();
+    if (!text) return json({ error: "empty" }, 400, cors);
+
+    const gh = ghFetch(env.GITHUB_TOKEN);
+
+    // 1) Optionally commit the photo, so it can be embedded in the issue.
+    let photoMd = "";
+    if (payload.photoBase64) {
+      try {
+        const base64 = String(payload.photoBase64).replace(/^data:[^;]+;base64,/, "");
+        const path = `${ASSET_DIR}/${crypto.randomUUID()}.jpg`;
+        const put = await gh(`/repos/${REPO}/contents/${path}`, {
+          method: "PUT",
+          body: JSON.stringify({
+            message: `feedback photo ${path}`,
+            content: base64,
+          }),
+        });
+        if (put.ok) {
+          const data = await put.json();
+          const rawUrl = data.content?.download_url;
+          if (rawUrl) photoMd = `\n\n![feedback photo](${rawUrl})`;
+        }
+        // If the photo commit fails, we still file the issue without it.
+      } catch (_) { /* ignore photo errors */ }
+    }
+
+    // 2) Create the issue.
+    const title = firstLine(text).slice(0, 60) || "App feedback";
+    const meta = payload.meta || {};
+    const body =
+      `**From in-app feedback**\n\n${text}${photoMd}\n\n` +
+      `---\n` +
+      `<sub>app ${esc(meta.appVersion)} · ${esc(meta.at)} · ${esc(meta.ua)}</sub>`;
+
+    const res = await gh(`/repos/${REPO}/issues`, {
+      method: "POST",
+      body: JSON.stringify({ title, body, labels: [LABEL] }),
+    });
+
+    if (!res.ok) {
+      const detail = await res.text();
+      return json({ error: "github error", status: res.status, detail }, 502, cors);
+    }
+    const issue = await res.json();
+    return json({ number: issue.number, url: issue.html_url }, 201, cors);
+  },
+};
+
+function ghFetch(token) {
+  return (path, init = {}) =>
+    fetch(`https://api.github.com${path}`, {
+      ...init,
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Accept": "application/vnd.github+json",
+        "User-Agent": "dateanalyze-feedback-worker",
+        "Content-Type": "application/json",
+        ...(init.headers || {}),
+      },
+    });
+}
+
+function json(obj, status, cors) {
+  return new Response(JSON.stringify(obj), {
+    status,
+    headers: { "Content-Type": "application/json", ...cors },
+  });
+}
+function firstLine(s) { return s.split("\n")[0].trim(); }
+function esc(s) { return (s == null ? "" : String(s)).replace(/[<>]/g, ""); }

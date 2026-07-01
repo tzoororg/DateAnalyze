@@ -8,7 +8,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icons/icon.svg" />
-  <link rel="stylesheet" href="css/styles.css?v=10" />
+  <link rel="stylesheet" href="css/styles.css?v=11" />
 </head>
 <body>
   <header class="app-header">
@@ -42,6 +42,7 @@
       <label class="menu-row" for="importInput">⬆️ Import data (restore)</label>
       <input id="importInput" type="file" accept="application/json" hidden />
       <button class="menu-row" id="seedBtn">🌱 Add sample dates (demo)</button>
+      <button class="menu-row" id="feedbackBtn">💬 Send feedback</button>
       <button class="menu-row danger" id="wipeBtn">🗑️ Erase everything</button>
       <button class="menu-row ghost" data-close>Close</button>
       <p class="muted small">All data lives only on this device.</p>
@@ -50,6 +51,6 @@
 
   <div id="toast" class="toast hidden"></div>
 
-  <script type="module" src="app.js?v=10"></script>
+  <script type="module" src="app.js?v=11"></script>
 </body>
 </html>
