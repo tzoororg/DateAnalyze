@@ -1,0 +1,9 @@
+# Cloudflare Worker config for the feedback endpoint.
+# Deploy with:  cd worker && wrangler deploy
+# Secrets (GITHUB_TOKEN, optional FEEDBACK_KEY) are set separately and are NOT stored here.
+name = "dateanalyze-feedback"
+main = "feedback-worker.js"
+compatibility_date = "2025-01-01"
+
+[vars]
+ALLOWED_ORIGIN = "https://tzoororg.github.io"

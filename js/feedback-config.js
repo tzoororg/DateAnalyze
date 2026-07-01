@@ -1,12 +1,9 @@
 // Feedback endpoint configuration.
 //
-// Fill FEEDBACK_ENDPOINT with your deployed Cloudflare Worker URL, e.g.
-//   "https://dateanalyze-feedback.<your-subdomain>.workers.dev"
-// Until it is set, the "Send feedback" form shows a "not configured yet" hint.
-//
-// FEEDBACK_KEY is an optional shared secret sent as the x-feedback-key header.
-// If you set a matching FEEDBACK_KEY secret on the Worker, set the same value here.
-// It is NOT a real secret (it ships in the client) — it just deters trivial abuse.
+// FEEDBACK_ENDPOINT is the deployed Cloudflare Worker URL.
+// FEEDBACK_KEY is a light anti-abuse shared value sent as the x-feedback-key header.
+// Note: this ships in the client, so it is NOT a true secret — it only deters trivial
+// drive-by requests to the bare endpoint. The same value is set as a Worker secret.
 
-export const FEEDBACK_ENDPOINT = "";
-export const FEEDBACK_KEY = "";
+export const FEEDBACK_ENDPOINT = "https://dateanalyze-feedback.tzoororg.workers.dev";
+export const FEEDBACK_KEY = "c5801ee23816436a9b84705d8ec67407";
