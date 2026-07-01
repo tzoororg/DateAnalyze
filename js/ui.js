@@ -14,7 +14,7 @@ let dates = [];
 let draft = blankEntry();        // the entry currently being composed/edited
 let editingId = null;
 let currentTab = "log";
-const sug = { explore: 0.5, budget: null, maxEffort: null, category: null };
+const sug = { explore: 0.5, budget: null, maxEffort: null, category: null, moods: [] };
 const hist = { sort: "date-desc", category: null, mood: null, query: "", view: "list", expanded: null };
 let memoryDismissed = false;
 let costCurrency = "ILS";
@@ -344,14 +344,32 @@ function renderHistory() {
         </div>
       </div>
       <input class="h-search" id="h-search" type="text" placeholder="Search title, notes, place…" value="${escAttr(hist.query)}"/>
-      <div class="chips hist-chips" id="h-cat">
-        <button class="chip ${!hist.category ? "on" : ""}" data-hcat="">All</button>
-        ${CATEGORIES.map(c => `<button class="chip ${hist.category === c.key ? "on" : ""}" data-hcat="${c.key}">${c.emoji} ${c.label}</button>`).join("")}
-      </div>
-      <div class="chips hist-chips" id="h-mood" style="margin-top:6px">
-        <button class="chip ${!hist.mood ? "on" : ""}" data-hmood="">Any vibe</button>
-        ${MOOD_OPTIONS.map(m => `<button class="chip ${hist.mood === m.key ? "on" : ""}" data-hmood="${m.key}">${m.emoji} ${m.label}</button>`).join("")}
-      </div>
+      <details class="filter-group" id="h-cat-group">
+        <summary>
+          <span class="fg-label">Category</span>
+          <span class="fg-right">
+            ${hist.category ? `<span class="fg-badge">${CATEGORIES.find(c => c.key === hist.category)?.emoji} ${CATEGORIES.find(c => c.key === hist.category)?.label}</span>` : ""}
+            <span class="fg-arrow">▼</span>
+          </span>
+        </summary>
+        <div class="chips" id="h-cat">
+          <button class="chip ${!hist.category ? "on" : ""}" data-hcat="">All</button>
+          ${CATEGORIES.map(c => `<button class="chip ${hist.category === c.key ? "on" : ""}" data-hcat="${c.key}">${c.emoji} ${c.label}</button>`).join("")}
+        </div>
+      </details>
+      <details class="filter-group" id="h-mood-group">
+        <summary>
+          <span class="fg-label">Vibe</span>
+          <span class="fg-right">
+            ${hist.mood ? `<span class="fg-badge">${MOOD_OPTIONS.find(m => m.key === hist.mood)?.emoji} ${MOOD_OPTIONS.find(m => m.key === hist.mood)?.label}</span>` : ""}
+            <span class="fg-arrow">▼</span>
+          </span>
+        </summary>
+        <div class="chips" id="h-mood">
+          <button class="chip ${!hist.mood ? "on" : ""}" data-hmood="">Any vibe</button>
+          ${MOOD_OPTIONS.map(m => `<button class="chip ${hist.mood === m.key ? "on" : ""}" data-hmood="${m.key}">${m.emoji} ${m.label}</button>`).join("")}
+        </div>
+      </details>
       <span class="hist-count" id="h-count">${dates.length} date${dates.length !== 1 ? "s" : ""}</span>
     </section>
     <div id="hist-list"></div>
@@ -368,12 +386,30 @@ function wireHistory() {
     const b = e.target.closest("[data-hcat]"); if (!b) return;
     hist.category = b.dataset.hcat || null;
     setOn(v.querySelectorAll("#h-cat .chip"), b);
+    const cat = CATEGORIES.find(c => c.key === hist.category);
+    const badge = v.querySelector("#h-cat-group summary .fg-badge");
+    if (badge) badge.remove();
+    if (cat) {
+      const span = document.createElement("span");
+      span.className = "fg-badge";
+      span.textContent = `${cat.emoji} ${cat.label}`;
+      v.querySelector("#h-cat-group summary .fg-right").prepend(span);
+    }
     renderHistoryList();
   });
   v.querySelector("#h-mood").addEventListener("click", e => {
     const b = e.target.closest("[data-hmood]"); if (!b) return;
     hist.mood = b.dataset.hmood || null;
     setOn(v.querySelectorAll("#h-mood .chip"), b);
+    const mood = MOOD_OPTIONS.find(m => m.key === hist.mood);
+    const badge = v.querySelector("#h-mood-group summary .fg-badge");
+    if (badge) badge.remove();
+    if (mood) {
+      const span = document.createElement("span");
+      span.className = "fg-badge";
+      span.textContent = `${mood.emoji} ${mood.label}`;
+      v.querySelector("#h-mood-group summary .fg-right").prepend(span);
+    }
     renderHistoryList();
   });
   v.querySelector(".hist-view-toggle").addEventListener("click", e => {
@@ -617,11 +653,32 @@ function renderSuggest() {
           </select></label>
       </div>
 
-      <label class="field"><span>Category</span></label>
-      <div class="chips" id="s-cat">
-        <button class="chip ${!sug.category ? "on" : ""}" data-scat="">Any</button>
-        ${CATEGORIES.map(c => `<button class="chip ${sug.category === c.key ? "on" : ""}" data-scat="${c.key}">${c.emoji} ${c.label}</button>`).join("")}
-      </div>
+      <details class="filter-group" id="s-cat-group">
+        <summary>
+          <span class="fg-label">Category</span>
+          <span class="fg-right">
+            ${sug.category ? `<span class="fg-badge">${CATEGORIES.find(c => c.key === sug.category)?.emoji} ${CATEGORIES.find(c => c.key === sug.category)?.label}</span>` : ""}
+            <span class="fg-arrow">▼</span>
+          </span>
+        </summary>
+        <div class="chips" id="s-cat">
+          <button class="chip ${!sug.category ? "on" : ""}" data-scat="">Any</button>
+          ${CATEGORIES.map(c => `<button class="chip ${sug.category === c.key ? "on" : ""}" data-scat="${c.key}">${c.emoji} ${c.label}</button>`).join("")}
+        </div>
+      </details>
+
+      <details class="filter-group" id="s-mood-group">
+        <summary>
+          <span class="fg-label">Vibe</span>
+          <span class="fg-right">
+            ${sug.moods.length ? `<span class="fg-badge">${sug.moods.length === 1 ? (MOOD_OPTIONS.find(m => m.key === sug.moods[0])?.emoji + " " + MOOD_OPTIONS.find(m => m.key === sug.moods[0])?.label) : sug.moods.length + " selected"}</span>` : ""}
+            <span class="fg-arrow">▼</span>
+          </span>
+        </summary>
+        <div class="chips" id="s-mood">
+          ${MOOD_OPTIONS.map(m => `<button class="chip ${sug.moods.includes(m.key) ? "on" : ""}" data-smood="${m.key}">${m.emoji} ${m.label}</button>`).join("")}
+        </div>
+      </details>
 
       <div class="btn-row">
         <button class="btn secondary" id="s-shuffle">🎲 Surprise us</button>
@@ -680,6 +737,34 @@ function wireSuggest() {
     const b = e.target.closest("[data-scat]"); if (!b) return;
     sug.category = b.dataset.scat || null;
     setOn(v.querySelectorAll("#s-cat .chip"), b);
+    const cat = CATEGORIES.find(c => c.key === sug.category);
+    const badge = v.querySelector("#s-cat-group summary .fg-badge");
+    if (badge) badge.remove();
+    if (cat) {
+      const span = document.createElement("span");
+      span.className = "fg-badge";
+      span.textContent = `${cat.emoji} ${cat.label}`;
+      v.querySelector("#s-cat-group summary .fg-right").prepend(span);
+    }
+    rerun();
+  });
+  v.querySelector("#s-mood").addEventListener("click", e => {
+    const b = e.target.closest("[data-smood]"); if (!b) return;
+    const key = b.dataset.smood;
+    if (sug.moods.includes(key)) sug.moods = sug.moods.filter(m => m !== key);
+    else sug.moods = [...sug.moods, key];
+    v.querySelectorAll("#s-mood .chip").forEach(chip => {
+      chip.classList.toggle("on", sug.moods.includes(chip.dataset.smood));
+    });
+    const badge = v.querySelector("#s-mood-group summary .fg-badge");
+    if (badge) badge.remove();
+    if (sug.moods.length) {
+      const span = document.createElement("span");
+      span.className = "fg-badge";
+      const m0 = MOOD_OPTIONS.find(m => m.key === sug.moods[0]);
+      span.textContent = sug.moods.length === 1 ? `${m0.emoji} ${m0.label}` : `${sug.moods.length} selected`;
+      v.querySelector("#s-mood-group summary .fg-right").prepend(span);
+    }
     rerun();
   });
   bind("s-shuffle", "click", () => rerun(true));

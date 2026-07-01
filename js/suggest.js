@@ -23,6 +23,7 @@ export function suggest(dates, opts = {}) {
     budget = null,        // max $ per date
     maxEffort = null,     // 1..5
     category = null,      // restrict to one category key
+    moods = [],           // restrict to activities that produced these vibes
     count = 6,
     jitter = false,       // add small randomness so "shuffle" varies results
   } = opts;
@@ -36,12 +37,15 @@ export function suggest(dates, opts = {}) {
   for (const d of dates) {
     const t = entryTimeMs(d);
     const k = normTitle(d.title);
+    const dMoods = Array.isArray(d.mood) ? d.mood : [];
     if (k) {
-      if (!acts.has(k)) acts.set(k, { title: d.title, category: d.category, items: [], lastMs: 0 });
+      if (!acts.has(k)) acts.set(k, { title: d.title, category: d.category, items: [], lastMs: 0, moods: new Set() });
       const a = acts.get(k); a.items.push(d); a.lastMs = Math.max(a.lastMs, t);
+      for (const m of dMoods) a.moods.add(m);
     }
-    if (!cats.has(d.category)) cats.set(d.category, { items: [], lastMs: 0 });
+    if (!cats.has(d.category)) cats.set(d.category, { items: [], lastMs: 0, moods: new Set() });
     const c = cats.get(d.category); c.items.push(d); c.lastMs = Math.max(c.lastMs, t);
+    for (const m of dMoods) c.moods.add(m);
   }
   const globalAvg = N ? mean(dates.map(d => d.enjoyment)) : NEUTRAL;
 
@@ -77,6 +81,16 @@ export function suggest(dates, opts = {}) {
     if (category && c.category !== category) return false;
     if (maxEffort && c.effort > maxEffort) return false;
     if (budget != null && c.estCost != null && c.estCost > budget) return false;
+    if (moods.length) {
+      const actMoods = acts.get(normTitle(c.title))?.moods;
+      const catMoods = cats.get(c.category)?.moods;
+      const known = actMoods?.size || catMoods?.size;
+      if (known) {
+        const match = moods.some(m => actMoods?.has(m) || catMoods?.has(m));
+        if (!match) return false;
+      }
+      // no mood history at all → include (benefit of the doubt for explore ideas)
+    }
     return true;
   });
   if (!pool.length) pool = candidates; // never return nothing because of filters

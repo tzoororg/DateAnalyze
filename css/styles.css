@@ -159,6 +159,26 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent-2); 
 .hist-sort-label select { width: 100%; }
 .hist-count { font-size: 13px; color: var(--muted); white-space: nowrap; padding-bottom: 14px; }
 .hist-chips { margin-bottom: 2px; }
+
+/* Collapsible filter groups */
+.filter-group { border: none; padding: 0; margin: 0 0 4px; }
+.filter-group summary {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 13px; border-radius: 10px; border: 1px solid var(--line);
+  background: var(--bg-soft); cursor: pointer; list-style: none;
+  font-size: 14px; color: var(--muted); user-select: none;
+}
+.filter-group summary::-webkit-details-marker { display: none; }
+.filter-group summary::marker { display: none; }
+.filter-group summary .fg-label { font-weight: 500; color: var(--text); }
+.filter-group summary .fg-right { display: flex; align-items: center; gap: 8px; }
+.filter-group summary .fg-badge {
+  background: var(--accent-2); color: var(--text); border-radius: 999px;
+  padding: 2px 9px; font-size: 12px; font-weight: 600;
+}
+.filter-group summary .fg-arrow { font-size: 11px; transition: transform .2s; }
+.filter-group[open] summary .fg-arrow { transform: rotate(180deg); }
+.filter-group .chips { padding: 10px 4px 4px; }
 .hist-row { cursor: pointer; }
 .hist-detail { border-top: 1px solid var(--line); margin-top: 12px; padding-top: 12px; }
 .hist-detail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-bottom: 8px; }
