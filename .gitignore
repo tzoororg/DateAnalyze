@@ -1,0 +1,4 @@
+
+# Wrangler local cache/state
+worker/.wrangler/
+.wrangler/
