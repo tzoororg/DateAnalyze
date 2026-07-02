@@ -15,7 +15,7 @@ let draft = blankEntry();        // the entry currently being composed/edited
 let editingId = null;
 let currentTab = "log";
 const sug = { explore: 0.5, budget: null, maxEffort: null, category: null, moods: [] };
-const hist = { sort: "date-desc", category: null, mood: null, query: "", view: "list", expanded: null };
+const hist = { sort: "date-desc", category: null, moods: [], query: "", view: "list", expanded: null };
 let memoryDismissed = false;
 let costCurrency = "ILS";
 const urlCache = new Map();      // photoId -> objectURL
@@ -23,7 +23,7 @@ const urlCache = new Map();      // photoId -> objectURL
 export async function init() {
   dates = await db.getAllDates();
   wireChrome();
-  show("log");
+  show(localStorage.getItem("activeTab") || "log");
   refreshRates(db.getSetting, db.setSetting);
 }
 
@@ -51,6 +51,7 @@ function wireChrome() {
 
 function show(tab) {
   currentTab = tab;
+  localStorage.setItem("activeTab", tab);
   document.querySelectorAll(".tab").forEach(b =>
     b.setAttribute("aria-selected", String(b.dataset.tab === tab)));
   if (tab === "log") renderLog();
@@ -366,13 +367,12 @@ function renderHistory() {
         <summary>
           <span class="fg-label">Vibe</span>
           <span class="fg-right">
-            ${hist.mood ? `<span class="fg-badge">${MOOD_OPTIONS.find(m => m.key === hist.mood)?.emoji} ${MOOD_OPTIONS.find(m => m.key === hist.mood)?.label}</span>` : ""}
+            ${hist.moods.length ? `<span class="fg-badge">${hist.moods.length === 1 ? (MOOD_OPTIONS.find(m => m.key === hist.moods[0])?.emoji + " " + MOOD_OPTIONS.find(m => m.key === hist.moods[0])?.label) : hist.moods.length + " selected"}</span>` : ""}
             <span class="fg-arrow">▼</span>
           </span>
         </summary>
         <div class="chips" id="h-mood">
-          <button class="chip ${!hist.mood ? "on" : ""}" data-hmood="">Any vibe</button>
-          ${MOOD_OPTIONS.map(m => `<button class="chip ${hist.mood === m.key ? "on" : ""}" data-hmood="${m.key}">${m.emoji} ${m.label}</button>`).join("")}
+          ${MOOD_OPTIONS.map(m => `<button class="chip ${hist.moods.includes(m.key) ? "on" : ""}" data-hmood="${m.key}">${m.emoji} ${m.label}</button>`).join("")}
         </div>
       </details>
       <span class="hist-count" id="h-count">${dates.length} date${dates.length !== 1 ? "s" : ""}</span>
@@ -404,15 +404,19 @@ function wireHistory() {
   });
   v.querySelector("#h-mood").addEventListener("click", e => {
     const b = e.target.closest("[data-hmood]"); if (!b) return;
-    hist.mood = b.dataset.hmood || null;
-    setOn(v.querySelectorAll("#h-mood .chip"), b);
-    const mood = MOOD_OPTIONS.find(m => m.key === hist.mood);
+    const key = b.dataset.hmood;
+    if (hist.moods.includes(key)) hist.moods = hist.moods.filter(m => m !== key);
+    else hist.moods = [...hist.moods, key];
+    v.querySelectorAll("#h-mood .chip").forEach(chip => {
+      chip.classList.toggle("on", hist.moods.includes(chip.dataset.hmood));
+    });
     const badge = v.querySelector("#h-mood-group summary .fg-badge");
     if (badge) badge.remove();
-    if (mood) {
+    if (hist.moods.length) {
       const span = document.createElement("span");
       span.className = "fg-badge";
-      span.textContent = `${mood.emoji} ${mood.label}`;
+      const m0 = MOOD_OPTIONS.find(m => m.key === hist.moods[0]);
+      span.textContent = hist.moods.length === 1 ? `${m0.emoji} ${m0.label}` : `${hist.moods.length} selected`;
       v.querySelector("#h-mood-group summary .fg-right").prepend(span);
     }
     renderHistoryList();
@@ -428,7 +432,7 @@ function wireHistory() {
 function sortedHistory() {
   let list = [...dates];
   if (hist.category) list = list.filter(e => e.category === hist.category);
-  if (hist.mood) list = list.filter(e => Array.isArray(e.mood) && e.mood.includes(hist.mood));
+  if (hist.moods.length) list = list.filter(e => Array.isArray(e.mood) && hist.moods.some(k => e.mood.includes(k)));
   if (hist.query) {
     const q = hist.query.toLowerCase();
     list = list.filter(e =>
