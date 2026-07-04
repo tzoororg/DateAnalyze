@@ -60,35 +60,53 @@ function wireChrome() {
   document.getElementById("syncSignInBtn").addEventListener("click", onSyncSignIn);
   document.getElementById("syncCreateBtn").addEventListener("click", onSyncCreate);
   document.getElementById("syncJoinBtn").addEventListener("click", onSyncJoin);
+  document.getElementById("syncCopyCodeBtn").addEventListener("click", onSyncCopyCode);
   document.getElementById("syncSignOutBtn").addEventListener("click", onSyncSignOut);
   renderSyncStatus();
 }
 
 // ---------- sync menu ----------
-function renderSyncStatus() {
+let lastInviteCode = null;
+
+async function renderSyncStatus() {
   const status = document.getElementById("syncStatus");
   const signIn = document.getElementById("syncSignInBtn");
   const create = document.getElementById("syncCreateBtn");
   const join = document.getElementById("syncJoinBtn");
+  const copyCode = document.getElementById("syncCopyCodeBtn");
   const signOut = document.getElementById("syncSignOutBtn");
   const mode = db.getMode();
   const user = db.getUser();
 
   if (mode === "cloud" && user) {
-    status.textContent = `🔄 Syncing as ${user.email}`;
+    lastInviteCode = await db.getInviteCode();
+    status.textContent = lastInviteCode
+      ? `🔄 Syncing as ${user.email} — space code ${lastInviteCode}`
+      : `🔄 Syncing as ${user.email}`;
     status.classList.remove("hidden");
     signIn.classList.add("hidden"); create.classList.add("hidden"); join.classList.add("hidden");
+    copyCode.classList.toggle("hidden", !lastInviteCode);
     signOut.classList.remove("hidden");
   } else if (user) {
     status.textContent = `Signed in as ${user.email} — set up a shared space:`;
     status.classList.remove("hidden");
     signIn.classList.add("hidden"); create.classList.remove("hidden"); join.classList.remove("hidden");
+    copyCode.classList.add("hidden");
     signOut.classList.remove("hidden");
   } else {
     status.classList.add("hidden");
     signIn.classList.remove("hidden"); create.classList.add("hidden"); join.classList.add("hidden");
+    copyCode.classList.add("hidden");
     signOut.classList.add("hidden");
   }
+}
+
+async function onSyncCopyCode() {
+  if (!lastInviteCode) return;
+  try {
+    await navigator.clipboard.writeText(lastInviteCode);
+    toast(`Copied ${lastInviteCode} to clipboard`);
+  } catch (err) { console.error(err); toast("Couldn't copy — long-press the code above instead"); }
 }
 
 async function onSyncSignIn() {
