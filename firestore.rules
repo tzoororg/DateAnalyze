@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{db}/documents {
+    function isMember(spaceId) {
+      return exists(/databases/$(db)/documents/spaces/$(spaceId)/members/$(request.auth.uid));
+    }
+    match /invites/{code} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.createdBy == request.auth.uid;
+    }
+    match /spaces/{spaceId} {
+      allow create: if request.auth != null && request.resource.data.createdBy == request.auth.uid;
+      allow read:   if isMember(spaceId);
+      match /members/{uid} {
+        allow read: if isMember(spaceId);
+        allow create: if request.auth.uid == uid &&
+          exists(/databases/$(db)/documents/invites/$(request.resource.data.code)) &&
+          get(/databases/$(db)/documents/invites/$(request.resource.data.code)).data.spaceId == spaceId;
+      }
+      match /dates/{dateId} {
+        allow read, write: if isMember(spaceId);
+      }
+    }
+  }
+}

@@ -1,6 +1,6 @@
 // UI layer: renders the three tabs, handles the form, photos, charts and suggestions.
 
-import * as db from "./db.js";
+import * as db from "./store.js";
 import {
   CATEGORIES, REPEAT_OPTIONS, MOOD_OPTIONS, CURRENCIES, catLabel, catEmoji,
   blankEntry, fmtMoney, fmtDate, entryTimeMs, toILS, refreshRates,
@@ -25,6 +25,12 @@ export async function init() {
   wireChrome();
   show(localStorage.getItem("activeTab") || "log");
   refreshRates(db.getSetting, db.setSetting);
+  db.subscribe(onRemoteChange);
+}
+
+async function onRemoteChange() {
+  await reload();
+  show(currentTab);
 }
 
 async function reload() { dates = await db.getAllDates(); }
@@ -35,7 +41,10 @@ function wireChrome() {
     btn.addEventListener("click", () => show(btn.dataset.tab)));
 
   const sheet = document.getElementById("sheet");
-  document.getElementById("menuBtn").addEventListener("click", () => sheet.classList.remove("hidden"));
+  document.getElementById("menuBtn").addEventListener("click", () => {
+    sheet.classList.remove("hidden");
+    renderSyncStatus();
+  });
   sheet.querySelectorAll("[data-close]").forEach(el => el.addEventListener("click", () => sheet.classList.add("hidden")));
 
   document.getElementById("exportBtn").addEventListener("click", onExport);
@@ -47,6 +56,83 @@ function wireChrome() {
     const { openFeedback } = await import("./feedback.js");
     openFeedback();
   });
+
+  document.getElementById("syncSignInBtn").addEventListener("click", onSyncSignIn);
+  document.getElementById("syncCreateBtn").addEventListener("click", onSyncCreate);
+  document.getElementById("syncJoinBtn").addEventListener("click", onSyncJoin);
+  document.getElementById("syncSignOutBtn").addEventListener("click", onSyncSignOut);
+  renderSyncStatus();
+}
+
+// ---------- sync menu ----------
+function renderSyncStatus() {
+  const status = document.getElementById("syncStatus");
+  const signIn = document.getElementById("syncSignInBtn");
+  const create = document.getElementById("syncCreateBtn");
+  const join = document.getElementById("syncJoinBtn");
+  const signOut = document.getElementById("syncSignOutBtn");
+  const mode = db.getMode();
+  const user = db.getUser();
+
+  if (mode === "cloud" && user) {
+    status.textContent = `🔄 Syncing as ${user.email}`;
+    status.classList.remove("hidden");
+    signIn.classList.add("hidden"); create.classList.add("hidden"); join.classList.add("hidden");
+    signOut.classList.remove("hidden");
+  } else if (user) {
+    status.textContent = `Signed in as ${user.email} — set up a shared space:`;
+    status.classList.remove("hidden");
+    signIn.classList.add("hidden"); create.classList.remove("hidden"); join.classList.remove("hidden");
+    signOut.classList.remove("hidden");
+  } else {
+    status.classList.add("hidden");
+    signIn.classList.remove("hidden"); create.classList.add("hidden"); join.classList.add("hidden");
+    signOut.classList.add("hidden");
+  }
+}
+
+async function onSyncSignIn() {
+  try {
+    await db.signIn();
+    renderSyncStatus();
+    toast("Signed in");
+  } catch (err) { console.error(err); toast(err.message || "Sign-in failed"); }
+}
+
+async function onSyncCreate() {
+  try {
+    const uploadExisting = dates.length > 0 &&
+      confirm(`Upload your existing ${dates.length} dates to the shared space?`);
+    const code = await db.createSpace(uploadExisting);
+    await reload();
+    renderSyncStatus();
+    show(currentTab);
+    toast(`Space created — share code ${code} with your partner`);
+  } catch (err) { console.error(err); toast(err.message || "Couldn't create space"); }
+}
+
+async function onSyncJoin() {
+  const code = prompt("Enter the 6-character code from your partner:");
+  if (!code) return;
+  try {
+    await db.joinSpace(code);
+    await reload();
+    renderSyncStatus();
+    show(currentTab);
+    toast("Joined — syncing with your partner ♥");
+  } catch (err) { console.error(err); toast(err.message || "Couldn't join — check the code"); }
+}
+
+async function onSyncSignOut() {
+  if (db.getMode() === "cloud" &&
+    !confirm("Stop syncing? This device goes back to its own local-only data.")) return;
+  try {
+    await db.signOut();
+    await reload();
+    renderSyncStatus();
+    show(currentTab);
+    toast("Back to local-only mode");
+  } catch (err) { console.error(err); toast(err.message || "Couldn't sign out"); }
 }
 
 function show(tab) {
@@ -847,7 +933,10 @@ async function onSeed() {
 }
 
 async function onWipe() {
-  if (!confirm("Erase ALL dates and photos? This cannot be undone.")) return;
+  const msg = db.getMode() === "cloud"
+    ? "Erase ALL dates and photos in your shared space — for both of you? This cannot be undone."
+    : "Erase ALL dates and photos? This cannot be undone.";
+  if (!confirm(msg)) return;
   await db.wipeAll();
   await reload();
   urlCache.clear();

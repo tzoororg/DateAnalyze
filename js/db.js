@@ -68,6 +68,10 @@ export async function getPhoto(id) {
 export async function deletePhoto(id) {
   return tx("photos", "readwrite", s => reqP(s.delete(id)));
 }
+// Cache a blob under a caller-supplied id (used by sync.js to mirror cloud photos locally).
+export async function cachePhoto(id, blob) {
+  return tx("photos", "readwrite", s => reqP(s.put({ id, blob })));
+}
 
 // ---- Settings ----
 export async function getSetting(key, fallback = null) {

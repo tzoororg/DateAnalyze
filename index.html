@@ -43,9 +43,16 @@
       <input id="importInput" type="file" accept="application/json" hidden />
       <button class="menu-row" id="seedBtn">🌱 Add sample dates (demo)</button>
       <button class="menu-row" id="feedbackBtn">💬 Send feedback</button>
+
+      <p class="muted small hidden" id="syncStatus"></p>
+      <button class="menu-row hidden" id="syncSignInBtn">🔗 Sign in with Google</button>
+      <button class="menu-row hidden" id="syncCreateBtn">💞 Create shared space</button>
+      <button class="menu-row hidden" id="syncJoinBtn">🔑 Join with a code</button>
+      <button class="menu-row hidden" id="syncSignOutBtn">🚪 Sign out (stop syncing)</button>
+
       <button class="menu-row danger" id="wipeBtn">🗑️ Erase everything</button>
       <button class="menu-row ghost" data-close>Close</button>
-      <p class="muted small">All data lives only on this device.</p>
+      <p class="muted small">Local-only by default — sync with a partner is opt-in above.</p>
     </div>
   </div>
 
