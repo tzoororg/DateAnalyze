@@ -580,17 +580,13 @@ async function renderHistoryList() {
       const url = await photoURL(img.dataset.load);
       if (url) img.src = url;
     });
-    host.querySelectorAll(".gallery-tile").forEach(tile => tile.addEventListener("click", () => {
-      hist.view = "list";
-      hist.expanded = tile.dataset.entry;
-      const v = viewEl();
-      setOn(v.querySelectorAll(".hist-view-toggle .seg"),
-        v.querySelector(".hist-view-toggle [data-view='list']"));
-      renderHistoryList();
-      setTimeout(() => {
-        const el = host.querySelector(`[data-toggle="${tile.dataset.entry}"]`);
-        if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-      }, 50);
+    const tiles = [...host.querySelectorAll(".gallery-tile")];
+    tiles.forEach((tile, i) => tile.addEventListener("click", () => {
+      const items = tiles.map(t => ({
+        url: t.querySelector("img").getAttribute("src"),
+        caption: t.querySelector(".gallery-label").textContent,
+      }));
+      openLightbox(items, i);
     }));
     return;
   }
@@ -654,11 +650,10 @@ async function renderHistoryList() {
   host.querySelectorAll("[data-hist-photos]").forEach(async el => {
     const ids = el.dataset.histPhotos.split(",").filter(Boolean);
     if (!ids.length) { el.style.display = "none"; return; }
-    const imgs = await Promise.all(ids.map(async id => {
-      const url = await photoURL(id);
-      return url ? `<img src="${url}" alt=""/>` : "";
-    }));
-    el.innerHTML = imgs.filter(Boolean).join("");
+    const urls = (await Promise.all(ids.map(id => photoURL(id)))).filter(Boolean);
+    el.innerHTML = urls.map(u => `<img src="${u}" alt=""/>`).join("");
+    el.querySelectorAll("img").forEach((img, i) =>
+      img.addEventListener("click", () => openLightbox(urls.map(url => ({ url })), i)));
   });
 }
 
@@ -975,6 +970,52 @@ async function photoURL(id) {
   const url = URL.createObjectURL(blob);
   urlCache.set(id, url);
   return url;
+}
+
+// Full-screen photo viewer. items: [{ url, caption }]. Supports prev/next + swipe.
+function openLightbox(items, startIndex = 0) {
+  items = items.filter(it => it && it.url);
+  if (!items.length) return;
+  let idx = Math.max(0, Math.min(startIndex, items.length - 1));
+  const multi = items.length > 1;
+  const box = document.createElement("div");
+  box.className = "lightbox";
+  box.innerHTML = `
+    <button class="lb-close" aria-label="Close">✕</button>
+    <button class="lb-nav lb-prev" aria-label="Previous"${multi ? "" : " hidden"}>‹</button>
+    <img class="lb-img" src="" alt=""/>
+    <button class="lb-nav lb-next" aria-label="Next"${multi ? "" : " hidden"}>›</button>
+    <div class="lb-caption"></div>`;
+  const imgEl = box.querySelector(".lb-img");
+  const capEl = box.querySelector(".lb-caption");
+  const show = () => {
+    imgEl.src = items[idx].url;
+    capEl.textContent = items[idx].caption || "";
+    capEl.style.display = items[idx].caption ? "" : "none";
+  };
+  const go = d => { idx = (idx + d + items.length) % items.length; show(); };
+  const close = () => { document.removeEventListener("keydown", onKey); box.remove(); };
+  const onKey = e => {
+    if (e.key === "Escape") close();
+    else if (multi && e.key === "ArrowLeft") go(-1);
+    else if (multi && e.key === "ArrowRight") go(1);
+  };
+  box.querySelector(".lb-close").addEventListener("click", close);
+  box.querySelector(".lb-prev").addEventListener("click", e => { e.stopPropagation(); go(-1); });
+  box.querySelector(".lb-next").addEventListener("click", e => { e.stopPropagation(); go(1); });
+  imgEl.addEventListener("click", e => e.stopPropagation());
+  box.addEventListener("click", close);   // tap backdrop to dismiss
+  document.addEventListener("keydown", onKey);
+  let sx = null;
+  box.addEventListener("touchstart", e => { sx = e.touches[0].clientX; }, { passive: true });
+  box.addEventListener("touchend", e => {
+    if (sx == null || !multi) return;
+    const dx = e.changedTouches[0].clientX - sx;
+    if (Math.abs(dx) > 45) go(dx < 0 ? 1 : -1);
+    sx = null;
+  }, { passive: true });
+  document.body.appendChild(box);
+  show();
 }
 
 export function downscale(file, maxDim, quality) {
