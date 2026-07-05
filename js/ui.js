@@ -23,6 +23,7 @@ const urlCache = new Map();      // photoId -> objectURL
 export async function init() {
   dates = await db.getAllDates();
   wireChrome();
+  wireIdle();
   show(localStorage.getItem("activeTab") || "log");
   refreshRates(db.getSetting, db.setSetting);
   db.subscribe(onRemoteChange);
@@ -452,6 +453,7 @@ function renderHistory() {
           <button class="seg ${hist.view === "list" ? "on" : ""}" data-view="list">☰ List</button>
           <button class="seg ${hist.view === "gallery" ? "on" : ""}" data-view="gallery">⊞ Gallery</button>
         </div>
+        <button class="seg slideshow-btn" id="h-slideshow" title="Play a slideshow of your highlights">▶ Slideshow</button>
       </div>
       <input class="h-search" id="h-search" type="text" placeholder="Search title, notes, place…" value="${escAttr(hist.query)}"/>
       <details class="filter-group" id="h-cat-group">
@@ -489,6 +491,7 @@ function renderHistory() {
 
 function wireHistory() {
   const v = viewEl();
+  bind("h-slideshow", "click", startSlideshow);
   bind("h-sort", "change", e => { hist.sort = e.target.value; renderHistoryList(); });
   bind("h-search", "input", e => { hist.query = e.target.value; renderHistoryList(); });
   v.querySelector("#h-cat").addEventListener("click", e => {
@@ -972,14 +975,17 @@ async function photoURL(id) {
   return url;
 }
 
-// Full-screen photo viewer. items: [{ url, caption }]. Supports prev/next + swipe.
-function openLightbox(items, startIndex = 0) {
+// Full-screen photo viewer. items: [{ url, caption, entryId? }]. Supports prev/next
+// + swipe. opts.autoAdvanceMs turns it into a slideshow; opts.onTap(item) fires when
+// a slide is tapped (used to jump to that date) instead of dismissing.
+function openLightbox(items, startIndex = 0, opts = {}) {
   items = items.filter(it => it && it.url);
   if (!items.length) return;
+  const { autoAdvanceMs = 0, onTap = null } = opts;
   let idx = Math.max(0, Math.min(startIndex, items.length - 1));
   const multi = items.length > 1;
   const box = document.createElement("div");
-  box.className = "lightbox";
+  box.className = "lightbox" + (autoAdvanceMs ? " slideshow" : "");
   box.innerHTML = `
     <button class="lb-close" aria-label="Close">✕</button>
     <button class="lb-nav lb-prev" aria-label="Previous"${multi ? "" : " hidden"}>‹</button>
@@ -988,22 +994,29 @@ function openLightbox(items, startIndex = 0) {
     <div class="lb-caption"></div>`;
   const imgEl = box.querySelector(".lb-img");
   const capEl = box.querySelector(".lb-caption");
+  let timer = null;
+  const arm = () => { if (autoAdvanceMs && multi) { clearInterval(timer); timer = setInterval(() => go(1), autoAdvanceMs); } };
   const show = () => {
+    if (autoAdvanceMs) { imgEl.style.opacity = "0"; imgEl.onload = () => { imgEl.style.opacity = "1"; }; }
     imgEl.src = items[idx].url;
     capEl.textContent = items[idx].caption || "";
     capEl.style.display = items[idx].caption ? "" : "none";
   };
   const go = d => { idx = (idx + d + items.length) % items.length; show(); };
-  const close = () => { document.removeEventListener("keydown", onKey); box.remove(); };
+  const goUser = d => { go(d); arm(); };   // manual nav restarts the auto-advance clock
+  const close = () => { clearInterval(timer); document.removeEventListener("keydown", onKey); box.remove(); };
   const onKey = e => {
     if (e.key === "Escape") close();
-    else if (multi && e.key === "ArrowLeft") go(-1);
-    else if (multi && e.key === "ArrowRight") go(1);
+    else if (multi && e.key === "ArrowLeft") goUser(-1);
+    else if (multi && e.key === "ArrowRight") goUser(1);
   };
   box.querySelector(".lb-close").addEventListener("click", close);
-  box.querySelector(".lb-prev").addEventListener("click", e => { e.stopPropagation(); go(-1); });
-  box.querySelector(".lb-next").addEventListener("click", e => { e.stopPropagation(); go(1); });
-  imgEl.addEventListener("click", e => e.stopPropagation());
+  box.querySelector(".lb-prev").addEventListener("click", e => { e.stopPropagation(); goUser(-1); });
+  box.querySelector(".lb-next").addEventListener("click", e => { e.stopPropagation(); goUser(1); });
+  imgEl.addEventListener("click", e => {
+    e.stopPropagation();
+    if (onTap) { close(); onTap(items[idx]); }
+  });
   box.addEventListener("click", close);   // tap backdrop to dismiss
   document.addEventListener("keydown", onKey);
   let sx = null;
@@ -1011,11 +1024,54 @@ function openLightbox(items, startIndex = 0) {
   box.addEventListener("touchend", e => {
     if (sx == null || !multi) return;
     const dx = e.changedTouches[0].clientX - sx;
-    if (Math.abs(dx) > 45) go(dx < 0 ? 1 : -1);
+    if (Math.abs(dx) > 45) goUser(dx < 0 ? 1 : -1);
     sx = null;
   }, { passive: true });
   document.body.appendChild(box);
   show();
+  arm();
+}
+
+// Highlights slideshow: fullscreen auto-advancing reel of your best photos.
+// Tapping a slide jumps to that date. Same data path a native lockscreen carousel
+// would consume (A.highlightReel) — see the note there.
+async function startSlideshow() {
+  const reel = A.highlightReel(dates);
+  if (!reel.length) { toast("No photos yet — log a date with a photo first."); return; }
+  const items = [];
+  for (const r of reel) {
+    const url = await photoURL(r.photoId);
+    if (url) items.push({ url, caption: r.title, entryId: r.entryId });
+  }
+  openLightbox(items, 0, { autoAdvanceMs: 5000, onTap: it => it.entryId && openEntry(it.entryId) });
+}
+
+// Jump to a single date's entry in History, expanded and scrolled into view.
+function openEntry(entryId) {
+  hist.view = "list";           // the expanded detail only renders in list view
+  hist.category = null; hist.moods = []; hist.query = "";  // clear filters so the entry is guaranteed visible
+  hist.expanded = entryId;
+  show("history");
+  requestAnimationFrame(() =>
+    viewEl().querySelector(".hist-entry.open")?.scrollIntoView({ block: "center" }));
+}
+
+// Idle screensaver: after IDLE_MS of no interaction, auto-start the slideshow
+// (only when the tab is visible, nothing is already open, and photos exist).
+let idleTimer = null;
+const IDLE_MS = 60000;
+function resetIdle() { clearTimeout(idleTimer); idleTimer = setTimeout(maybeScreensaver, IDLE_MS); }
+function maybeScreensaver() {
+  if (document.visibilityState !== "visible") return;
+  if (document.querySelector(".lightbox")) return;
+  if (!dates.some(d => Array.isArray(d.photos) && d.photos.length)) return;
+  startSlideshow();
+}
+function wireIdle() {
+  ["pointerdown", "keydown", "touchstart"].forEach(ev =>
+    document.addEventListener(ev, resetIdle, { passive: true }));
+  document.addEventListener("visibilitychange", resetIdle);
+  resetIdle();
 }
 
 export function downscale(file, maxDim, quality) {

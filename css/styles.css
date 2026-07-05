@@ -222,6 +222,9 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent-2); 
 .lb-prev { left: 10px; }
 .lb-next { right: 10px; }
 .lb-caption { position: absolute; bottom: calc(16px + var(--safe-b)); left: 0; right: 0; text-align: center; color: #fff; font-size: 14px; padding: 0 20px; text-shadow: 0 1px 4px rgba(0,0,0,.9); }
+/* Slideshow mode: gentle cross-fade between slides + tap-to-open affordance. */
+.lightbox.slideshow .lb-img { cursor: pointer; transition: opacity .6s ease; }
+.lightbox.slideshow .lb-caption::after { content: " · tap to open"; opacity: .6; }
 
 /* Empty state */
 .empty { text-align: center; color: var(--muted); padding: 40px 20px; }

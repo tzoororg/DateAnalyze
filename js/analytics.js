@@ -143,6 +143,27 @@ export function onThisDay(dates, now = new Date()) {
     .sort((a, b) => entryTimeMs(b) - entryTimeMs(a));
 }
 
+// Ordered reel of highlight photos for the in-app slideshow and, later, an OS
+// lockscreen carousel. Pure: no DOM, no DB. A native port reuses THIS function
+// (the "which photos, in what order" logic); the web slideshow UI is throwaway.
+// ponytail: photo *bytes* live device-local in IndexedDB. OS integration later
+// must export them to the OS photo store — that's the real port work, not this.
+// Returns [{ entryId, photoId, title, dateMs, score }], best first.
+export function highlightReel(dates, now = new Date()) {
+  const anniversary = new Set(onThisDay(dates, now).map(d => d.id));
+  const reel = [];
+  for (const d of dates) {
+    if (!Array.isArray(d.photos) || !d.photos.length) continue;
+    let score = (Number(d.enjoyment) || 0)
+      + repeatWeight(d.wouldRepeat) * 1.5   // yes → +1.5, maybe → +0.75, no → 0
+      + (anniversary.has(d.id) ? 2 : 0);    // resurface on-this-day memories
+    const jitter = Math.random();           // reshuffle equal-score entries each launch
+    for (const photoId of d.photos)
+      reel.push({ entryId: d.id, photoId, title: d.title, dateMs: entryTimeMs(d), score, jitter });
+  }
+  return reel.sort((a, b) => (b.score - a.score) || (a.jitter - b.jitter));
+}
+
 // ---- helpers ----
 export function mean(arr) {
   const v = arr.filter(x => x != null && !isNaN(x)).map(Number);
