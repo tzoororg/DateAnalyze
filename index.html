@@ -8,7 +8,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icons/icon.svg" />
-  <link rel="stylesheet" href="css/styles.css?v=13" />
+  <link rel="stylesheet" href="css/styles.css?v=16" />
 </head>
 <body>
   <header class="app-header">
@@ -41,6 +41,8 @@
       <button class="menu-row" id="exportBtn">⬇️ Export data (JSON backup)</button>
       <label class="menu-row" for="importInput">⬆️ Import data (restore)</label>
       <input id="importInput" type="file" accept="application/json" hidden />
+      <label class="menu-row" for="importPhotosInput">📷 Import from photos</label>
+      <input id="importPhotosInput" type="file" accept="image/*" multiple hidden />
       <button class="menu-row" id="seedBtn">🌱 Add sample dates (demo)</button>
       <button class="menu-row" id="feedbackBtn">💬 Send feedback</button>
 
@@ -59,6 +61,6 @@
 
   <div id="toast" class="toast hidden"></div>
 
-  <script type="module" src="app.js?v=13"></script>
+  <script type="module" src="app.js?v=16"></script>
 </body>
 </html>

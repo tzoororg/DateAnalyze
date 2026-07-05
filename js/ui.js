@@ -50,6 +50,7 @@ function wireChrome() {
 
   document.getElementById("exportBtn").addEventListener("click", onExport);
   document.getElementById("importInput").addEventListener("change", onImport);
+  document.getElementById("importPhotosInput").addEventListener("change", onImportPhotos);
   document.getElementById("seedBtn").addEventListener("click", onSeed);
   document.getElementById("wipeBtn").addEventListener("click", onWipe);
   document.getElementById("feedbackBtn").addEventListener("click", async () => {
@@ -959,6 +960,131 @@ async function onWipe() {
   document.getElementById("sheet").classList.add("hidden");
   toast("Everything erased");
   show("log");
+}
+
+// ---------- photo import (EXIF triage) ----------
+let triageItems = null;
+
+async function onImportPhotos(e) {
+  const files = [...e.target.files].filter(f => f.type.startsWith("image/"));
+  e.target.value = "";
+  if (!files.length) return;
+  document.getElementById("sheet").classList.add("hidden");
+  toast("Reading photos…");
+  const { readExif } = await import("./exif.js");
+  // Group all photos taken on the same day into one candidate date entry.
+  const byDate = new Map();
+  for (const file of files) {
+    let ex = {};
+    try { ex = await readExif(file); } catch (err) { console.error(err); }
+    const date = ex.date || fileDateISO(file);
+    let g = byDate.get(date);
+    if (!g) {
+      g = { date, files: [], urls: [], location: "", title: "", category: "dining", keep: true };
+      byDate.set(date, g);
+    }
+    g.files.push(file);
+    g.urls.push(URL.createObjectURL(file));
+    if (!g.location && ex.lat != null) g.location = `${ex.lat.toFixed(5)}, ${ex.lon.toFixed(5)}`;
+  }
+  const groups = [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
+  openTriage(groups);
+}
+
+function fileDateISO(file) {
+  const d = new Date(file.lastModified || Date.now());
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+}
+
+function openTriage(items) {
+  triageItems = items;
+  const nPhotos = items.reduce((s, g) => s + g.files.length, 0);
+  const box = document.createElement("div");
+  box.className = "triage";
+  box.innerHTML = `
+    <div class="triage-head">
+      <strong>${nPhotos} photo${nPhotos > 1 ? "s" : ""} · ${items.length} date${items.length > 1 ? "s" : ""}</strong>
+      <span class="muted small">Photos from the same day are grouped. Set a title &amp; category, or skip.</span>
+    </div>
+    <div class="triage-list">${items.map(triageCard).join("")}</div>
+    <div class="triage-foot">
+      <button class="btn ghost" data-tr="cancel">Cancel</button>
+      <button class="btn" data-tr="import">Import kept</button>
+    </div>`;
+  document.body.appendChild(box);
+
+  box.addEventListener("input", ev => {
+    const el = ev.target.closest("[data-i]"); if (!el) return;
+    triageItems[+el.dataset.i][el.dataset.f] = el.value;
+  });
+  box.addEventListener("change", ev => {
+    const el = ev.target.closest("[data-i]"); if (!el) return;
+    triageItems[+el.dataset.i][el.dataset.f] = el.value;
+  });
+  box.addEventListener("click", async ev => {
+    const skip = ev.target.closest("[data-skip]");
+    if (skip) {
+      const i = +skip.dataset.skip, it = triageItems[i];
+      it.keep = !it.keep;
+      box.querySelector(`[data-card="${i}"]`).classList.toggle("skipped", !it.keep);
+      skip.textContent = it.keep ? "Skip" : "Keep";
+      return;
+    }
+    const act = ev.target.closest("[data-tr]");
+    if (!act) return;
+    if (act.dataset.tr === "cancel") return closeTriage(box);
+    act.disabled = true;
+    await importTriage();
+    closeTriage(box);
+  });
+}
+
+function triageCard(g, i) {
+  const badge = g.files.length > 1 ? `<span class="triage-count">${g.files.length}</span>` : "";
+  return `<div class="triage-card" data-card="${i}">
+    <div class="triage-thumb"><img src="${g.urls[0]}" alt=""/>${badge}</div>
+    <div class="triage-fields">
+      <input data-i="${i}" data-f="title" type="text" placeholder="${escAttr(catLabel(g.category))}" value="${escAttr(g.title)}"/>
+      <div class="row">
+        <select data-i="${i}" data-f="category">
+          ${CATEGORIES.map(c => `<option value="${c.key}" ${g.category === c.key ? "selected" : ""}>${c.emoji} ${c.label}</option>`).join("")}
+        </select>
+        <input data-i="${i}" data-f="date" type="date" value="${g.date}"/>
+      </div>
+    </div>
+    <button class="triage-skip" data-skip="${i}">Skip</button>
+  </div>`;
+}
+
+async function importTriage() {
+  const kept = triageItems.filter(g => g.keep);
+  let n = 0;
+  for (const g of kept) {
+    try {
+      const photos = [];
+      for (const file of g.files) {
+        const blob = await downscale(file, 1280, 0.82);
+        photos.push(await db.putPhoto(blob));
+      }
+      const entry = blankEntry();
+      entry.date = g.date;
+      entry.title = g.title.trim() || catLabel(g.category);
+      entry.category = g.category;
+      entry.location = g.location;
+      entry.photos = photos;
+      await db.putDate(entry);
+      n++;
+    } catch (err) { console.error(err); }
+  }
+  await reload();
+  toast(n ? `Imported ${n} date${n > 1 ? "s" : ""} ♥` : "Nothing imported");
+  if (n) show("history");
+}
+
+function closeTriage(box) {
+  (triageItems || []).forEach(g => g.urls.forEach(u => URL.revokeObjectURL(u)));
+  triageItems = null;
+  box.remove();
 }
 
 // ---------- small helpers ----------

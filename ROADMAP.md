@@ -182,6 +182,34 @@ bigger swings than wave 1; none should start before #1/#2 above ship.
 
 ## 6. History import (kill the cold start)
 
+**Status.** ✅ Photo-EXIF import shipped. `.ics` calendar import was built then
+dropped (see below).
+
+**⋯ menu → Import from photos** — pick many images → dependency-free EXIF
+reader (`js/exif.js`, parses DateTimeOriginal + GPS from the APP1/TIFF segment)
+reads each photo's capture date. **Photos taken on the same day are grouped
+into one candidate date entry** (a date night = many photos = one entry, not
+one-per-photo). Each group → a triage card (thumbnail + photo count, title,
+category, editable date, Skip) → **Import kept** saves each group as one entry
+via `blankEntry()` + `putDate()`, all its photos through
+`downscale()`/`putPhoto()`. GPS from the first located photo becomes a
+`"lat, lon"` string in the location field — no reverse-geocoding, no network
+(privacy-first, as planned). Ratings stay at defaults, edited later in History.
+Parser self-check: `node js/exif.test.mjs`.
+
+**On "connect to Google Photos":** the native mobile file picker
+(`accept="image/*"`) already surfaces Google Photos as a source on Android, so
+no integration was needed for the common (phone) case — photos come through
+with EXIF and group by day. The full Google Photos **Picker API** path (real
+account connection, works on desktop too) was scoped but not built: Google
+deprecated library browsing in 2025, the scope is "sensitive" (needs app
+verification), and byte download is CORS-blocked so it needs a Worker proxy.
+Parked unless desktop/account-based import is wanted.
+
+**`.ics` calendar import** was implemented (`js/ics.js` VEVENT parser) then
+removed at the user's request in favor of the photo path. Recoverable from git
+history if ever wanted.
+
 **What.** Seed years of past dates from external sources: pick photos from the
 device (EXIF date + GPS), and/or import a calendar `.ics` — the app pre-fills
 date/location/photo, the user adds title, category, and ratings in a fast
