@@ -1,156 +1,141 @@
-# Phone-to-Phone Sync Plan
+# Photo Sync Plan
 
-> **Status:** Approved, not yet implemented.  
-> **To execute:** Ask Claude Code "implement the sync plan from SYNC_PLAN.md".  
-> **Prerequisite:** User must create a Firebase project first (see Firebase setup section below).
+> **Status:** The core sync layer is **already implemented and live** — see the
+> `store.js` / `sync.js` architecture section in `CLAUDE.md`. Signed-in couples
+> share one Firestore space; all date/text data (title, ratings, moods, notes,
+> cost, location, the `photos[]` id list) syncs in real time.
+>
+> **What's missing:** the actual photo *blobs*. Today they stay in each device's
+> IndexedDB, so a partner sees that an entry *has* photos but renders nothing for
+> the ones they didn't add. This doc plans closing that gap.
+>
+> **To execute:** Ask Claude Code "implement the photo sync plan from SYNC_PLAN.md".
 
-## Context
+## Why photos aren't synced yet
 
-The app currently stores everything local-only in IndexedDB on one device.
-The goal is to let two phones **view and edit the same shared database**, with
-each couple having their own isolated database. Decisions already made:
+When the project was set up we chose the **free Spark plan** and declined the
+Blaze upgrade (which needs a billing account). Firebase's Cloud Storage — the
+"proper" home for image blobs — requires Blaze, so `sync.js`'s photo methods were
+left delegating to local IndexedDB (`js/sync.js:184-186`).
 
-- **Auth/pairing:** Google sign-in + a short pairing code to join a shared "space".
-- **Local-only mode stays:** the app keeps working with no account; cloud sync is **opt-in**.
-- **Photos sync too:** uploaded to Firebase Storage so both phones see them.
+## Two ways forward
 
-Chosen backend: **Firebase** (Firestore + Auth + Storage) — works from a static PWA
-with no server to host, has a generous free tier (Spark plan), and Firestore's built-in
-IndexedDB offline persistence maps directly onto the app's existing offline-first model.
+### Option A (recommended): photos as Firestore documents — stays free
 
-## Key design principle: sync is a dynamically-loaded, opt-in layer
-
-The app stays 100% dependency-free and offline in local mode. The Firebase SDK is
-**dynamically imported only when the user turns on sync** (`import()` of the gstatic ESM
-CDN bundles). Local-only users never download Firebase, the service-worker app shell is
-unchanged, and the existing JSON export/import remains as a no-account fallback.
-
-## Architecture
-
-### 1. Data-layer seam (`js/store.js` — NEW façade)
-
-Today `js/ui.js` does `import * as db from "./db.js"` and makes ~12 distinct `db.*` calls
-(inventory: `getAllDates`, `putDate`, `getDate`, `deleteDate`, `putPhoto`, `getPhoto`,
-`deletePhoto`, `getSetting`, `setSetting`, `exportAll`, `importAll`, `wipeAll`).
-
-Introduce `js/store.js` exporting the **same 12-function interface** plus:
-- `subscribe(cb)` — register a callback fired when remote data changes (cloud mode).
-- `getMode()` / `enableSync(...)` / `disableSync()` — mode control.
-
-`store.js` holds a `backend` reference that is either:
-- **local backend** = the current `js/db.js` (unchanged), or
-- **cloud backend** = new `js/sync.js` (Firestore + Storage), exposing the identical
-  function names so the façade just delegates.
-
-**Change in `ui.js` is nearly zero:** swap `import * as db from "./db.js"` →
-`import * as db from "./store.js"`; every existing `db.*` call keeps working. Add one
-`db.subscribe(onRemoteChange)` in `init()` so the current tab re-renders when the partner
-edits something (calls the existing `reload()` then re-renders current tab via `show(currentTab)`).
-
-### 2. Firestore data model
+Store each downscaled photo as base64 in its own doc under the space:
 
 ```
-spaces/{spaceId}
-  createdAt, createdBy
-spaces/{spaceId}/members/{uid}    -> { joinedAt, joinedVia }
-spaces/{spaceId}/dates/{dateId}   -> full date entry (same schema as blankEntry())
-invites/{CODE}                    -> { spaceId, createdBy, createdAt, expiresAt }
-Storage: spaces/{spaceId}/photos/{photoId}.jpg
+spaces/{spaceId}/photos/{photoId}  ->  { data: "<base64 jpeg>", mime, createdAt }
 ```
 
-- Each couple = one `space`; isolation enforced by security rules on membership.
-- Date docs keyed by the entry's existing `id` UUID → **last-write-wins** via `setDoc`.
-- Real-time: a single `onSnapshot` listener on `spaces/{spaceId}/dates` drives `subscribe()`.
+- **No billing, no new SDK.** Stays entirely on Firestore + the free Spark plan,
+  so the "no card required" property we chose earlier is preserved.
+- `{photoId}` is the **same UUID already stored in `date.photos[]`**, so nothing
+  about the date schema or the UI changes — only where `getPhoto`/`putPhoto` read
+  and write.
+- Photos are **not** streamed by the existing `onSnapshot` (which listens on
+  `dates` only). They're fetched lazily on first view via `getDoc` and cached
+  locally, mirroring today's lazy `photoURL()` pattern — so opening the app
+  doesn't download every partner photo eagerly.
 
-### 3. Auth & pairing flow (free Spark plan, no Cloud Functions)
+**The one real constraint:** a Firestore document is capped at **1 MiB**. A
+1280px/0.82 JPEG is usually 200–600 KB, and base64 inflates that ~33% → it can
+brush against the limit for a detailed photo. Mitigation: a `fitUnderLimit(blob)`
+helper in `sync.js` that re-encodes (progressively lower quality, then smaller
+max dimension) until the base64 payload is safely under ~900 KB, before writing.
+Local-mode photo quality is left untouched (the guard lives in the cloud path).
 
-- **Sign in:** `signInWithPopup` (Google). Add `tzoororg.github.io` to Firebase Auth authorized domains.
-- **Create space:** signed-in user with no space → create `spaces/{id}`, add self to `members/`, generate a 6-char code, write `invites/{CODE}`. Show the code to share.
-- **Join space:** partner signs in, enters code → client reads `invites/{CODE}` → resolves `spaceId` → writes own `members/{uid}` doc.
-- The active `spaceId` is persisted via existing `setSetting("spaceId", ...)`.
+### Option B (alternative): Firebase Storage — cleaner, but needs Blaze
 
-### 4. Photos in cloud mode (`sync.js`)
+The original design. Proper blob storage, no 1 MiB ceiling, `storage.rules` is
+already written and committed, and the Storage-based `putPhoto/getPhoto/
+deletePhoto/uploadPhoto` implementation still exists in git history (removed in
+the "photos device-local" change). Restoring it means: re-add the
+`firebase-storage.js` dynamic import, restore those methods, publish
+`storage.rules`, and **upgrade the project to the Blaze plan (adds a card;
+realistically ~$0/mo at a couple's usage, but billing must be enabled).**
 
-- `putPhoto(blob)`: generate UUID → `uploadBytes` to Storage → also cache locally in IndexedDB so the uploader sees it instantly and offline.
-- `getPhoto(id)`: check local IndexedDB cache first → else download from Storage, cache locally, return Blob.
-- `deleteDate` cascade also deletes Storage objects for the entry's `photos[]`.
+Pick this only if you'd rather attach billing than accept Option A's size guard.
 
-### 5. One-time migration on first sync
+---
 
-When a user creates a space while local data exists, prompt "Upload your existing N dates to the shared space?" → upload local dates to Firestore and photos to Storage. Joiners do **not** auto-push (avoids duplicating the partner's data).
+## Implementation (Option A)
 
-## Files to create
+### 1. Firestore data model + rules
 
-- `js/firebase-config.js` — public `firebaseConfig` object (user fills from Firebase console).
-- `js/sync.js` — cloud backend: dynamic Firebase import, auth, space create/join, Firestore CRUD mirroring `db.js`'s interface, Storage photo upload/download, `onSnapshot` wiring.
-- `js/store.js` — façade: same 12-function interface, routes to local or cloud backend.
-- `firestore.rules` / `storage.rules` — committed copies of the security rules.
-
-## Files to modify
-
-- `js/ui.js` — change db import to `store.js`; add `subscribe()` in `init()`; add sync menu handlers.
-- `index.html` — add sync rows to the `#sheet` menu (Sign in, Create space, Join with code, Sign out).
-- `css/styles.css` — minor styles for sync menu rows / code display (reuse `.menu-row`).
-- `app.js` — on startup, if a `spaceId` setting exists, auto-enable sync before first render.
-- `sw.js` — bump `CACHE`; add `js/store.js`, `js/sync.js`, `js/firebase-config.js` to `SHELL`.
-- `CLAUDE.md` — document the sync layer.
-
-## Security rules
+Add a `photos` subcollection alongside `dates`. This requires a **rules change**
+in `firestore.rules` (and a re-publish), mirroring the `dates` rule:
 
 ```
-// Firestore
-match /databases/{db}/documents {
-  function isMember(spaceId) {
-    return exists(/databases/$(db)/documents/spaces/$(spaceId)/members/$(request.auth.uid));
-  }
-  match /invites/{code} {
-    allow read: if request.auth != null;
-    allow create: if request.auth != null && request.resource.data.createdBy == request.auth.uid;
-  }
-  match /spaces/{spaceId} {
-    allow create: if request.auth != null && request.resource.data.createdBy == request.auth.uid;
-    allow read:   if isMember(spaceId);
-    match /members/{uid} {
-      allow read: if isMember(spaceId);
-      allow create: if request.auth.uid == uid &&
-        exists(/databases/$(db)/documents/invites/$(request.resource.data.code)) &&
-        get(/databases/$(db)/documents/invites/$(request.resource.data.code)).data.spaceId == spaceId;
-    }
-    match /dates/{dateId} {
-      allow read, write: if isMember(spaceId);
-    }
-  }
+match /spaces/{spaceId} {
+  ...
+  match /dates/{dateId}  { allow read, write: if isMember(spaceId); }
+  match /photos/{photoId} { allow read, write: if isMember(spaceId); }   // NEW
 }
 ```
 
-```
-// Storage
-match /b/{bucket}/o {
-  match /spaces/{spaceId}/photos/{photoId} {
-    allow read, write: if request.auth != null &&
-      firestore.exists(/databases/(default)/documents/spaces/$(spaceId)/members/$(request.auth.uid));
-  }
-}
-```
+### 2. `js/sync.js` — swap the three photo methods off local-only
 
-## Firebase project setup (user must do before implementation)
+Replace the current pass-throughs (`js/sync.js:184-186`) with Firestore-backed
+versions that also keep the local IndexedDB cache warm (instant + offline):
 
-1. Go to https://console.firebase.google.com → **Create a project** (free Spark plan).
-2. In the project, go to **Project settings → General → Your apps → Add app → Web** → copy the `firebaseConfig` object.
-3. **Authentication → Sign-in method** → enable **Google** provider → add `tzoororg.github.io` and `localhost` to Authorized domains.
-4. **Firestore Database → Create database** (production mode) → paste the Firestore rules above in the Rules tab.
-5. **Storage → Get started** → paste the Storage rules above in the Rules tab.
+- `putPhoto(blob)`: `blob → fitUnderLimit → base64`; new UUID; `setDoc` the photo
+  doc; `local.cachePhoto(id, blob)` so the uploader sees it immediately; return id.
+- `getPhoto(id)`: check `local.getPhoto(id)` first; else `getDoc` the photo doc,
+  decode base64 → Blob, `local.cachePhoto`, return. Return `null` if missing.
+- `deletePhoto(id)`: `deleteDoc` the photo doc **and** `local.deletePhoto(id)`.
+
+### 3. `js/sync.js` — cascade + bulk paths that currently skip the cloud
+
+- `deleteDate` (`:172`): its cascade calls `local.deletePhoto`; point it at the
+  new `deletePhoto` so cloud photo docs are removed too.
+- `migrateLocalData` (create-space upload): currently only `putDate`s. Loop each
+  entry's `photos[]`, read the local blob, and `putPhoto`-upload it.
+- `importAll`: currently `local.cachePhoto` only; route through `putPhoto` so an
+  imported backup's photos land in the shared space.
+- `exportAll`: no change — it already calls `getPhoto`, which will now pull from
+  the cloud when needed.
+
+### 4. `fitUnderLimit(blob)` helper
+
+Canvas re-encode loop: try quality 0.82 → 0.7 → 0.6, then drop max dimension
+1280 → 1024 → 800, recompute base64 length each pass, stop at < ~900 KB. Reuse
+the existing `downscale()` canvas approach from `ui.js`.
+
+### 5. No UI, schema, service-worker, or config changes
+
+`ui.js` keeps calling `db.putPhoto/getPhoto`; `store.js` keeps routing to the
+backend; `date.photos[]` is unchanged; no new files → no `sw.js` SHELL/CACHE bump
+needed for new modules (still bump `CACHE` so phones pick up the new `sync.js`).
+
+## Migration of existing data
+
+Photos added **before** this change live only on the device that created them.
+On first run after deploying, offer a one-time "Upload N local photos to the
+shared space?" action (same shape as the create-space migration) that walks every
+`date.photos[]` id, and for any blob present locally but missing its Firestore
+photo doc, uploads it. Photos whose only copy was on the *other* phone can only be
+back-filled from that phone.
 
 ## Verification
 
-- **Local-only regression test:** after the `store.js` refactor, verify all local-mode features still work (log, history, edit, delete, photos, export/import).
-- **Cloud sync test:** on phone A sign in → create space → confirm existing dates upload. On phone B sign in → join with the code → confirm the same dates + photos appear. Add a date on A → it appears on B within seconds.
-- **Offline resilience:** airplane mode on A, add a date, re-enable → confirm it syncs.
-- **Isolation:** a Google account that hasn't joined the space sees nothing.
-- **Sign out / disable sync:** app returns to local data; no crash.
+- **Cross-device:** Phone A adds a date with a photo → within seconds Phone B
+  opens History and sees the actual image (not a blank).
+- **Size guard:** attach a large, high-detail photo → confirm it still uploads
+  (re-encoded) and the Firestore write doesn't fail with a doc-size error.
+- **Delete cascade:** delete a date on A → its photo doc disappears (check the
+  console's Firestore data tab), and it's gone on B.
+- **Offline:** airplane mode, add a photo, re-enable → photo doc syncs up.
+- **Free-tier sanity:** confirm reads/writes stay within Spark quotas during a
+  normal session (photos are one read each, cached thereafter).
+- **Local-only regression:** with sync off, photo add/view/delete unchanged.
 
 ## Risks / tradeoffs
 
-- **Data leaves the device** to Google servers in cloud mode (local-only remains default).
-- **Free-tier limits:** Spark plan is generous for a couple (50K reads/day, 1GB Firestore, 5GB Storage).
-- **Conflict model** is last-write-wins per date entry; fine for two-person low-frequency use.
+- **1 MiB doc limit** is the headline risk; the `fitUnderLimit` guard is what
+  makes Option A safe. Without it, an oversized photo write throws.
+- **Storage counts toward the 1 GB Firestore free cap** (~2k photos at ~500 KB);
+  fine for a couple, but base64's 33% overhead makes Firestore a less efficient
+  photo store than real Storage — the price of staying off Blaze.
+- **First view of each partner photo is a document read**; negligible at this
+  scale and cached locally afterward.
