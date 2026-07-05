@@ -1,7 +1,7 @@
 // Service worker: cache the app shell so the app opens & runs fully offline.
 // User data lives in IndexedDB (not here), so bumping CACHE only refreshes code/assets.
 
-const CACHE = "us-date-tracker-v19";
+const CACHE = "us-date-tracker-v20";
 const SHELL = [
   "./",
   "./index.html",
@@ -25,6 +25,10 @@ const SHELL = [
   "./icons/icon.svg",
   "./icons/icon-maskable.svg",
 ];
+
+self.addEventListener("message", e => {
+  if (e.data === "GET_VERSION") e.ports[0].postMessage(CACHE);
+});
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
