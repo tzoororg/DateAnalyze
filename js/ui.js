@@ -8,6 +8,7 @@ import {
 import * as A from "./analytics.js";
 import * as C from "./charts.js";
 import { suggest } from "./suggest.js";
+import * as push from "./push.js";
 
 const viewEl = () => document.getElementById("view");
 let dates = [];
@@ -24,9 +25,11 @@ export async function init() {
   dates = await db.getAllDates();
   wireChrome();
   wireIdle();
-  show(localStorage.getItem("activeTab") || "log");
+  // A notification tap opens the app at #history (see sw.js notificationclick).
+  show(location.hash === "#history" ? "history" : (localStorage.getItem("activeTab") || "log"));
   refreshRates(db.getSetting, db.setSetting);
   db.subscribe(onRemoteChange);
+  push.refreshToken();
 }
 
 async function onRemoteChange() {
@@ -63,6 +66,7 @@ function wireChrome() {
   document.getElementById("syncCreateBtn").addEventListener("click", onSyncCreate);
   document.getElementById("syncJoinBtn").addEventListener("click", onSyncJoin);
   document.getElementById("syncCopyCodeBtn").addEventListener("click", onSyncCopyCode);
+  document.getElementById("syncNotifyBtn").addEventListener("click", onSyncNotify);
   document.getElementById("syncSignOutBtn").addEventListener("click", onSyncSignOut);
   renderSyncStatus();
 }
@@ -76,6 +80,7 @@ async function renderSyncStatus() {
   const create = document.getElementById("syncCreateBtn");
   const join = document.getElementById("syncJoinBtn");
   const copyCode = document.getElementById("syncCopyCodeBtn");
+  const notify = document.getElementById("syncNotifyBtn");
   const signOut = document.getElementById("syncSignOutBtn");
   const mode = db.getMode();
   const user = db.getUser();
@@ -88,19 +93,29 @@ async function renderSyncStatus() {
     status.classList.remove("hidden");
     signIn.classList.add("hidden"); create.classList.add("hidden"); join.classList.add("hidden");
     copyCode.classList.toggle("hidden", !lastInviteCode);
+    notify.classList.remove("hidden");
     signOut.classList.remove("hidden");
   } else if (user) {
     status.textContent = `Signed in as ${user.email} — set up a shared space:`;
     status.classList.remove("hidden");
     signIn.classList.add("hidden"); create.classList.remove("hidden"); join.classList.remove("hidden");
     copyCode.classList.add("hidden");
+    notify.classList.add("hidden");
     signOut.classList.remove("hidden");
   } else {
     status.classList.add("hidden");
     signIn.classList.remove("hidden"); create.classList.add("hidden"); join.classList.add("hidden");
     copyCode.classList.add("hidden");
+    notify.classList.add("hidden");
     signOut.classList.add("hidden");
   }
+}
+
+async function onSyncNotify() {
+  try {
+    const { msg } = await push.enablePush();
+    toast(msg);
+  } catch (err) { console.error(err); toast("Couldn't turn on notifications"); }
 }
 
 async function onSyncCopyCode() {
@@ -366,8 +381,10 @@ async function saveDraft() {
   if (!draft.title.trim()) { toast("Add what you did first"); return; }
   draft.title = draft.title.trim();
   if (draft.cost != null) draft.cost = toILS(draft.cost, costCurrency);
-  if (!editingId) draft.createdAt = Date.now();
+  const isNew = !editingId;
+  if (isNew) draft.createdAt = Date.now();
   await db.putDate(draft);
+  if (isNew) push.sendNewDatePush(draft.title); // fire-and-forget; no-op unless syncing
   await reload();
   const saved = costCurrency !== "ILS" && draft.cost != null ? ` (${fmtMoney(draft.cost)})` : "";
   toast((editingId ? "Updated ♥" : "Date saved ♥") + saved);

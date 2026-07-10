@@ -150,6 +150,32 @@ export function getInviteCode() {
   return local.getSetting("spaceInviteCode", null);
 }
 
+// ---- Push notifications ----
+
+// Obtain (or refresh) this device's FCM token. Messaging is imported here because
+// sync.js owns the Firebase app; the caller supplies the already-registered SW.
+export async function getPushToken(vapidKey, swReg) {
+  const s = await ensureFirebase();
+  const mod = await import(/* @vite-ignore */ `${CDN}/firebase-messaging.js`);
+  const messaging = mod.getMessaging(s.app);
+  return mod.getToken(messaging, { vapidKey, serviceWorkerRegistration: swReg });
+}
+
+export async function setMyPushToken(token) {
+  const uid = sdk?.auth?.currentUser?.uid;
+  if (!uid || !spaceId) return;
+  await sdk.setDoc(sdk.doc(sdk.fs, "spaces", spaceId, "members", uid),
+    { fcmToken: token, tokenUpdatedAt: sdk.serverTimestamp() }, { merge: true });
+}
+
+// Every member's token except mine (the partner, in a 2-person space).
+export async function getPartnerTokens() {
+  if (!sdk || !spaceId) return [];
+  const me = sdk.auth?.currentUser?.uid;
+  const snap = await sdk.getDocs(sdk.collection(sdk.fs, "spaces", spaceId, "members"));
+  return snap.docs.filter(d => d.id !== me).map(d => d.data().fcmToken).filter(Boolean);
+}
+
 // ---- Data interface (mirrors db.js) ----
 
 export async function getAllDates() {

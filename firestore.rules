@@ -16,6 +16,8 @@ service cloud.firestore {
         allow create: if request.auth.uid == uid &&
           exists(/databases/$(db)/documents/invites/$(request.resource.data.code)) &&
           get(/databases/$(db)/documents/invites/$(request.resource.data.code)).data.spaceId == spaceId;
+        // Members update only their own doc (e.g. to store their FCM push token).
+        allow update: if request.auth.uid == uid;
       }
       match /dates/{dateId} {
         allow read, write: if isMember(spaceId);

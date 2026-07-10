@@ -91,6 +91,11 @@ export async function exportAll() { return backend.exportAll(); }
 export async function importAll(payload, opts) { return backend.importAll(payload, opts); }
 export async function wipeAll() { return backend.wipeAll(); }
 
+// ---- Push (cloud-only; no-ops in local mode) ----
+export async function getPushToken(vapidKey, swReg) { return cloud ? cloud.getPushToken(vapidKey, swReg) : null; }
+export async function setMyPushToken(token) { return cloud ? cloud.setMyPushToken(token) : null; }
+export async function getPartnerTokens() { return cloud && mode === "cloud" ? cloud.getPartnerTokens() : []; }
+
 // Settings always stay local — see file header.
 export async function getSetting(key, fallback = null) { return local.getSetting(key, fallback); }
 export async function setSetting(key, value) { return local.setSetting(key, value); }
