@@ -1,0 +1,12 @@
+{
+  // Deploy config for the push worker (worker/push-worker.js).
+  //   cd worker && npx wrangler deploy
+  // Secrets are set separately (not stored here):
+  //   npx wrangler secret put FCM_SERVICE_ACCOUNT   (the service-account JSON)
+  //   npx wrangler secret put PUSH_KEY              (matches js/push-config.js)
+  // The feedback worker is deployed via the dashboard and is unaffected by this.
+  "name": "dateanalyze-push",
+  "main": "push-worker.js",
+  "compatibility_date": "2025-01-01",
+  "vars": { "ALLOWED_ORIGIN": "https://tzoororg.github.io" }
+}
