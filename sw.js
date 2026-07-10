@@ -28,6 +28,10 @@ const SHELL = [
   "./icons/icon-maskable.svg",
 ];
 
+self.addEventListener("message", e => {
+  if (e.data === "GET_VERSION") e.ports[0].postMessage(CACHE);
+});
+
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
 });

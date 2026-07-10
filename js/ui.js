@@ -48,6 +48,7 @@ function wireChrome() {
   document.getElementById("menuBtn").addEventListener("click", () => {
     sheet.classList.remove("hidden");
     renderSyncStatus();
+    renderSwVersion();
   });
   sheet.querySelectorAll("[data-close]").forEach(el => el.addEventListener("click", () => sheet.classList.add("hidden")));
 
@@ -69,6 +70,14 @@ function wireChrome() {
   document.getElementById("syncNotifyBtn").addEventListener("click", onSyncNotify);
   document.getElementById("syncSignOutBtn").addEventListener("click", onSyncSignOut);
   renderSyncStatus();
+}
+
+function renderSwVersion() {
+  const el = document.getElementById("swVersion");
+  if (!el || !navigator.serviceWorker?.controller) return;
+  const channel = new MessageChannel();
+  channel.port1.onmessage = e => { el.textContent = `App build: ${e.data}`; };
+  navigator.serviceWorker.controller.postMessage("GET_VERSION", [channel.port2]);
 }
 
 // ---------- sync menu ----------
