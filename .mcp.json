@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "firebase": {
+      "command": "firebase",
+      "args": ["mcp"]
+    },
+    "cloudflare": {
+      "command": "wrangler",
+      "args": ["mcp"]
+    }
+  }
+}
