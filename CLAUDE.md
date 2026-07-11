@@ -14,7 +14,7 @@ python -m http.server 8000
 
 Open http://localhost:8000 in Chrome. Use DevTools device toolbar for mobile preview. `file://` URLs won't work (ES modules and service worker require HTTP).
 
-There is no build, lint, or test command. To populate the app with demo data: **⋯ menu → Add sample dates**.
+There is no build or lint command. To populate the app with demo data: **⋯ menu → Add sample dates**. Tests exist — see Testing below.
 
 ## Design-first workflow (required)
 
@@ -27,6 +27,21 @@ Every new feature or UI/UX modification starts as a static HTML mock **before** 
 Skip the mock only for pure logic/bugfix changes with no visible UI impact.
 
 **Service worker caching caveat:** During development, the SW caches aggressively. After changing files, either unregister the SW in DevTools → Application → Service Workers, or bump the `CACHE` version string in `sw.js`. When adding a new file, also add it to the `SHELL` array in `sw.js`. A pre-commit hook in `hooks/pre-commit` bumps the version automatically when app shell files are committed (enable once per clone with `git config core.hooksPath hooks`) — if the hook is enabled, don't bump by hand.
+
+## Testing (required after every feature/redesign)
+
+Three layers, all dependency-free, all text output. **Assert in text — never verify with screenshots** (screenshots are only for visual design review; they cost thousands of tokens each, text runs cost ~100–300).
+
+```bash
+node --test test/logic.test.mjs   # pure logic: model/analytics/suggest/charts (~1s)
+node test/smoke.mjs               # UI smoke in headless Chrome; needs python -m http.server 8000
+node test/sync.mjs                # two-phone sync; needs the server AND the emulators (below)
+```
+
+- **After any change:** run logic + smoke. Both must pass before commit.
+- **When touching `sync.js`, `store.js`, or `firestore.rules`:** also run the sync test. It simulates two phones as separate headless-Chrome profiles talking to the **Firebase Emulator Suite** — start it first with `firebase emulators:start --only auth,firestore --project us-date-tracker-c988b` (firebase-tools + Java runtime, both installed on this machine). The `?emu=1` URL param is a dev hook in `sync.js` that routes Auth/Firestore to the emulators and swaps the Google popup for anonymous sign-in.
+- New feature with a genuinely new UI flow → add a check to `test/smoke.mjs` (plus a `?shot=` state in `js/dev-shots.js` if needed). New pure logic → a test in `test/logic.test.mjs`.
+- The shared headless-Chrome CDP client lives in `test/cdp.mjs` (also used by `design/capture.mjs`).
 
 ## Finishing a task (required)
 

@@ -2,3 +2,7 @@
 # Wrangler local cache/state
 worker/.wrangler/
 .wrangler/
+
+# Firebase emulator artifacts
+firebase-debug.log
+firestore-debug.log

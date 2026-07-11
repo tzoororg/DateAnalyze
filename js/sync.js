@@ -9,6 +9,9 @@ import * as local from "./db.js";
 
 const SDK_VERSION = "12.15.0";
 const CDN = `https://www.gstatic.com/firebasejs/${SDK_VERSION}`;
+// Test-only: ?emu=1 routes Auth+Firestore to the local Firebase Emulator Suite
+// and swaps the Google popup for anonymous sign-in (see test/sync.test.mjs).
+const EMU = typeof location !== "undefined" && new URLSearchParams(location.search).has("emu");
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O/1/I
 const INVITE_TTL_MS = 7 * 24 * 3600 * 1000;
 
@@ -43,6 +46,10 @@ async function ensureFirebase() {
     fs: fsMod.getFirestore(app),
     ...appMod, ...authMod, ...fsMod,
   };
+  if (EMU) {
+    authMod.connectAuthEmulator(sdk.auth, "http://127.0.0.1:9099", { disableWarnings: true });
+    fsMod.connectFirestoreEmulator(sdk.fs, "127.0.0.1", 8080);
+  }
   return sdk;
 }
 
@@ -61,6 +68,10 @@ export function getCurrentUser() {
 
 export async function signIn() {
   const s = await ensureFirebase();
+  if (EMU) { // the emulator has no Google popup; anonymous gives a real uid
+    const { user } = await s.signInAnonymously(s.auth);
+    return { uid: user.uid, email: null, displayName: "Emulator user" };
+  }
   const provider = new s.GoogleAuthProvider();
   const { user } = await s.signInWithPopup(s.auth, provider);
   return { uid: user.uid, email: user.email, displayName: user.displayName };
