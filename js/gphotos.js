@@ -15,7 +15,8 @@ const SCOPE = "https://www.googleapis.com/auth/photospicker.mediaitems.readonly"
 const clientId = () => window.__gpClientId || GP_CLIENT_ID;
 export const isConfigured = () => !!clientId();
 
-let token = null, tokenExp = 0;
+// Persist the short-lived token so reloads within the hour skip the popup.
+let { t: token, e: tokenExp } = JSON.parse(localStorage.getItem("gpToken") || "{}");
 let cancelled = false;
 export function cancelPick() { cancelled = true; }
 
@@ -41,6 +42,7 @@ async function getToken() {
         if (r.error) return rej(new Error(r.error));
         token = r.access_token;
         tokenExp = Date.now() + (r.expires_in - 60) * 1000;
+        localStorage.setItem("gpToken", JSON.stringify({ t: token, e: tokenExp }));
         res(token);
       },
       error_callback: e => rej(new Error(e?.message || "Google sign-in cancelled")),
