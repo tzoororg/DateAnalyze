@@ -11,10 +11,11 @@ import { suggest } from "./suggest.js";
 import * as push from "./push.js";
 
 const viewEl = () => document.getElementById("view");
+const formEl = () => document.getElementById("logSheetBody");
 let dates = [];
 let draft = blankEntry();        // the entry currently being composed/edited
 let editingId = null;
-let currentTab = "log";
+let currentTab = "home";
 const sug = { explore: 0.5, budget: null, maxEffort: null, category: null, moods: [] };
 const hist = { sort: "date-desc", category: null, moods: [], query: "", view: "list", expanded: null };
 let memoryDismissed = false;
@@ -26,7 +27,7 @@ export async function init() {
   wireChrome();
   wireIdle();
   // A notification tap opens the app at #history (see sw.js notificationclick).
-  show(location.hash === "#history" ? "history" : (localStorage.getItem("activeTab") || "log"));
+  show(location.hash === "#history" ? "history" : (localStorage.getItem("activeTab") || "home"));
   refreshRates(db.getSetting, db.setSetting);
   db.subscribe(onRemoteChange);
   push.refreshToken();
@@ -40,9 +41,29 @@ async function onRemoteChange() {
 async function reload() { dates = await db.getAllDates(); }
 
 // ---------- tab + chrome wiring ----------
+const THEME_COLORS = { pink: "#e8577e", plum: "#2a1b26", navy: "#0d1220" };
+
+// pick = explicit user choice ("pink"|"plum"|"navy"); no arg = just sync UI + meta color.
+function applyTheme(pick) {
+  if (pick) {
+    localStorage.setItem("theme", pick);
+    document.documentElement.dataset.theme = pick;
+  }
+  const eff = document.documentElement.dataset.theme || "plum"; // Plum is the default theme
+  document.querySelector('meta[name="theme-color"]').setAttribute("content", THEME_COLORS[eff]);
+  document.querySelectorAll("[data-theme-pick]").forEach(b =>
+    b.classList.toggle("on", b.dataset.themePick === eff));
+}
+
 function wireChrome() {
   document.querySelectorAll(".tab").forEach(btn =>
     btn.addEventListener("click", () => show(btn.dataset.tab)));
+
+  document.getElementById("fab").addEventListener("click", openLogSheet);
+  document.getElementById("logCloseBtn").addEventListener("click", closeLogSheet);
+  document.querySelectorAll("[data-theme-pick]").forEach(b =>
+    b.addEventListener("click", () => applyTheme(b.dataset.themePick)));
+  applyTheme();
 
   const sheet = document.getElementById("sheet");
   document.getElementById("menuBtn").addEventListener("click", () => {
@@ -196,11 +217,12 @@ async function onSyncSignOut() {
 }
 
 function show(tab) {
+  if (!["home", "history", "insights", "suggest"].includes(tab)) tab = "home"; // migrates stale "log"
   currentTab = tab;
   localStorage.setItem("activeTab", tab);
   document.querySelectorAll(".tab").forEach(b =>
     b.setAttribute("aria-selected", String(b.dataset.tab === tab)));
-  if (tab === "log") renderLog();
+  if (tab === "home") renderHome();
   else if (tab === "history") renderHistory();
   else if (tab === "insights") renderInsights();
   else renderSuggest();
@@ -208,11 +230,12 @@ function show(tab) {
   window.scrollTo(0, 0);
 }
 
-// ---------- LOG tab ----------
-function renderLog() {
+// ---------- HOME tab ----------
+function renderHome() {
   const v = viewEl();
-  const isEdit = !!editingId;
-  const memories = (!memoryDismissed && !isEdit) ? A.onThisDay(dates) : [];
+  const top = suggest(dates, { explore: 0.5 })[0];
+  const memories = !memoryDismissed ? A.onThisDay(dates) : [];
+  const s = A.summary(dates);
   const memoryCard = memories.length ? `
     <section class="card memory-card">
       <div class="memory-header">
@@ -232,12 +255,52 @@ function renderLog() {
         </div>`;
       }).join("")}
     </section>` : "";
-  v.innerHTML = memoryCard + `
-    <section class="card">
-      <h2 style="margin:0 0 4px">${isEdit ? "Edit date" : "How was the date?"}</h2>
-      <p class="muted small" style="margin:0">${isEdit ? "Update the details below." : "Fill this in after a date — it feeds your insights & suggestions."}</p>
 
-      <label class="field"><span>What did you do?</span>
+  v.innerHTML = `
+    ${top ? `
+    <h3 class="section-title">Tonight's pick</h3>
+    <section class="card hero-card">
+      <span class="sticker-tag ${top.kind === "explore" ? "butter" : "mint"}">${top.kind === "explore" ? "new!" : "favorite ♥"}</span>
+      <h3>${catEmoji(top.category)} ${escHtml(top.title)}</h3>
+      <p class="sug-reason">${escHtml(top.reason)}</p>
+      <button class="mini-btn" id="home-plan">Plan it →</button>
+    </section>` : ""}
+    ${memoryCard}
+    <h3 class="section-title">Recent memories</h3>
+    <div id="date-list"></div>
+    ${dates.length ? `
+    <h3 class="section-title">Our story so far</h3>
+    <div class="stat-grid trio">
+      <div class="stat"><div class="num">${s.count}</div><div class="lbl">Dates</div></div>
+      <div class="stat"><div class="num">${s.avgEnjoyment.toFixed(1)}★</div><div class="lbl">Avg joy</div></div>
+      <div class="stat"><div class="num">${s.distinctCategories}/${s.totalCategories}</div><div class="lbl">Categories</div></div>
+    </div>` : ""}
+  `;
+  bind("home-plan", "click", () => show("suggest"));
+  bind("memory-dismiss", "click", () => { memoryDismissed = true; renderHome(); });
+  renderList();
+}
+
+// ---------- log sheet (opened from the ＋ button) ----------
+function openLogSheet() {
+  document.getElementById("logSheet").classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+  renderLog();
+}
+
+function closeLogSheet() {
+  document.getElementById("logSheet").classList.add("hidden");
+  document.body.style.overflow = "";
+}
+
+// ---------- log form (renders inside the log sheet) ----------
+function renderLog() {
+  const v = formEl();
+  const isEdit = !!editingId;
+  document.querySelector(".logsheet-title").textContent = isEdit ? "Edit date" : "New page!";
+  v.innerHTML = `
+    <section class="card">
+      <label class="field" style="margin-top:0"><span>What did you do?</span>
         <input id="f-title" type="text" placeholder="e.g. Sunset hike at the cliffs" value="${escAttr(draft.title)}"/></label>
 
       <label class="field"><span>Photos</span></label>
@@ -285,13 +348,9 @@ function renderLog() {
         <button class="btn" id="f-save">${isEdit ? "Save changes" : "Save date ♥"}</button>
       </div>
     </section>
-
-    <h3 class="section-title">Recent dates</h3>
-    <div id="date-list"></div>
   `;
   wireForm();
   renderPhotoStrip();
-  renderList();
 }
 
 function ratingBlock(label, field, value, unit) {
@@ -301,8 +360,7 @@ function ratingBlock(label, field, value, unit) {
 }
 
 function wireForm() {
-  const v = viewEl();
-  bind("memory-dismiss", "click", () => { memoryDismissed = true; renderLog(); });
+  const v = formEl();
   // text-ish inputs update the draft without re-rendering (keeps focus/caret)
   bind("f-title", "input", e => draft.title = e.target.value);
   bind("f-date", "change", e => draft.date = e.target.value);
@@ -351,11 +409,11 @@ function wireForm() {
 
   bind("f-save", "click", saveDraft);
   const cancel = v.querySelector("#f-cancel");
-  if (cancel) cancel.addEventListener("click", () => { resetDraft(); renderLog(); });
+  if (cancel) cancel.addEventListener("click", () => { resetDraft(); closeLogSheet(); });
 }
 
 async function renderPhotoStrip() {
-  const strip = viewEl().querySelector("#f-photos");
+  const strip = formEl().querySelector("#f-photos");
   if (!strip) return;
   const thumbs = await Promise.all(draft.photos.map(async id => {
     const url = await photoURL(id);
@@ -376,7 +434,7 @@ async function renderPhotoStrip() {
   menu.addEventListener("click", e => {
     const item = e.target.closest("[data-src]"); if (!item) return;
     menu.classList.add("hidden");
-    const v = viewEl();
+    const v = formEl();
     if (item.dataset.src === "camera") v.querySelector("#f-photo-camera").click();
     else v.querySelector("#f-photo-gallery").click();
   });
@@ -415,7 +473,8 @@ async function saveDraft() {
   toast((editingId ? "Updated ♥" : "Date saved ♥") + saved);
   resetDraft();
   costCurrency = "ILS";
-  renderLog();
+  closeLogSheet();
+  show(currentTab);
 }
 
 function resetDraft() { draft = blankEntry(); editingId = null; }
@@ -425,7 +484,7 @@ async function editEntry(id) {
   if (!e) return;
   draft = structuredClone(e);
   editingId = id;
-  show("log");
+  openLogSheet();
 }
 
 async function removeEntry(id) {
@@ -433,17 +492,18 @@ async function removeEntry(id) {
   await db.deleteDate(id);
   await reload();
   toast("Deleted");
-  renderList();
+  show(currentTab);
 }
 
+// Renders the 3 most recent dates into #date-list (used by the Home tab).
 async function renderList() {
   const host = viewEl().querySelector("#date-list");
   if (!host) return;
   if (!dates.length) {
-    host.innerHTML = `<div class="empty"><div class="big">📭</div>No dates yet — log your first one above, or add demo data from the ⋯ menu.</div>`;
+    host.innerHTML = `<div class="empty"><div class="big">📭</div>No dates yet — tap ＋ to log your first one, or add demo data from the ⋯ menu.</div>`;
     return;
   }
-  const sorted = [...dates].sort((a, b) => entryTimeMs(b) - entryTimeMs(a));
+  const sorted = [...dates].sort((a, b) => entryTimeMs(b) - entryTimeMs(a)).slice(0, 3);
   host.innerHTML = sorted.map(e => `
     <div class="card tight">
       <div class="entry">
@@ -789,7 +849,7 @@ function renderSuggest() {
 
   v.innerHTML = `
     <section class="card">
-      <h2 style="margin:0 0 10px">Tonight's pick</h2>
+      <h2 style="margin:0 0 10px">Date night ideas</h2>
       <div class="slider-row">
         <span title="repeat favorites">🛋️</span>
         <input id="s-explore" type="range" min="0" max="100" value="${Math.round(sug.explore * 100)}"/>
@@ -950,7 +1010,7 @@ function wireLogButtons() {
     draft = blankEntry();
     Object.assign(draft, { title: seed.title, category: seed.category, cost: seed.cost, effort: seed.effort || 3 });
     editingId = null;
-    show("log");
+    openLogSheet();
     toast("Pre-filled — save it after your date");
   }));
 }
@@ -1001,7 +1061,7 @@ async function onWipe() {
   urlCache.clear();
   document.getElementById("sheet").classList.add("hidden");
   toast("Everything erased");
-  show("log");
+  show("home");
 }
 
 // ---------- photo import (EXIF triage) ----------
@@ -1130,7 +1190,8 @@ function closeTriage(box) {
 }
 
 // ---------- small helpers ----------
-function bind(id, ev, fn) { const el = viewEl().querySelector("#" + id); if (el) el.addEventListener(ev, fn); }
+// ids are unique app-wide (form ids live in the log sheet, tab ids in #view)
+function bind(id, ev, fn) { const el = document.getElementById(id); if (el) el.addEventListener(ev, fn); }
 function setOn(nodes, active) { nodes.forEach(n => n.classList.toggle("on", n === active)); }
 
 async function photoURL(id) {

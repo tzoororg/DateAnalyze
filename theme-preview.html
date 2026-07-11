@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Us — UI Redesign Concepts</title>
+<style>
+  /* ============ page chrome (neutral, so the themes speak for themselves) ============ */
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    background: #1c1c22; color: #e8e8ee;
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    padding: 32px 20px 80px;
+  }
+  .page-head { max-width: 1200px; margin: 0 auto 36px; text-align: center; }
+  .page-head h1 { font-size: 26px; font-weight: 800; }
+  .page-head p { color: #9a9aa8; margin-top: 6px; }
+  .concepts { display: flex; flex-wrap: wrap; gap: 48px; justify-content: center; max-width: 1300px; margin: 0 auto; }
+  .concept { width: 380px; max-width: 100%; }
+  .concept > h2 { font-size: 21px; margin-bottom: 4px; }
+  .concept > .pitch { color: #9a9aa8; font-size: 14px; min-height: 42px; margin-bottom: 10px; }
+  .swatches { display: flex; gap: 6px; margin-bottom: 16px; }
+  .swatches span { width: 34px; height: 34px; border-radius: 8px; border: 1px solid rgba(255,255,255,.15); }
+  .frames { display: flex; gap: 16px; flex-wrap: wrap; }
+  .phone {
+    width: 300px; height: 620px; border-radius: 34px; overflow: hidden;
+    border: 6px solid #000; box-shadow: 0 16px 48px rgba(0,0,0,.5);
+    position: relative; display: flex; flex-direction: column; flex: none;
+  }
+  .frame-label { font-size: 12px; color: #9a9aa8; text-align: center; width: 300px; margin-top: 8px; }
+  .frame-col { display: flex; flex-direction: column; align-items: center; }
+  .screen { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+
+  /* shared photo placeholder */
+  .ph { display: grid; place-items: center; font-size: 20px; color: rgba(255,255,255,.85); }
+
+  /* =========================================================
+     CONCEPT 1 — GOLDEN HOUR  (warm sunset · journal-first)
+     ========================================================= */
+  .gh { background: #fdf6ec; color: #3d2c22; }
+  .gh .hdr { padding: 18px 18px 10px; display: flex; justify-content: space-between; align-items: baseline; }
+  .gh .hdr h1 { font: 700 22px Georgia, "Times New Roman", serif; letter-spacing: .2px; }
+  .gh .hdr h1 em { font-style: normal; color: #e85d75; }
+  .gh .hdr .dots { color: #b09680; font-size: 18px; }
+  .gh .body { flex: 1; overflow: hidden; padding: 0 16px; }
+  .gh .month { font: 700 13px Georgia, serif; color: #b07a45; letter-spacing: .14em; text-transform: uppercase; margin: 14px 2px 8px; }
+  .gh .jentry { background: #fff; border: 1px solid #f0e2cf; border-radius: 18px; padding: 13px 14px; margin-bottom: 10px; box-shadow: 0 4px 14px rgba(190,120,60,.08); position: relative; }
+  .gh .jentry::before { content: ""; position: absolute; left: -1px; top: 14px; bottom: 14px; width: 4px; border-radius: 4px; background: linear-gradient(#ff7a59, #f4b860); }
+  .gh .jentry h3 { font: 700 16px Georgia, serif; }
+  .gh .jentry .sub { font-size: 12.5px; color: #a08468; margin-top: 2px; }
+  .gh .jentry .score { position: absolute; top: 12px; right: 13px; font-weight: 800; color: #f4a83c; font-size: 13px; }
+  .gh .strip { display: flex; gap: 6px; margin-top: 9px; }
+  .gh .strip .ph { width: 68px; height: 50px; border-radius: 9px; }
+  .gh .fab {
+    position: absolute; right: 18px; bottom: 78px; width: 56px; height: 56px; border-radius: 50%;
+    background: linear-gradient(135deg, #ff7a59, #e85d75); color: #fff; font-size: 28px;
+    display: grid; place-items: center; box-shadow: 0 8px 20px rgba(232,93,117,.45); font-weight: 400;
+  }
+  .gh .tabs { display: flex; background: #fffdf8; border-top: 1px solid #f0e2cf; padding: 8px 0 14px; }
+  .gh .tabs div { flex: 1; text-align: center; font-size: 11px; color: #b09680; }
+  .gh .tabs div b { display: block; font-size: 20px; margin-bottom: 2px; font-weight: 400; }
+  .gh .tabs div.on { color: #e85d75; }
+  /* log sheet */
+  .gh .sheet-hd { padding: 16px 18px 8px; display: flex; justify-content: space-between; align-items: center; }
+  .gh .sheet-hd h2 { font: 700 20px Georgia, serif; }
+  .gh .sheet-hd .x { color: #b09680; font-size: 20px; }
+  .gh .f { padding: 0 18px; margin-top: 12px; }
+  .gh .f label { display: block; font-size: 12px; color: #a08468; margin-bottom: 5px; letter-spacing: .04em; }
+  .gh .in { background: #fff; border: 1px solid #f0e2cf; border-radius: 12px; padding: 11px 13px; font-size: 14.5px; color: #3d2c22; }
+  .gh .in.placeholder { color: #c4ab8f; }
+  .gh .chips { display: flex; gap: 7px; flex-wrap: wrap; }
+  .gh .chip { padding: 7px 12px; border-radius: 999px; border: 1px solid #f0e2cf; background: #fff; font-size: 13px; color: #a08468; }
+  .gh .chip.on { background: linear-gradient(135deg, #ff7a59, #e85d75); color: #fff; border-color: transparent; }
+  .gh .hearts { display: flex; gap: 8px; }
+  .gh .hearts span { flex: 1; text-align: center; padding: 10px 0; border-radius: 12px; border: 1px solid #f0e2cf; background: #fff; font-size: 16px; opacity: .35; }
+  .gh .hearts span.on { opacity: 1; border-color: #f4b860; background: #fff8ec; }
+  .gh .save { margin: 18px 18px 0; padding: 14px; border-radius: 14px; text-align: center; font-weight: 700; color: #fff; background: linear-gradient(135deg, #ff7a59, #e85d75); box-shadow: 0 6px 16px rgba(232,93,117,.35); }
+
+  /* =========================================================
+     CONCEPT 2 — MIDNIGHT ROSÉ  (elegant minimal · dashboard)
+     ========================================================= */
+  .mr { background: linear-gradient(170deg, #131a2e 0%, #0d1220 55%); color: #e9e4da; }
+  .mr .hdr { padding: 20px 22px 6px; display: flex; justify-content: space-between; align-items: baseline; }
+  .mr .hdr h1 { font-size: 17px; font-weight: 300; letter-spacing: .34em; text-transform: uppercase; }
+  .mr .hdr h1 b { color: #d4a373; font-weight: 400; }
+  .mr .hdr .dots { color: #6b7089; }
+  .mr .body { flex: 1; padding: 6px 18px 0; overflow: hidden; }
+  .mr .eyebrow { font-size: 10px; letter-spacing: .28em; text-transform: uppercase; color: #d4a373; margin: 14px 2px 8px; }
+  .mr .hero {
+    border: 1px solid rgba(212,163,115,.35); border-radius: 18px; padding: 18px;
+    background: linear-gradient(135deg, rgba(212,163,115,.12), rgba(232,180,184,.05));
+    backdrop-filter: blur(8px);
+  }
+  .mr .hero h3 { font-size: 19px; font-weight: 400; letter-spacing: .02em; }
+  .mr .hero p { font-size: 12.5px; color: #a9a294; margin-top: 5px; font-weight: 300; }
+  .mr .hero .cta { display: inline-block; margin-top: 12px; padding: 8px 18px; border: 1px solid #d4a373; border-radius: 999px; color: #d4a373; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; }
+  .mr .caro { display: flex; gap: 10px; overflow: hidden; }
+  .mr .mem { flex: none; width: 118px; }
+  .mr .mem .ph { width: 118px; height: 88px; border-radius: 12px; border: 1px solid rgba(255,255,255,.08); }
+  .mr .mem .t { font-size: 12px; margin-top: 6px; font-weight: 300; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mr .mem .d { font-size: 10.5px; color: #6b7089; }
+  .mr .stats { display: flex; gap: 10px; }
+  .mr .stat { flex: 1; border: 1px solid rgba(255,255,255,.09); border-radius: 14px; padding: 11px 6px; text-align: center; background: rgba(255,255,255,.02); }
+  .mr .stat .n { font-size: 20px; font-weight: 300; color: #e8b4b8; }
+  .mr .stat .l { font-size: 9px; letter-spacing: .16em; text-transform: uppercase; color: #6b7089; margin-top: 3px; }
+  .mr .rail { display: flex; justify-content: space-around; padding: 12px 0 16px; border-top: 1px solid rgba(255,255,255,.07); background: rgba(13,18,32,.9); }
+  .mr .rail div { text-align: center; color: #565b73; font-size: 18px; position: relative; width: 40px; }
+  .mr .rail div.on { color: #d4a373; }
+  .mr .rail div.on::after { content: ""; position: absolute; left: 50%; transform: translateX(-50%); bottom: -7px; width: 4px; height: 4px; border-radius: 50%; background: #d4a373; }
+  /* log form */
+  .mr .f { padding: 0 22px; margin-top: 18px; }
+  .mr .f label { display: block; font-size: 10px; letter-spacing: .24em; text-transform: uppercase; color: #d4a373; margin-bottom: 7px; }
+  .mr .uin { border-bottom: 1px solid rgba(255,255,255,.18); padding: 6px 2px 9px; font-size: 16px; font-weight: 300; }
+  .mr .uin.placeholder { color: #565b73; }
+  .mr .chips { display: flex; gap: 7px; flex-wrap: wrap; }
+  .mr .chip { padding: 6px 13px; border-radius: 999px; border: 1px solid rgba(255,255,255,.14); font-size: 12px; font-weight: 300; color: #a9a294; }
+  .mr .chip.on { border-color: #e8b4b8; color: #e8b4b8; background: rgba(232,180,184,.08); }
+  .mr .dotscale { display: flex; gap: 14px; align-items: center; padding: 4px 2px; }
+  .mr .dotscale i { width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(255,255,255,.25); }
+  .mr .dotscale i.on { background: #d4a373; border-color: #d4a373; box-shadow: 0 0 10px rgba(212,163,115,.5); }
+  .mr .save { margin: 22px 22px 0; padding: 13px; border: 1px solid #d4a373; border-radius: 999px; text-align: center; color: #d4a373; font-size: 12px; letter-spacing: .26em; text-transform: uppercase; }
+
+  /* =========================================================
+     CONCEPT 3 — SCRAPBOOK  (playful pastel · photo-first)
+     ========================================================= */
+  .sb { background: #ffeff3; color: #5a4450; }
+  .sb .hdr { padding: 16px 16px 10px; text-align: center; }
+  .sb .hdr h1 { font: 700 24px "Segoe Script", "Comic Sans MS", cursive; color: #e8577e; transform: rotate(-2deg); }
+  .sb .pills { display: flex; gap: 6px; padding: 0 14px 10px; }
+  .sb .pill { flex: 1; text-align: center; padding: 8px 0; border-radius: 999px; background: #fff; border: 2px solid #ffd3de; font-size: 12.5px; font-weight: 700; color: #c58ba0; }
+  .sb .pill.on { background: #e8577e; border-color: #e8577e; color: #fff; box-shadow: 0 4px 10px rgba(232,87,126,.3); }
+  .sb .grid { flex: 1; overflow: hidden; padding: 4px 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-content: start; }
+  .sb .tile { border-radius: 20px; overflow: visible; position: relative; }
+  .sb .tile .ph { width: 100%; border-radius: 20px; border: 4px solid #fff; box-shadow: 0 6px 14px rgba(200,110,140,.18); }
+  .sb .tile.tall .ph { height: 168px; }
+  .sb .tile.short .ph { height: 120px; }
+  .sb .cap {
+    position: absolute; bottom: -8px; left: 8px; background: #fff3d1; border-radius: 10px;
+    padding: 3px 9px; font: 700 11px "Segoe Script", "Comic Sans MS", cursive; color: #8a6d3b;
+    transform: rotate(-3deg); box-shadow: 0 3px 8px rgba(0,0,0,.12);
+  }
+  .sb .tile:nth-child(2n) .cap { transform: rotate(2.5deg); background: #d9f2e6; color: #3e7d62; left: auto; right: 8px; }
+  /* wizard */
+  .sb .wiz { flex: 1; padding: 8px 18px; display: flex; flex-direction: column; }
+  .sb .wsteps { display: flex; gap: 6px; justify-content: center; margin-bottom: 14px; }
+  .sb .wsteps i { width: 26px; height: 6px; border-radius: 6px; background: #ffd3de; }
+  .sb .wsteps i.done { background: #e8577e; }
+  .sb .wcard { background: #fff; border-radius: 24px; padding: 22px 18px; box-shadow: 0 8px 20px rgba(200,110,140,.15); text-align: center; }
+  .sb .wcard .stepno { font-size: 11px; font-weight: 800; letter-spacing: .1em; color: #c58ba0; text-transform: uppercase; }
+  .sb .wcard h2 { font: 700 22px "Segoe Script", "Comic Sans MS", cursive; color: #e8577e; margin: 8px 0 16px; }
+  .sb .faces { display: flex; justify-content: center; gap: 8px; }
+  .sb .faces span { font-size: 28px; padding: 8px; border-radius: 16px; border: 3px solid transparent; opacity: .45; }
+  .sb .faces span.on { border-color: #7ed3ab; background: #d9f2e6; opacity: 1; transform: rotate(-4deg) scale(1.1); display: inline-block; }
+  .sb .moodstick { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 16px; }
+  .sb .stick { padding: 7px 13px; border-radius: 14px; font-size: 13px; font-weight: 700; background: #fff3d1; color: #8a6d3b; transform: rotate(-2deg); }
+  .sb .stick:nth-child(2n) { background: #d9f2e6; color: #3e7d62; transform: rotate(2deg); }
+  .sb .stick:nth-child(3n) { background: #ffd3de; color: #b04a68; transform: rotate(-1deg); }
+  .sb .stick.on { outline: 3px solid #e8577e; }
+  .sb .wnav { display: flex; gap: 10px; margin-top: auto; padding-bottom: 18px; }
+  .sb .wbtn { flex: 1; padding: 14px; border-radius: 18px; text-align: center; font-weight: 800; font-size: 15px; }
+  .sb .wbtn.back { background: #fff; color: #c58ba0; border: 2px solid #ffd3de; }
+  .sb .wbtn.next { background: #e8577e; color: #fff; box-shadow: 0 6px 14px rgba(232,87,126,.35); }
+  /* =========================================================
+     CONCEPT 4 — HYBRID  (scrapbook whimsy · dashboard home ·
+     FAB logging · dark-mode option)
+     ========================================================= */
+  .concept.wide { width: 100%; max-width: 1300px; }
+  .concept.wide .frames { justify-content: flex-start; }
+  .hy {
+    --hbg: #ffd9e4; --hcard: #fff; --htext: #5a3a4a; --hmut: #b0798f;
+    --hacc: #e8577e; --hline: #ffc0d2;
+    --hmint-bg: #d9f2e6; --hmint-tx: #3e7d62;
+    --hbut-bg: #fff3d1; --hbut-tx: #8a6d3b;
+    --hshadow: 0 6px 16px rgba(200,90,130,.18);
+    background: var(--hbg); color: var(--htext);
+  }
+  .hy.dark {
+    --hbg: #2a1b26; --hcard: #3b2a37; --htext: #f5e6ee; --hmut: #c99bb0;
+    --hacc: #ff7fa2; --hline: #54394c;
+    --hmint-bg: #2e4a3e; --hmint-tx: #8fd6b5;
+    --hbut-bg: #4a3d22; --hbut-tx: #eec97a;
+    --hshadow: 0 6px 16px rgba(0,0,0,.35);
+  }
+  .hy.navy {
+    --hbg: #0d1220; --hcard: #1c2438; --htext: #e8e6f0; --hmut: #8891ac;
+    --hacc: #ff7fa2; --hline: #2a3350;
+    --hmint-bg: #1e3d34; --hmint-tx: #7ed3ab;
+    --hbut-bg: #3d3520; --hbut-tx: #e8c97a;
+    --hshadow: 0 6px 16px rgba(0,0,0,.4);
+  }
+  .hy .hdr { padding: 14px 16px 8px; display: flex; justify-content: space-between; align-items: center; }
+  .hy .hdr h1 { font: 700 24px "Segoe Script", "Comic Sans MS", cursive; color: var(--hacc); transform: rotate(-2deg); }
+  .hy .hdr .dots { width: 34px; height: 34px; border-radius: 12px; background: var(--hcard); box-shadow: var(--hshadow); display: grid; place-items: center; color: var(--hmut); font-size: 16px; }
+  .hy .pills { display: flex; gap: 6px; padding: 0 14px 10px; }
+  .hy .pill { flex: 1; text-align: center; padding: 8px 0; border-radius: 999px; background: var(--hcard); border: 2px solid var(--hline); font-size: 12.5px; font-weight: 700; color: var(--hmut); }
+  .hy .pill.on { background: var(--hacc); border-color: var(--hacc); color: #fff; box-shadow: 0 4px 10px rgba(232,87,126,.35); }
+  .hy .body { flex: 1; overflow: hidden; padding: 2px 14px 0; }
+  .hy .sec { font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--hmut); margin: 12px 4px 7px; }
+  .hy .card { background: var(--hcard); border-radius: 20px; padding: 14px; box-shadow: var(--hshadow); margin-bottom: 10px; position: relative; }
+  .hy .stickertag { position: absolute; top: -9px; right: 12px; padding: 3px 10px; border-radius: 10px; font: 700 11px "Segoe Script", "Comic Sans MS", cursive; transform: rotate(3deg); box-shadow: 0 3px 8px rgba(0,0,0,.15); }
+  .hy .tag-new { background: var(--hbut-bg); color: var(--hbut-tx); }
+  .hy .tag-fav { background: var(--hmint-bg); color: var(--hmint-tx); }
+  .hy .hero h3 { font-size: 17px; font-weight: 800; }
+  .hy .hero p { font-size: 12.5px; color: var(--hmut); margin-top: 4px; }
+  .hy .mini-btn { display: inline-block; margin-top: 10px; padding: 7px 16px; border-radius: 999px; background: var(--hacc); color: #fff; font-size: 12.5px; font-weight: 800; box-shadow: 0 4px 10px rgba(232,87,126,.3); }
+  .hy .entry { display: flex; gap: 10px; align-items: center; }
+  .hy .entry .ph { width: 44px; height: 44px; border-radius: 14px; flex: none; font-size: 18px; }
+  .hy .entry .m { flex: 1; min-width: 0; }
+  .hy .entry .m b { font-size: 14px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hy .entry .m i { font-style: normal; font-size: 11.5px; color: var(--hmut); }
+  .hy .entry .sc { font-weight: 800; color: #f4a83c; font-size: 13px; }
+  .hy .stats { display: flex; gap: 8px; }
+  .hy .stat { flex: 1; background: var(--hcard); border-radius: 16px; padding: 10px 4px; text-align: center; box-shadow: var(--hshadow); }
+  .hy .stat .n { font-size: 19px; font-weight: 800; color: var(--hacc); }
+  .hy .stat .l { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--hmut); margin-top: 2px; }
+  .hy .fab { position: absolute; right: 16px; bottom: 20px; width: 56px; height: 56px; border-radius: 50%; background: var(--hacc); color: #fff; font-size: 28px; display: grid; place-items: center; box-shadow: 0 8px 20px rgba(232,87,126,.45); z-index: 3; }
+  /* album */
+  .hy .search { background: var(--hcard); border-radius: 999px; padding: 9px 15px; font-size: 13px; color: var(--hmut); box-shadow: var(--hshadow); margin-bottom: 9px; }
+  .hy .fchips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .hy .fchip { padding: 5px 11px; border-radius: 12px; font-size: 12px; font-weight: 700; background: var(--hcard); color: var(--hmut); box-shadow: var(--hshadow); transform: rotate(-1.5deg); }
+  .hy .fchip:nth-child(2n) { transform: rotate(1.5deg); }
+  .hy .fchip.on { background: var(--hmint-bg); color: var(--hmint-tx); }
+  .hy .segrow { display: flex; gap: 6px; margin-bottom: 10px; }
+  .hy .seg { flex: 1; text-align: center; padding: 6px 0; border-radius: 12px; font-size: 12px; font-weight: 700; background: var(--hcard); color: var(--hmut); box-shadow: var(--hshadow); }
+  .hy .seg.on { background: var(--hacc); color: #fff; }
+  .hy .gal { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+  .hy .gal .ph { aspect-ratio: 1; border-radius: 14px; border: 3px solid var(--hcard); box-shadow: var(--hshadow); }
+  /* stats page */
+  .hy .bars { display: flex; align-items: flex-end; gap: 8px; height: 90px; padding: 4px 6px 0; }
+  .hy .bars .b { flex: 1; border-radius: 8px 8px 4px 4px; background: linear-gradient(180deg, var(--hacc), #ffb1c6); }
+  .hy .bars .b.alt { background: linear-gradient(180deg, var(--hmint-tx), var(--hmint-bg)); }
+  .hy .bar-lbls { display: flex; gap: 8px; padding: 4px 6px 0; }
+  .hy .bar-lbls span { flex: 1; text-align: center; font-size: 9.5px; font-weight: 700; color: var(--hmut); }
+  .hy .moodrow { display: flex; flex-wrap: wrap; gap: 7px; }
+  .hy .mood { padding: 6px 11px; border-radius: 13px; font-size: 12.5px; font-weight: 700; background: var(--hbut-bg); color: var(--hbut-tx); transform: rotate(-2deg); }
+  .hy .mood:nth-child(2n) { background: var(--hmint-bg); color: var(--hmint-tx); transform: rotate(2deg); }
+  .hy .mood:nth-child(3n) { background: var(--hbg); color: var(--hacc); transform: rotate(-1deg); }
+  /* ideas page */
+  .hy .slider { display: flex; align-items: center; gap: 10px; }
+  .hy .slider .track { flex: 1; height: 8px; border-radius: 8px; background: var(--hline); position: relative; }
+  .hy .slider .track::after { content: ""; position: absolute; left: 46%; top: -6px; width: 20px; height: 20px; border-radius: 50%; background: var(--hacc); box-shadow: 0 3px 8px rgba(232,87,126,.4); }
+  .hy .slider-ends { display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: var(--hmut); margin-top: 6px; }
+  .hy .sug-meta { display: flex; gap: 12px; font-size: 11.5px; color: var(--hmut); margin-top: 6px; }
+  /* wizard */
+  .hy .wiz { flex: 1; padding: 6px 16px; display: flex; flex-direction: column; }
+  .hy .wsteps { display: flex; gap: 6px; justify-content: center; margin-bottom: 12px; }
+  .hy .wsteps i { width: 26px; height: 6px; border-radius: 6px; background: var(--hline); }
+  .hy .wsteps i.done { background: var(--hacc); }
+  .hy .wcard { background: var(--hcard); border-radius: 24px; padding: 20px 16px; box-shadow: var(--hshadow); text-align: center; }
+  .hy .wcard .stepno { font-size: 11px; font-weight: 800; letter-spacing: .1em; color: var(--hmut); text-transform: uppercase; }
+  .hy .wcard h2 { font: 700 21px "Segoe Script", "Comic Sans MS", cursive; color: var(--hacc); margin: 7px 0 14px; }
+  .hy .win { background: var(--hbg); border-radius: 14px; padding: 11px 13px; font-size: 14px; text-align: left; color: var(--htext); }
+  .hy .win.placeholder { color: var(--hmut); }
+  .hy .wchips { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; margin-top: 13px; }
+  .hy .wchip { padding: 7px 12px; border-radius: 13px; font-size: 12.5px; font-weight: 700; background: var(--hbut-bg); color: var(--hbut-tx); transform: rotate(-2deg); }
+  .hy .wchip:nth-child(2n) { background: var(--hmint-bg); color: var(--hmint-tx); transform: rotate(2deg); }
+  .hy .wchip.on { outline: 3px solid var(--hacc); }
+  .hy .wnav { display: flex; gap: 10px; margin-top: auto; padding-bottom: 16px; }
+  .hy .wbtn { flex: 1; padding: 13px; border-radius: 18px; text-align: center; font-weight: 800; font-size: 14px; }
+  .hy .wbtn.back { background: var(--hcard); color: var(--hmut); border: 2px solid var(--hline); }
+  .hy .wbtn.next { background: var(--hacc); color: #fff; box-shadow: 0 6px 14px rgba(232,87,126,.35); }
+  /* single-sheet log form (replaces wizard) */
+  .hy .lf { padding: 0 16px; margin-top: 11px; }
+  .hy .lf label { display: block; font-size: 10.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--hmut); margin-bottom: 5px; }
+  .hy .lin { background: var(--hcard); border-radius: 14px; padding: 10px 13px; font-size: 14px; color: var(--htext); box-shadow: var(--hshadow); }
+  .hy .lin.placeholder { color: var(--hmut); }
+  .hy .lchips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .hy .lchip { padding: 6px 11px; border-radius: 12px; font-size: 12.5px; font-weight: 700; background: var(--hcard); color: var(--hmut); box-shadow: var(--hshadow); }
+  .hy .lchip.on { background: var(--hacc); color: #fff; }
+  .hy .faces { display: flex; justify-content: center; gap: 6px; }
+  .hy .faces span { font-size: 24px; padding: 6px 9px; border-radius: 14px; opacity: .4; }
+  .hy .faces span.on { background: var(--hmint-bg); opacity: 1; transform: rotate(-4deg) scale(1.12); display: inline-block; }
+  .hy .lsave { margin: 14px 16px 0; padding: 13px; border-radius: 18px; text-align: center; font-weight: 800; color: #fff; background: var(--hacc); box-shadow: 0 6px 14px rgba(232,87,126,.35); }
+  /* theme segmented row */
+  .hy .theme-seg { display: flex; gap: 6px; flex: 1; }
+  .hy .tseg { flex: 1; text-align: center; padding: 6px 0; border-radius: 10px; font-size: 11.5px; font-weight: 700; border: 2px solid transparent; }
+  .hy .tseg.pink { background: #ffd9e4; color: #b04a68; }
+  .hy .tseg.plum { background: #2a1b26; color: #c99bb0; }
+  .hy .tseg.navy { background: #0d1220; color: #8891ac; }
+  .hy .tseg.on { border-color: var(--hacc); }
+  /* accent A/B */
+  .acc-ab { display: flex; gap: 16px; flex-wrap: wrap; margin: 4px 0 20px; }
+  .acc-card { width: 300px; border-radius: 20px; padding: 16px; background: #ffd9e4; color: #5a3a4a; }
+  .acc-card h4 { font-size: 13px; font-weight: 800; margin-bottom: 10px; }
+  .acc-card .rowx { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+  .acc-card .p1 { flex: 1; text-align: center; padding: 8px 0; border-radius: 999px; color: #fff; font-size: 12.5px; font-weight: 700; }
+  .acc-card .p0 { flex: 1; text-align: center; padding: 8px 0; border-radius: 999px; background: #fff; color: #b0798f; font-size: 12.5px; font-weight: 700; }
+  .acc-card .fabx { width: 44px; height: 44px; border-radius: 50%; color: #fff; font-size: 22px; display: grid; place-items: center; flex: none; }
+  .acc-card .btnx { flex: 1; padding: 10px; border-radius: 14px; text-align: center; color: #fff; font-weight: 800; font-size: 13px; }
+  .acc-card .darkstrip { display: flex; gap: 8px; background: #2a1b26; border-radius: 14px; padding: 10px; }
+  .acc-card .darkstrip span { color: #fff; font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 999px; }
+  /* menu sheet */
+  .hy .dim { position: absolute; inset: 0; background: rgba(60,20,40,.45); z-index: 4; }
+  .hy .msheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; background: var(--hcard); border-radius: 26px 26px 0 0; padding: 16px 14px 18px; box-shadow: 0 -8px 30px rgba(0,0,0,.25); }
+  .hy .msheet h2 { font: 700 20px "Segoe Script", "Comic Sans MS", cursive; color: var(--hacc); margin: 0 0 10px 4px; transform: rotate(-1deg); }
+  .hy .mrow { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: var(--hbg); font-size: 13.5px; font-weight: 600; margin-bottom: 6px; }
+  .hy .mrow .grow { flex: 1; }
+  .hy .mrow.danger { color: #e05656; background: rgba(224,86,86,.1); }
+  .hy .toggle { width: 40px; height: 22px; border-radius: 999px; background: var(--hacc); position: relative; flex: none; }
+  .hy .toggle::after { content: ""; position: absolute; top: 2px; right: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; }
+  .hy .toggle.off { background: var(--hline); }
+  .hy .toggle.off::after { right: auto; left: 2px; }
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <h1>Us ♥ — three redesign directions</h1>
+  <p>Full-rethink concepts: each changes the look <em>and</em> the structure. Left frame = new home screen, right frame = new logging flow.</p>
+</div>
+
+<div class="concepts">
+
+  <!-- ================= 1. GOLDEN HOUR ================= -->
+  <section class="concept">
+    <h2>1 · Golden Hour</h2>
+    <p class="pitch">Warm sunset journal. Home is your story — a timeline of dates by month. Logging moves to a floating ＋ button; the bar drops to 3 tabs.</p>
+    <div class="swatches">
+      <span style="background:#fdf6ec"></span><span style="background:#ff7a59"></span>
+      <span style="background:#e85d75"></span><span style="background:#f4b860"></span>
+      <span style="background:#3d2c22"></span>
+    </div>
+    <div class="frames">
+      <div class="frame-col">
+        <div class="phone gh">
+          <div class="screen">
+            <div class="hdr"><h1>Our Story <em>♥</em></h1><div class="dots">⋯</div></div>
+            <div class="body">
+              <div class="month">July 2026</div>
+              <div class="jentry">
+                <h3>Sunset picnic</h3><span class="score">★ 5</span>
+                <div class="sub">Outdoors · Jul 5 · felt: romantic, relaxed</div>
+                <div class="strip">
+                  <div class="ph" style="background:linear-gradient(135deg,#f4b860,#e85d75)">🌅</div>
+                  <div class="ph" style="background:linear-gradient(135deg,#ff7a59,#f4b860)">🧺</div>
+                  <div class="ph" style="background:linear-gradient(135deg,#e85d75,#b04a68)">🥂</div>
+                </div>
+              </div>
+              <div class="jentry">
+                <h3>Ramen night</h3><span class="score">★ 4</span>
+                <div class="sub">Food & drink · Jul 1 · felt: cozy</div>
+              </div>
+              <div class="month">June 2026</div>
+              <div class="jentry">
+                <h3>Board game café</h3><span class="score">★ 5</span>
+                <div class="sub">Games · Jun 21 · felt: playful, silly</div>
+                <div class="strip">
+                  <div class="ph" style="background:linear-gradient(135deg,#8a6d3b,#f4b860)">🎲</div>
+                </div>
+              </div>
+              <div class="jentry">
+                <h3>Morning hike</h3><span class="score">★ 3</span>
+                <div class="sub">Outdoors · Jun 14 · felt: adventurous</div>
+              </div>
+            </div>
+            <div class="fab">＋</div>
+            <div class="tabs">
+              <div class="on"><b>📖</b>Journal</div>
+              <div><b>📊</b>Insights</div>
+              <div><b>✨</b>Suggest</div>
+            </div>
+          </div>
+        </div>
+        <div class="frame-label">Home — journal timeline + floating log button</div>
+      </div>
+      <div class="frame-col">
+        <div class="phone gh">
+          <div class="screen">
+            <div class="sheet-hd"><h2>New memory</h2><div class="x">✕</div></div>
+            <div class="f"><label>WHAT DID YOU DO?</label><div class="in">Jazz bar downtown</div></div>
+            <div class="f"><label>CATEGORY</label>
+              <div class="chips">
+                <span class="chip on">Music</span><span class="chip">Food & drink</span>
+                <span class="chip">Outdoors</span><span class="chip">At home</span>
+              </div>
+            </div>
+            <div class="f"><label>HOW WAS IT?</label>
+              <div class="hearts"><span class="on">♥</span><span class="on">♥</span><span class="on">♥</span><span class="on">♥</span><span>♥</span></div>
+            </div>
+            <div class="f"><label>WHEN</label><div class="in">Fri, Jul 10 2026</div></div>
+            <div class="f"><label>NOTES</label><div class="in placeholder">Little details you'll want to remember…</div></div>
+            <div class="save">Save to our story ♥</div>
+          </div>
+        </div>
+        <div class="frame-label">Logging — full-screen sheet from the ＋ button</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 2. MIDNIGHT ROSÉ ================= -->
+  <section class="concept">
+    <h2>2 · Midnight Rosé</h2>
+    <p class="pitch">Elegant, minimal date-night. Home is a dashboard: tonight's suggestion up top, recent memories, quick stats. Icon-only nav rail, hairline borders, champagne accents.</p>
+    <div class="swatches">
+      <span style="background:#0d1220"></span><span style="background:#d4a373"></span>
+      <span style="background:#e8b4b8"></span><span style="background:#e9e4da"></span>
+      <span style="background:#131a2e"></span>
+    </div>
+    <div class="frames">
+      <div class="frame-col">
+        <div class="phone mr">
+          <div class="screen">
+            <div class="hdr"><h1>U<b>S</b></h1><div class="dots">☰</div></div>
+            <div class="body">
+              <div class="eyebrow">Tonight's pick</div>
+              <div class="hero">
+                <h3>Rooftop wine bar</h3>
+                <p>You both loved the last wine night — this one's new, 15 min away, quiet on Fridays.</p>
+                <span class="cta">Plan it</span>
+              </div>
+              <div class="eyebrow">Recent memories</div>
+              <div class="caro">
+                <div class="mem">
+                  <div class="ph" style="background:linear-gradient(135deg,#2a3350,#d4a373)">🌅</div>
+                  <div class="t">Sunset picnic</div><div class="d">Jul 5 · ★5</div>
+                </div>
+                <div class="mem">
+                  <div class="ph" style="background:linear-gradient(135deg,#3a2a3e,#e8b4b8)">🍜</div>
+                  <div class="t">Ramen night</div><div class="d">Jul 1 · ★4</div>
+                </div>
+                <div class="mem">
+                  <div class="ph" style="background:linear-gradient(135deg,#1f2b40,#8891b5)">🎲</div>
+                  <div class="t">Board games</div><div class="d">Jun 21 · ★5</div>
+                </div>
+              </div>
+              <div class="eyebrow">This year</div>
+              <div class="stats">
+                <div class="stat"><div class="n">23</div><div class="l">Dates</div></div>
+                <div class="stat"><div class="n">4.3</div><div class="l">Avg joy</div></div>
+                <div class="stat"><div class="n">7</div><div class="l">Streak wk</div></div>
+              </div>
+            </div>
+            <div class="rail">
+              <div class="on">◆</div><div>✚</div><div>◷</div><div>❊</div>
+            </div>
+          </div>
+        </div>
+        <div class="frame-label">Home — dashboard: suggestion, memories, stats</div>
+      </div>
+      <div class="frame-col">
+        <div class="phone mr">
+          <div class="screen">
+            <div class="hdr"><h1>NEW <b>DATE</b></h1><div class="dots">✕</div></div>
+            <div class="f"><label>Title</label><div class="uin">Rooftop wine bar</div></div>
+            <div class="f"><label>Category</label>
+              <div class="chips">
+                <span class="chip on">Food & drink</span><span class="chip">Music</span>
+                <span class="chip">Culture</span><span class="chip">Outdoors</span>
+              </div>
+            </div>
+            <div class="f"><label>Enjoyment</label>
+              <div class="dotscale"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div>
+            </div>
+            <div class="f"><label>Effort</label>
+              <div class="dotscale"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></div>
+            </div>
+            <div class="f"><label>Mood</label>
+              <div class="chips">
+                <span class="chip on">Romantic</span><span class="chip on">Relaxed</span>
+                <span class="chip">Playful</span><span class="chip">Adventurous</span>
+              </div>
+            </div>
+            <div class="f"><label>Notes</label><div class="uin placeholder">A detail worth keeping…</div></div>
+            <div class="save">Save</div>
+          </div>
+        </div>
+        <div class="frame-label">Logging — hairline form, dot scales, gold accents</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 3. SCRAPBOOK ================= -->
+  <section class="concept">
+    <h2>3 · Scrapbook</h2>
+    <p class="pitch">Playful pastel photo album. Home is a photo grid with sticker captions; logging becomes a cute step-by-step wizard. Pill tabs on top instead of a bottom bar.</p>
+    <div class="swatches">
+      <span style="background:#ffeff3"></span><span style="background:#e8577e"></span>
+      <span style="background:#d9f2e6"></span><span style="background:#fff3d1"></span>
+      <span style="background:#5a4450"></span>
+    </div>
+    <div class="frames">
+      <div class="frame-col">
+        <div class="phone sb">
+          <div class="screen">
+            <div class="hdr"><h1>Us ♥</h1></div>
+            <div class="pills">
+              <div class="pill on">Album</div><div class="pill">Log</div>
+              <div class="pill">Ideas</div><div class="pill">Stats</div>
+            </div>
+            <div class="grid">
+              <div class="tile tall">
+                <div class="ph" style="background:linear-gradient(135deg,#f4b860,#e8577e)">🌅</div>
+                <div class="cap">sunset picnic!</div>
+              </div>
+              <div class="tile short">
+                <div class="ph" style="background:linear-gradient(135deg,#7ed3ab,#3e7d62)">🍜</div>
+                <div class="cap">ramen date</div>
+              </div>
+              <div class="tile short">
+                <div class="ph" style="background:linear-gradient(135deg,#e8577e,#b04a68)">🥂</div>
+                <div class="cap">anniversary ♥</div>
+              </div>
+              <div class="tile tall">
+                <div class="ph" style="background:linear-gradient(135deg,#8fb8e8,#5a7db0)">🎲</div>
+                <div class="cap">game café</div>
+              </div>
+              <div class="tile short">
+                <div class="ph" style="background:linear-gradient(135deg,#c9a1e8,#8a5ab0)">🎬</div>
+                <div class="cap">movie night</div>
+              </div>
+              <div class="tile short">
+                <div class="ph" style="background:linear-gradient(135deg,#ffd3de,#e8577e)">🥾</div>
+                <div class="cap">morning hike</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="frame-label">Home — photo album with sticker captions</div>
+      </div>
+      <div class="frame-col">
+        <div class="phone sb">
+          <div class="screen">
+            <div class="hdr"><h1>New page!</h1></div>
+            <div class="wiz">
+              <div class="wsteps"><i class="done"></i><i class="done"></i><i class="done"></i><i></i></div>
+              <div class="wcard">
+                <div class="stepno">Step 3 of 4</div>
+                <h2>How was it?</h2>
+                <div class="faces">
+                  <span>😐</span><span>🙂</span><span>😊</span><span class="on">😍</span><span>🤩</span>
+                </div>
+                <div class="moodstick">
+                  <span class="stick on">romantic ♥</span>
+                  <span class="stick">silly</span>
+                  <span class="stick on">cozy</span>
+                  <span class="stick">adventurous</span>
+                  <span class="stick">yummy</span>
+                </div>
+              </div>
+              <div class="wnav">
+                <div class="wbtn back">← Back</div>
+                <div class="wbtn next">Next →</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="frame-label">Logging — one-question-per-step wizard</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 4. HYBRID ================= -->
+  <section class="concept wide">
+    <h2>4 · Hybrid — "Sticker Book"</h2>
+    <p class="pitch">Post-review version: cursive only on the app title &amp; sticker tags, single-sheet log form from the ＋ button, "on this day" on Home, and a 3-way theme switch (Pink / Plum / Navy) in the menu. Full app walkthrough below.</p>
+    <div class="swatches">
+      <span style="background:#ffd9e4"></span><span style="background:#e8577e"></span>
+      <span style="background:#d9f2e6"></span><span style="background:#fff3d1"></span>
+      <span style="background:#2a1b26"></span><span style="background:#0d1220"></span>
+    </div>
+
+    <h3 style="font-size:15px;margin:10px 0 8px">Accent — chosen: A · raspberry <code>#e8577e</code> ✓ (B kept for reference)</h3>
+    <div class="acc-ab">
+      <div class="acc-card">
+        <h4>A · Raspberry #e8577e</h4>
+        <div class="rowx"><div class="p1" style="background:#e8577e">Home</div><div class="p0">Album</div><div class="fabx" style="background:#e8577e">＋</div></div>
+        <div class="rowx"><div class="btnx" style="background:#e8577e">Save ♥</div></div>
+        <div class="darkstrip"><span style="background:#e8577e">on plum</span><span style="background:#ff7fa2">dark accent</span></div>
+      </div>
+      <div class="acc-card">
+        <h4>B · Deeper rose #d13d6b</h4>
+        <div class="rowx"><div class="p1" style="background:#d13d6b">Home</div><div class="p0">Album</div><div class="fabx" style="background:#d13d6b">＋</div></div>
+        <div class="rowx"><div class="btnx" style="background:#d13d6b">Save ♥</div></div>
+        <div class="darkstrip"><span style="background:#d13d6b">on plum</span><span style="background:#f76a94">dark accent</span></div>
+      </div>
+    </div>
+
+    <div class="frames">
+
+      <!-- HOME -->
+      <div class="frame-col">
+        <div class="phone hy">
+          <div class="screen">
+            <div class="hdr"><h1>Us ♥</h1><div class="dots">⋯</div></div>
+            <div class="pills">
+              <div class="pill on">Home</div><div class="pill">Album</div>
+              <div class="pill">Ideas</div><div class="pill">Stats</div>
+            </div>
+            <div class="body">
+              <div class="sec">tonight's pick ✨</div>
+              <div class="card hero">
+                <div class="stickertag tag-new">new!</div>
+                <h3>Rooftop wine bar</h3>
+                <p>You both loved the last wine night — this one's new and 15 min away.</p>
+                <span class="mini-btn">Plan it →</span>
+              </div>
+              <div class="card">
+                <div class="stickertag tag-fav">1 year ago!</div>
+                <div class="entry">
+                  <div class="ph" style="background:linear-gradient(135deg,#ffb1c6,#e8577e)">🧺</div>
+                  <div class="m"><b>Our first picnic ♥</b><i>On this day · Jul 11 2025</i></div>
+                  <div class="sc">★ 5</div>
+                </div>
+              </div>
+              <div class="sec">recent memories</div>
+              <div class="card">
+                <div class="entry">
+                  <div class="ph" style="background:linear-gradient(135deg,#f4b860,#e8577e)">🌅</div>
+                  <div class="m"><b>Sunset picnic</b><i>Outdoors · Jul 5</i></div>
+                  <div class="sc">★ 5</div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="entry">
+                  <div class="ph" style="background:linear-gradient(135deg,#7ed3ab,#3e7d62)">🍜</div>
+                  <div class="m"><b>Ramen night</b><i>Food & drink · Jul 1</i></div>
+                  <div class="sc">★ 4</div>
+                </div>
+              </div>
+              <div class="sec">this year</div>
+              <div class="stats">
+                <div class="stat"><div class="n">23</div><div class="l">Dates</div></div>
+                <div class="stat"><div class="n">4.3</div><div class="l">Avg joy</div></div>
+                <div class="stat"><div class="n">7</div><div class="l">Wk streak</div></div>
+              </div>
+            </div>
+            <div class="fab">＋</div>
+          </div>
+        </div>
+        <div class="frame-label">Home — pick + on-this-day + recent + stats</div>
+      </div>
+
+      <!-- ALBUM -->
+      <div class="frame-col">
+        <div class="phone hy">
+          <div class="screen">
+            <div class="hdr"><h1>Us ♥</h1><div class="dots">⋯</div></div>
+            <div class="pills">
+              <div class="pill">Home</div><div class="pill on">Album</div>
+              <div class="pill">Ideas</div><div class="pill">Stats</div>
+            </div>
+            <div class="body">
+              <div class="search">🔍 Search our dates…</div>
+              <div class="segrow"><div class="seg">List</div><div class="seg on">Photos</div></div>
+              <div class="fchips">
+                <span class="fchip on">Food & drink</span><span class="fchip">Outdoors</span>
+                <span class="fchip">Movies</span><span class="fchip">Games</span><span class="fchip">★ 5 only</span>
+              </div>
+              <div class="gal">
+                <div class="ph" style="background:linear-gradient(135deg,#f4b860,#e8577e)">🌅</div>
+                <div class="ph" style="background:linear-gradient(135deg,#7ed3ab,#3e7d62)">🍜</div>
+                <div class="ph" style="background:linear-gradient(135deg,#e8577e,#b04a68)">🥂</div>
+                <div class="ph" style="background:linear-gradient(135deg,#8fb8e8,#5a7db0)">🎲</div>
+                <div class="ph" style="background:linear-gradient(135deg,#c9a1e8,#8a5ab0)">🎬</div>
+                <div class="ph" style="background:linear-gradient(135deg,#ffb1c6,#e8577e)">🥾</div>
+                <div class="ph" style="background:linear-gradient(135deg,#f0d090,#c09040)">🍰</div>
+                <div class="ph" style="background:linear-gradient(135deg,#90d0e8,#4090b0)">🏖️</div>
+                <div class="ph" style="background:linear-gradient(135deg,#e8a1a1,#b05a5a)">🍕</div>
+              </div>
+              <div class="sec" style="margin-top:14px">…or as a list</div>
+              <div class="card">
+                <div class="entry">
+                  <div class="ph" style="background:linear-gradient(135deg,#e8577e,#b04a68)">🥂</div>
+                  <div class="m"><b>Anniversary dinner</b><i>Food & drink · Jun 28 · romantic</i></div>
+                  <div class="sc">★ 5</div>
+                </div>
+              </div>
+            </div>
+            <div class="fab">＋</div>
+          </div>
+        </div>
+        <div class="frame-label">Album (History) — search, filters, gallery/list</div>
+      </div>
+
+      <!-- IDEAS -->
+      <div class="frame-col">
+        <div class="phone hy">
+          <div class="screen">
+            <div class="hdr"><h1>Us ♥</h1><div class="dots">⋯</div></div>
+            <div class="pills">
+              <div class="pill">Home</div><div class="pill">Album</div>
+              <div class="pill on">Ideas</div><div class="pill">Stats</div>
+            </div>
+            <div class="body">
+              <div class="card">
+                <div class="slider"><span>🛋️</span><div class="track"></div><span>🚀</span></div>
+                <div class="slider-ends"><span>comfy favorites</span><span>new adventures</span></div>
+              </div>
+              <div class="sec">for you two ✨</div>
+              <div class="card">
+                <div class="stickertag tag-fav">favorite ♥</div>
+                <div class="hero">
+                  <h3>Board game café</h3>
+                  <p>You rate this ★4.8 — it's been 3 weeks since the last visit.</p>
+                  <div class="sug-meta"><span>💸 ~$20</span><span>⚡ low effort</span><span>🎲 Games</span></div>
+                  <span class="mini-btn">Log it →</span>
+                </div>
+              </div>
+              <div class="card">
+                <div class="stickertag tag-new">new!</div>
+                <div class="hero">
+                  <h3>Pottery class</h3>
+                  <p>Something you've never tried — hands-on, silly, and you keep the mug.</p>
+                  <div class="sug-meta"><span>💸 ~$45</span><span>⚡ medium</span><span>🎨 Creative</span></div>
+                  <span class="mini-btn">Log it →</span>
+                </div>
+              </div>
+            </div>
+            <div class="fab">＋</div>
+          </div>
+        </div>
+        <div class="frame-label">Ideas (Suggest) — comfy↔adventure slider</div>
+      </div>
+
+      <!-- STATS -->
+      <div class="frame-col">
+        <div class="phone hy">
+          <div class="screen">
+            <div class="hdr"><h1>Us ♥</h1><div class="dots">⋯</div></div>
+            <div class="pills">
+              <div class="pill">Home</div><div class="pill">Album</div>
+              <div class="pill">Ideas</div><div class="pill on">Stats</div>
+            </div>
+            <div class="body">
+              <div class="stats">
+                <div class="stat"><div class="n">23</div><div class="l">Dates</div></div>
+                <div class="stat"><div class="n">4.3</div><div class="l">Avg joy</div></div>
+                <div class="stat"><div class="n">🍜</div><div class="l">Top cat.</div></div>
+              </div>
+              <div class="sec">dates per month</div>
+              <div class="card">
+                <div class="bars">
+                  <div class="b" style="height:40%"></div><div class="b alt" style="height:65%"></div>
+                  <div class="b" style="height:50%"></div><div class="b alt" style="height:85%"></div>
+                  <div class="b" style="height:70%"></div><div class="b alt" style="height:95%"></div>
+                </div>
+                <div class="bar-lbls"><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span><span>Jul</span></div>
+              </div>
+              <div class="sec">how we felt</div>
+              <div class="card">
+                <div class="moodrow">
+                  <span class="mood">romantic ×9</span><span class="mood">cozy ×7</span>
+                  <span class="mood">silly ×6</span><span class="mood">adventurous ×4</span>
+                  <span class="mood">yummy ×8</span>
+                </div>
+              </div>
+            </div>
+            <div class="fab">＋</div>
+          </div>
+        </div>
+        <div class="frame-label">Stats (Insights) — charts as sticker cards</div>
+      </div>
+
+      <!-- LOG FORM (single sheet) -->
+      <div class="frame-col">
+        <div class="phone hy">
+          <div class="screen">
+            <div class="hdr"><h1>New page!</h1><div class="dots">✕</div></div>
+            <div class="lf"><label>What did you do?</label><div class="lin">Jazz bar downtown</div></div>
+            <div class="lf" style="margin-top:12px"><label>Category</label>
+              <div class="lchips">
+                <span class="lchip on">Music</span><span class="lchip">Food & drink</span>
+                <span class="lchip">Outdoors</span><span class="lchip">At home</span><span class="lchip">Games</span>
+              </div>
+            </div>
+            <div class="lf" style="margin-top:12px"><label>How was it?</label>
+              <div class="faces"><span>😐</span><span>🙂</span><span>😊</span><span class="on">😍</span><span>🤩</span></div>
+            </div>
+            <div class="lf" style="margin-top:12px"><label>Mood stickers</label>
+              <div class="wchips" style="justify-content:flex-start;margin-top:0">
+                <span class="wchip on">romantic ♥</span><span class="wchip">silly</span>
+                <span class="wchip on">cozy</span><span class="wchip">adventurous</span>
+              </div>
+            </div>
+            <div class="lf" style="margin-top:12px"><label>Notes</label><div class="lin placeholder">Little details to remember…</div></div>
+            <div class="lsave">Save to our album ♥</div>
+          </div>
+        </div>
+        <div class="frame-label">Logging — one sticker-styled sheet from ＋</div>
+      </div>
+
+      <!-- MENU SHEET -->
+      <div class="frame-col">
+        <div class="phone hy">
+          <div class="screen">
+            <div class="hdr"><h1>Us ♥</h1><div class="dots">⋯</div></div>
+            <div class="pills">
+              <div class="pill on">Home</div><div class="pill">Album</div>
+              <div class="pill">Ideas</div><div class="pill">Stats</div>
+            </div>
+            <div class="body">
+              <div class="sec">tonight's pick ✨</div>
+              <div class="card hero"><h3>Rooftop wine bar</h3><p>You both loved the last wine night…</p></div>
+            </div>
+            <div class="dim"></div>
+            <div class="msheet">
+              <h2>Menu</h2>
+              <div class="mrow"><span>🎨</span>
+                <div class="theme-seg">
+                  <div class="tseg pink on">☀️ Pink</div>
+                  <div class="tseg plum">🍇 Plum</div>
+                  <div class="tseg navy">🌙 Navy</div>
+                </div>
+              </div>
+              <div class="mrow"><span>⬇️</span><span class="grow">Export data (backup)</span></div>
+              <div class="mrow"><span>📷</span><span class="grow">Import from photos</span></div>
+              <div class="mrow"><span>💞</span><span class="grow">Sync with partner</span></div>
+              <div class="mrow"><span>💬</span><span class="grow">Send feedback</span></div>
+              <div class="mrow danger"><span>🗑️</span><span class="grow">Erase everything</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="frame-label">⋯ Menu — slide-up sheet with dark-mode switch</div>
+      </div>
+
+      <!-- HOME DARK -->
+      <div class="frame-col">
+        <div class="phone hy dark">
+          <div class="screen">
+            <div class="hdr"><h1>Us ♥</h1><div class="dots">⋯</div></div>
+            <div class="pills">
+              <div class="pill on">Home</div><div class="pill">Album</div>
+              <div class="pill">Ideas</div><div class="pill">Stats</div>
+            </div>
+            <div class="body">
+              <div class="sec">tonight's pick ✨</div>
+              <div class="card hero">
+                <div class="stickertag tag-new">new!</div>
+                <h3>Rooftop wine bar</h3>
+                <p>You both loved the last wine night — this one's new and 15 min away.</p>
+                <span class="mini-btn">Plan it →</span>
+              </div>
+              <div class="sec">recent memories</div>
+              <div class="card">
+                <div class="entry">
+                  <div class="ph" style="background:linear-gradient(135deg,#f4b860,#e8577e)">🌅</div>
+                  <div class="m"><b>Sunset picnic</b><i>Outdoors · Jul 5</i></div>
+                  <div class="sc">★ 5</div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="entry">
+                  <div class="ph" style="background:linear-gradient(135deg,#7ed3ab,#3e7d62)">🍜</div>
+                  <div class="m"><b>Ramen night</b><i>Food & drink · Jul 1</i></div>
+                  <div class="sc">★ 4</div>
+                </div>
+              </div>
+              <div class="sec">this year</div>
+              <div class="stats">
+                <div class="stat"><div class="n">23</div><div class="l">Dates</div></div>
+                <div class="stat"><div class="n">4.3</div><div class="l">Avg joy</div></div>
+                <div class="stat"><div class="n">7</div><div class="l">Wk streak</div></div>
+              </div>
+            </div>
+            <div class="fab">＋</div>
+          </div>
+        </div>
+        <div class="frame-label">Theme 2 — dusty plum</div>
+      </div>
+
+      <!-- HOME NAVY -->
+      <div class="frame-col">
+        <div class="phone hy navy">
+          <div class="screen">
+            <div class="hdr"><h1>Us ♥</h1><div class="dots">⋯</div></div>
+            <div class="pills">
+              <div class="pill on">Home</div><div class="pill">Album</div>
+              <div class="pill">Ideas</div><div class="pill">Stats</div>
+            </div>
+            <div class="body">
+              <div class="sec">tonight's pick ✨</div>
+              <div class="card hero">
+                <div class="stickertag tag-new">new!</div>
+                <h3>Rooftop wine bar</h3>
+                <p>You both loved the last wine night — this one's new and 15 min away.</p>
+                <span class="mini-btn">Plan it →</span>
+              </div>
+              <div class="sec">recent memories</div>
+              <div class="card">
+                <div class="entry">
+                  <div class="ph" style="background:linear-gradient(135deg,#f4b860,#e8577e)">🌅</div>
+                  <div class="m"><b>Sunset picnic</b><i>Outdoors · Jul 5</i></div>
+                  <div class="sc">★ 5</div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="entry">
+                  <div class="ph" style="background:linear-gradient(135deg,#7ed3ab,#3e7d62)">🍜</div>
+                  <div class="m"><b>Ramen night</b><i>Food & drink · Jul 1</i></div>
+                  <div class="sc">★ 4</div>
+                </div>
+              </div>
+              <div class="sec">this year</div>
+              <div class="stats">
+                <div class="stat"><div class="n">23</div><div class="l">Dates</div></div>
+                <div class="stat"><div class="n">4.3</div><div class="l">Avg joy</div></div>
+                <div class="stat"><div class="n">7</div><div class="l">Wk streak</div></div>
+              </div>
+            </div>
+            <div class="fab">＋</div>
+          </div>
+        </div>
+        <div class="frame-label">Theme 3 — midnight navy</div>
+      </div>
+
+    </div>
+  </section>
+
+</div>
+
+</body>
+</html>

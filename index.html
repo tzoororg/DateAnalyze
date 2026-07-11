@@ -3,12 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#e0567a" />
+  <meta name="theme-color" content="#2a1b26" />
   <title>Us — Date Tracker</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icons/icon.svg" />
-  <link rel="stylesheet" href="css/styles.css?v=16" />
+  <script>
+    // Apply the saved theme before the stylesheet paints to avoid a flash.
+    (function () {
+      var t = localStorage.getItem("theme");
+      if (t) document.documentElement.dataset.theme = t;
+      var colors = { pink: "#e8577e", plum: "#2a1b26", navy: "#0d1220" };
+      var c = colors[t] || colors.plum; // Plum is the default theme
+      document.querySelector('meta[name="theme-color"]').setAttribute("content", c);
+    })();
+  </script>
+  <link rel="stylesheet" href="css/styles.css?v=24" />
 </head>
 <body>
   <header class="app-header">
@@ -16,28 +26,39 @@
     <button id="menuBtn" class="icon-btn" aria-label="Menu">⋯</button>
   </header>
 
+  <nav class="tabbar" role="tablist">
+    <button class="tab" data-tab="home" role="tab" aria-selected="true">Home</button>
+    <button class="tab" data-tab="history" role="tab" aria-selected="false">Album</button>
+    <button class="tab" data-tab="suggest" role="tab" aria-selected="false">Ideas</button>
+    <button class="tab" data-tab="insights" role="tab" aria-selected="false">Stats</button>
+  </nav>
+
   <main id="view" class="view"><!-- active tab renders here --></main>
 
-  <nav class="tabbar" role="tablist">
-    <button class="tab" data-tab="log" role="tab" aria-selected="true">
-      <span class="tab-ico">＋</span><span class="tab-lbl">Log</span>
-    </button>
-    <button class="tab" data-tab="history" role="tab" aria-selected="false">
-      <span class="tab-ico">📅</span><span class="tab-lbl">History</span>
-    </button>
-    <button class="tab" data-tab="insights" role="tab" aria-selected="false">
-      <span class="tab-ico">📊</span><span class="tab-lbl">Insights</span>
-    </button>
-    <button class="tab" data-tab="suggest" role="tab" aria-selected="false">
-      <span class="tab-ico">✨</span><span class="tab-lbl">Suggest</span>
-    </button>
-  </nav>
+  <button id="fab" class="fab" aria-label="Log a date">＋</button>
+
+  <!-- Log form: full-screen sheet opened by the ＋ button -->
+  <div id="logSheet" class="logsheet hidden">
+    <div class="logsheet-head">
+      <h2 class="logsheet-title">New page!</h2>
+      <button id="logCloseBtn" class="icon-btn" aria-label="Close">✕</button>
+    </div>
+    <div class="logsheet-body" id="logSheetBody"></div>
+  </div>
 
   <!-- Slide-up menu sheet -->
   <div id="sheet" class="sheet hidden">
     <div class="sheet-backdrop" data-close></div>
     <div class="sheet-body">
       <h2>Menu</h2>
+      <div class="menu-row theme-row">
+        <span>🎨</span>
+        <div class="theme-seg">
+          <button class="tseg tseg-pink" data-theme-pick="pink">☀️ Pink</button>
+          <button class="tseg tseg-plum" data-theme-pick="plum">🍇 Plum</button>
+          <button class="tseg tseg-navy" data-theme-pick="navy">🌙 Navy</button>
+        </div>
+      </div>
       <button class="menu-row" id="exportBtn">⬇️ Export data (JSON backup)</button>
       <label class="menu-row" for="importInput">⬆️ Import data (restore)</label>
       <input id="importInput" type="file" accept="application/json" hidden />
@@ -64,6 +85,6 @@
 
   <div id="toast" class="toast hidden"></div>
 
-  <script type="module" src="app.js?v=16"></script>
+  <script type="module" src="app.js?v=24"></script>
 </body>
 </html>
