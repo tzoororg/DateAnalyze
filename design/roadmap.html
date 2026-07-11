@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Us — Roadmap before/after mockups</title>
+<style>
+  :root { --ink:#2b2230; --muted:#7a6f80; --accent:#e8577e; --line:#eadfe8; }
+  body { font:15px/1.55 system-ui, sans-serif; color:var(--ink); background:#faf6f9; margin:0; padding:32px 20px 80px; }
+  header.page { max-width:1080px; margin:0 auto 36px; }
+  h1 { font-size:28px; margin:0 0 6px; } h1 .heart { color:var(--accent); }
+  .sub { color:var(--muted); max-width:75ch; }
+  section.point { max-width:1080px; margin:0 auto 64px; border-top:1px solid var(--line); padding-top:28px; }
+  .crumb { font-size:13px; color:var(--accent); font-weight:600; letter-spacing:.5px; text-transform:uppercase; }
+  h2 { font-size:21px; margin:2px 0 6px; }
+  .what { color:var(--muted); max-width:75ch; margin:0 0 4px; }
+  .touches { font-size:13px; color:var(--muted); margin:0 0 10px; }
+  .touches code { background:#f1e8ef; border-radius:4px; padding:1px 5px; }
+  .ba { display:flex; gap:34px; flex-wrap:wrap; margin-top:18px; }
+  .col { flex:0 0 300px; }
+  .col h3 { font-size:13px; letter-spacing:1px; text-transform:uppercase; margin:0 0 8px; }
+  .col.before h3 { color:var(--muted); } .col.after h3 { color:var(--accent); }
+  .col img { width:300px; border-radius:18px; border:1px solid var(--line); box-shadow:0 10px 30px rgba(60,20,50,.12); display:block; }
+  .col.after img { border:2px solid var(--accent); }
+  .col figcaption { font-size:12px; color:var(--muted); margin-top:6px; text-align:center; }
+  figure { margin:0; }
+  .note { flex:1; min-width:260px; font-size:14px; color:var(--muted); }
+  .note b { color:var(--ink); }
+  .badge { display:inline-block; font-size:12px; font-weight:600; border-radius:20px; padding:2px 10px; margin-left:8px; vertical-align:middle; }
+  .badge.small { background:#e3f6e8; color:#2e7d4f; } .badge.med { background:#fff3d6; color:#9a6b00; }
+  .badge.large { background:#fde3e8; color:#b0295a; } .badge.parked { background:#eee; color:#777; }
+</style>
+</head>
+<body>
+
+<header class="page">
+  <h1>Us <span class="heart">♥</span> — roadmap before/after</h1>
+  <p class="sub">Visual mockups for every unimplemented <a href="../ROADMAP.md">ROADMAP.md</a> point.
+  "Before" is the real app today; "After" is a mock rendered inside the real app with its real CSS
+  (injected by <code>js/dev-shots.js</code>, captured by <code>node design/capture.mjs</code>) — so
+  spacing, theme and components are authentic, only the feature content is fake.
+  Shipped items (#1 milestone strip — later removed by choice — and #6 photo import) are not shown.</p>
+</header>
+
+<section class="point" id="p2">
+  <span class="crumb">Roadmap #2 · Stats tab</span>
+  <h2>Shareable "Wrapped" recap card <span class="badge med">Medium</span></h2>
+  <p class="what">A generated, shareable image: favorite category, most-repeated date, best month, totals — for "all time" and "this year". Rasterized SVG → PNG, shared via the Web Share API (download fallback). No photos by default.</p>
+  <p class="touches">Touches: <code>js/charts.js</code> (new SVG card) · <code>js/ui.js renderInsights()</code> (entry button) · Web Share API</p>
+  <div class="ba">
+    <div class="col before"><h3>Before</h3><figure><img src="shots/insights.png" alt=""/><figcaption>Stats tab today — analytics only, nothing shareable</figcaption></figure></div>
+    <div class="col after"><h3>After</h3><figure><img src="shots/after-wrapped.png" alt=""/><figcaption>Wrapped card at the top of Stats with a Share button</figcaption></figure></div>
+    <div class="note"><b>Why it wins:</b> nobody else has a real logged history to build this from, and shared cards are an organic growth loop.</div>
+  </div>
+</section>
+
+<section class="point" id="p3">
+  <span class="crumb">Roadmap #3 · Ideas + Album tabs</span>
+  <h2>Wishlist — close the Suggest → Log loop <span class="badge med">Medium</span></h2>
+  <p class="what">Save a suggestion as "want to try"; saved ideas live in a wishlist and pre-fill the log form when the date actually happens. Schema: <code>status: "idea" | "done"</code> on entries; analytics must exclude non-done entries (the real work).</p>
+  <p class="touches">Touches: <code>js/model.js</code> (status field) · <code>js/analytics.js</code>/<code>js/suggest.js</code> (done-only filter) · <code>js/ui.js</code> Ideas cards + Album view</p>
+  <div class="ba">
+    <div class="col before"><h3>Before</h3><figure><img src="shots/suggest.png" alt=""/><figcaption>Ideas today — a card can only be logged, not kept</figcaption></figure></div>
+    <div class="col after"><h3>After</h3><figure><img src="shots/after-wishlist-suggest.png" alt=""/><figcaption>"♡ Save to wishlist" on every card; saved sticker on kept ones</figcaption></figure></div>
+  </div>
+  <div class="ba">
+    <div class="col before"><h3>Before</h3><figure><img src="shots/history-list.png" alt=""/><figcaption>Album today — only past (done) dates</figcaption></figure></div>
+    <div class="col after"><h3>After</h3><figure><img src="shots/after-wishlist-history.png" alt=""/><figcaption>New "☆ Wishlist" view in Album; "We did it! Log it →" pre-fills the form</figcaption></figure></div>
+    <div class="note"><b>Why it wins:</b> the app becomes prospective, not only retrospective — a reason to open it between dates.</div>
+  </div>
+</section>
+
+<section class="point" id="p4">
+  <span class="crumb">Roadmap #4 · ⋯ menu (+ system notifications)</span>
+  <h2>Gentle reminders (opt-in) <span class="badge med">Medium</span></h2>
+  <p class="what">Two nudges: anniversary-of-a-great-date ("A year ago you loved <i>Rooftop dinner</i> — do it again?") and inactivity ("3 weeks since your last date"). The push Worker + permission UX already exist from partner notifications, so this is mostly two content triggers.</p>
+  <p class="touches">Touches: <code>js/ui.js</code> menu · <code>js/push.js</code>/<code>sw.js</code> · <code>js/analytics.js onThisDay()</code> (already exists)</p>
+  <div class="ba">
+    <div class="col before"><h3>Before</h3><figure><img src="shots/menu.png" alt=""/><figcaption>Menu today — notifications exist only for partner sync events</figcaption></figure></div>
+    <div class="col after"><h3>After</h3><figure><img src="shots/after-reminders.png" alt=""/><figcaption>New "🔔 Gentle reminders" row with its own opt-in state</figcaption></figure></div>
+    <div class="note"><b>Note:</b> the notification itself renders as a system notification (not screenshotable here); the in-app change is just this settings row.</div>
+  </div>
+</section>
+
+<section class="point" id="p5">
+  <span class="crumb">Roadmap #5 · Ideas tab</span>
+  <h2>Double-blind date match <span class="badge large">Large</span><span class="badge parked">Parked — needs sync adoption</span></h2>
+  <p class="what">Both partners privately vote 👍/👎 on suggestions over sync; only mutual yeses are revealed. Needs security-sensitive Firestore rules so neither can see the other's vote pre-match.</p>
+  <p class="touches">Touches: <code>firestore.rules</code> (votes subcollection) · <code>js/sync.js</code> · <code>js/ui.js renderSuggest()</code></p>
+  <div class="ba">
+    <div class="col before"><h3>Before</h3><figure><img src="shots/suggest.png" alt=""/><figcaption>Ideas today — single-player</figcaption></figure></div>
+    <div class="col after"><h3>After</h3><figure><img src="shots/after-match.png" alt=""/><figcaption>Vote buttons per card; a matched card lights up for both</figcaption></figure></div>
+  </div>
+</section>
+
+<section class="point" id="p7">
+  <span class="crumb">Roadmap #7 · Home tab (banner spans all tabs)</span>
+  <h2>Date Night mode — log as a byproduct <span class="badge med">Medium</span></h2>
+  <p class="what">"Start date night" timestamps the start; a persistent banner offers a camera button that collects photos into a pending pool; "End" opens the log sheet pre-filled with date, duration and photos. State survives app closes; auto-expires after ~12h.</p>
+  <p class="touches">Touches: <code>js/ui.js</code> (start card + banner) · <code>activeDate</code> setting via <code>js/store.js</code> — no schema change</p>
+  <div class="ba">
+    <div class="col before"><h3>Before</h3><figure><img src="shots/home.png" alt=""/><figcaption>Home today — the app exists only before and after a date</figcaption></figure></div>
+    <div class="col after"><h3>After</h3><figure><img src="shots/after-datenight-home.png" alt=""/><figcaption>Idle: a "Start date night" card on Home</figcaption></figure></div>
+    <div class="col after"><h3>After (active)</h3><figure><img src="shots/after-datenight-active.png" alt=""/><figcaption>Active: elapsed time, photo count, 📷 and End — shown on every tab</figcaption></figure></div>
+  </div>
+</section>
+
+<section class="point" id="p8">
+  <span class="crumb">Roadmap #8 · Stats tab</span>
+  <h2>Relationship forecasting <span class="badge small">Small→Medium</span></h2>
+  <p class="what">Forward-looking cards: pace projection ("date #25 lands mid-August"), per-category enjoyment slopes, gap warnings. Pure math over existing aggregates; every card suppressed below a minimum sample size.</p>
+  <p class="touches">Touches: <code>js/analytics.js</code> (new pure functions) · <code>js/ui.js renderInsights()</code></p>
+  <div class="ba">
+    <div class="col before"><h3>Before</h3><figure><img src="shots/insights.png" alt=""/><figcaption>Stats today — every insight looks backward</figcaption></figure></div>
+    <div class="col after"><h3>After</h3><figure><img src="shots/after-forecast.png" alt=""/><figcaption>"Looking ahead 🔮" cards above the existing stats</figcaption></figure></div>
+    <div class="note"><b>Guardrail:</b> phrased as observation, never prophecy; hidden under ~10 dates.</div>
+  </div>
+</section>
+
+<section class="point" id="p9">
+  <span class="crumb">Roadmap #9 · Stats tab (Ideas half already shipped)</span>
+  <h2>Cost-of-happiness optimizer <span class="badge med">Medium</span></h2>
+  <p class="what">Connect money to joy: enjoyment by cost band ("plateaus above ₪200"), best-value category. The Ideas-tab budget cap from this item <b>already shipped</b>; what remains is the Insights side.</p>
+  <p class="touches">Touches: <code>js/analytics.js</code> (cost-band bucketing) · <code>js/ui.js renderInsights()</code></p>
+  <div class="ba">
+    <div class="col before"><h3>Before</h3><figure><img src="shots/insights.png" alt=""/><figcaption>Stats today — value-for-money list exists, but no cost-band claims</figcaption></figure></div>
+    <div class="col after"><h3>After</h3><figure><img src="shots/after-value.png" alt=""/><figcaption>"Cost of happiness 💸" card with plateau + best-value claims</figcaption></figure></div>
+  </div>
+</section>
+
+<section class="point" id="p10">
+  <span class="crumb">Roadmap #10 · Log sheet</span>
+  <h2>AI post-date interviewer <span class="badge med">Medium</span></h2>
+  <p class="what">Optional conversational logging: answer ~3 free-text questions; an LLM (via a Cloudflare Worker, keys server-side) maps answers into the schema and keeps the best line as a quote. The user always reviews the filled form before saving — the AI never writes to the DB.</p>
+  <p class="touches">Touches: new Worker route · <code>js/ui.js</code> log sheet · <code>js/model.js</code> (optional <code>quote</code>)</p>
+  <div class="ba">
+    <div class="col before"><h3>Before</h3><figure><img src="shots/log.png" alt=""/><figcaption>Log sheet today — a form, i.e. homework</figcaption></figure></div>
+    <div class="col after"><h3>After</h3><figure><img src="shots/after-interview.png" alt=""/><figcaption>Chat option above the form; answers fill the form for review</figcaption></figure></div>
+    <div class="note"><b>Caveat:</b> first log path that touches a server — clearly optional, with a consent note.</div>
+  </div>
+</section>
+
+<section class="point" id="p11">
+  <span class="crumb">Roadmap #11 · Log sheet + Home tab</span>
+  <h2>Time-capsule notes <span class="badge small">Tiny</span></h2>
+  <p class="what">An optional "note to your future selves" written while logging; it resurfaces exactly one year later in the existing On-this-day memory card. Smallest item on the roadmap.</p>
+  <p class="touches">Touches: <code>js/model.js</code> (optional <code>capsule</code>) · <code>js/ui.js</code> log form + memory card · <code>onThisDay()</code> already finds the entries</p>
+  <div class="ba">
+    <div class="col before"><h3>Before</h3><figure><img src="shots/log.png" alt=""/><figcaption>Log sheet today — notes end at "Notes / memories"</figcaption></figure></div>
+    <div class="col after"><h3>After</h3><figure><img src="shots/after-capsule-log.png" alt=""/><figcaption>Collapsed-by-default capsule field after the notes</figcaption></figure></div>
+  </div>
+  <div class="ba">
+    <div class="col before"><h3>Before</h3><figure><img src="shots/home.png" alt=""/><figcaption>Memory card today — facts only</figcaption></figure></div>
+    <div class="col after"><h3>After</h3><figure><img src="shots/after-capsule-home.png" alt=""/><figcaption>One year later: your own words inside the memory card</figcaption></figure></div>
+  </div>
+</section>
+
+</body>
+</html>

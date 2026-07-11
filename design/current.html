@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Us — Current design catalog</title>
+<style>
+  :root { --ink:#2b2230; --muted:#7a6f80; --accent:#e8577e; --line:#eadfe8; }
+  body { font:15px/1.55 system-ui, sans-serif; color:var(--ink); background:#faf6f9; margin:0; padding:32px 20px 80px; }
+  header.page { max-width:1080px; margin:0 auto 36px; }
+  h1 { font-size:28px; margin:0 0 6px; } h1 .heart { color:var(--accent); }
+  .sub { color:var(--muted); max-width:70ch; }
+  section.view { max-width:1080px; margin:0 auto 56px; border-top:1px solid var(--line); padding-top:28px; }
+  h2 { font-size:20px; margin:0 0 4px; }
+  .crumb { font-size:13px; color:var(--accent); font-weight:600; letter-spacing:.5px; text-transform:uppercase; }
+  .pair { display:flex; gap:28px; flex-wrap:wrap; align-items:flex-start; margin-top:16px; }
+  figure { margin:0; flex:0 0 300px; }
+  figure img { width:300px; border-radius:18px; border:1px solid var(--line); box-shadow:0 10px 30px rgba(60,20,50,.12); display:block; }
+  figcaption { font-size:12px; color:var(--muted); margin-top:6px; text-align:center; }
+  .notes { flex:1; min-width:280px; }
+  .notes ul { padding-left:18px; margin:8px 0; }
+  .notes li { margin:6px 0; }
+  .notes b { color:var(--accent); }
+  .tip { background:#fff; border:1px solid var(--line); border-left:3px solid var(--accent); border-radius:8px; padding:10px 14px; font-size:13.5px; color:var(--muted); margin-top:12px; }
+</style>
+</head>
+<body>
+
+<header class="page">
+  <h1>Us <span class="heart">♥</span> — current design catalog</h1>
+  <p class="sub">Every page and view of the app as it looks today (Sticker Book theme, Plum — the default).
+  Screenshots are captured from the real app with demo data via <code>node design/capture.mjs</code>
+  (needs the dev server running); re-run it after UI changes to refresh this catalog.</p>
+</header>
+
+<section class="view">
+  <span class="crumb">Tab 1 · Home</span>
+  <h2>Home — tonight's pick, memories, recent dates</h2>
+  <div class="pair">
+    <figure><img src="shots/home.png" alt="Home tab"/><figcaption>Home tab</figcaption></figure>
+    <div class="notes"><ul>
+      <li><b>App chrome</b> — the "Us ♥" header, ⋯ menu button and the four pill tabs (Home / Album / Ideas / Stats) are sticky; they stay visible while scrolling.</li>
+      <li><b>Tonight's pick</b> — the top result from the suggestion engine, with a sticker tag ("favorite ♥" or "new!") and the reason it was picked. "Plan it →" jumps to the Ideas tab.</li>
+      <li><b>On this day</b> — memory card shown when a past date matches today's month/day in a prior year; dismissible per session.</li>
+      <li><b>Recent memories</b> — the three latest entries with quick Edit/Delete.</li>
+      <li><b>＋ FAB</b> (bottom-right) opens the full-screen log sheet from any tab.</li>
+    </ul></div>
+  </div>
+</section>
+
+<section class="view">
+  <span class="crumb">Log sheet</span>
+  <h2>"New page!" — the log form (＋ button)</h2>
+  <div class="pair">
+    <figure><img src="shots/log.png" alt="Log sheet"/><figcaption>Full-screen log sheet</figcaption></figure>
+    <div class="notes"><ul>
+      <li>Opens as a <b>full-screen sheet</b> over any tab; ✕ closes without saving.</li>
+      <li>Fields top to bottom: title, <b>photo strip</b> (camera or gallery, downscaled to 1280px before storing), category chips (11), date, <b>enjoyment ★ 1–5</b>, mood/vibe chips (multi-select), effort 1–5, would-repeat, cost (with currency select), location, notes.</li>
+      <li>The same sheet is reused for <b>editing</b> an existing entry (title becomes "Edit date", adds Cancel).</li>
+    </ul></div>
+  </div>
+</section>
+
+<section class="view">
+  <span class="crumb">Tab 2 · Album</span>
+  <h2>Album — browse, search, filter</h2>
+  <div class="pair">
+    <figure><img src="shots/history-list.png" alt="Album list view"/><figcaption>List view (default)</figcaption></figure>
+    <figure><img src="shots/history-detail.png" alt="Expanded entry"/><figcaption>Entry expanded in place</figcaption></figure>
+    <div class="notes"><ul>
+      <li><b>Controls card</b>: sort select (date / enjoyment / cost / title), List ⇄ Gallery toggle, ▶ Slideshow, free-text search, and collapsible Category + Vibe filter groups with badges.</li>
+      <li>Tapping a row <b>expands it in place</b>: mood tags, effort dots, repeat answer, location, notes, photos, Edit/Delete.</li>
+      <li>The count under the filters ("19 dates") tracks the active filter.</li>
+    </ul></div>
+  </div>
+  <div class="pair">
+    <figure><img src="shots/history-gallery.png" alt="Gallery view"/><figcaption>Gallery view — one tile per photo</figcaption></figure>
+    <figure><img src="shots/lightbox.png" alt="Lightbox"/><figcaption>Lightbox (tap a tile); ▶ Slideshow auto-advances highlights</figcaption></figure>
+    <div class="notes"><ul>
+      <li><b>Gallery view</b> flattens every photo of the filtered entries into a grid with the entry title as caption.</li>
+      <li>Tapping a tile opens the <b>lightbox</b> with swipe/arrow navigation.</li>
+      <li><b>▶ Slideshow</b> plays a highlight reel (best-rated photo entries) with 5s auto-advance; tapping a slide opens that entry.</li>
+    </ul></div>
+  </div>
+</section>
+
+<section class="view">
+  <span class="crumb">Tab 3 · Ideas</span>
+  <h2>Ideas — the suggestion engine (UCB1 bandit)</h2>
+  <div class="pair">
+    <figure><img src="shots/suggest.png" alt="Ideas tab"/><figcaption>Ideas tab</figcaption></figure>
+    <div class="notes"><ul>
+      <li><b>Comfort ⇄ Adventure slider</b> — the explore parameter: left repeats favorites, right pushes unseen catalog ideas. Results always mix both.</li>
+      <li>Filters: <b>max budget</b>, <b>max effort</b>, category, vibe. "🎲 Surprise us" re-rolls with jitter; "📍 Find nearby" opens a maps search.</li>
+      <li>Each card: sticker ("Favorite"/"New"), reason line, category · est. cost · effort dots, and <b>"Log this when we do it →"</b> which pre-fills the log sheet.</li>
+      <li>Cards of past favorites show their photos.</li>
+    </ul></div>
+  </div>
+</section>
+
+<section class="view">
+  <span class="crumb">Tab 4 · Stats</span>
+  <h2>Stats — insights &amp; charts</h2>
+  <div class="pair">
+    <figure><img src="shots/insights.png" alt="Stats tab"/><figcaption>Stats tab (full scroll)</figcaption></figure>
+    <div class="notes"><ul>
+      <li><b>Stat grid</b>: dates logged, average enjoyment, total spent, categories tried.</li>
+      <li>Charts are hand-rolled inline SVG themed by CSS variables: <b>enjoyment by category</b> (bars), <b>your vibes</b> (mood frequency + per-mood detail list), <b>trend over time</b> (enjoyment line vs. date count), <b>enjoyment vs. cost</b> (scatter — "top-left = cheap &amp; wonderful").</li>
+      <li>Lists: <b>best value for money</b> and <b>most repeat-worthy</b> (repeats grouped by normalized title).</li>
+      <li><b>Adventure balance</b> donut: how many of the 11 categories you've tried, and how exploratory recent dates were.</li>
+    </ul></div>
+  </div>
+</section>
+
+<section class="view">
+  <span class="crumb">⋯ menu</span>
+  <h2>Menu sheet — themes, data, sync</h2>
+  <div class="pair">
+    <figure><img src="shots/menu.png" alt="Menu sheet"/><figcaption>Slide-up menu</figcaption></figure>
+    <div class="notes"><ul>
+      <li><b>Theme switch</b>: ☀️ Pink / 🍇 Plum (default) / 🌙 Navy.</li>
+      <li><b>Data</b>: export JSON backup, import/restore, 📷 import from photos (EXIF-dated triage), sample data, erase everything.</li>
+      <li><b>Sync</b> (rows appear per state): Google sign-in → create shared space / join with code → copy code, 🔔 push on partner's new dates, photo backfill, sign out. Local-only is the default; sync is opt-in.</li>
+      <li>💬 Send feedback posts to the feedback Worker (becomes a GitHub issue).</li>
+      <li>Footer shows the service-worker build version.</li>
+    </ul></div>
+  </div>
+</section>
+
+<section class="view">
+  <span class="crumb">Empty state</span>
+  <h2>First run — before any data</h2>
+  <div class="pair">
+    <figure><img src="shots/empty.png" alt="Empty first-run state"/><figcaption>Fresh install</figcaption></figure>
+    <div class="notes"><ul>
+      <li>Home shows only "Recent memories" with the 📭 empty card pointing at the ＋ button and the demo-data menu item.</li>
+      <li>Album and Stats have equivalent empty states; Ideas works from day one via the ~49-idea seed catalog.</li>
+      <li class="tip" style="list-style:none;margin-left:-18px">This cold-start blankness is what roadmap item #6 (photo import — shipped) and the remaining roadmap items chip away at.</li>
+    </ul></div>
+  </div>
+</section>
+
+</body>
+</html>

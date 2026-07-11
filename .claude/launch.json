@@ -6,6 +6,18 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "8137", "--bind", "127.0.0.1", "--directory", "T:\\programming\\claude\\DateAnalyze"],
       "port": 8137
+    },
+    {
+      "name": "web2",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8151", "--bind", "127.0.0.1", "--directory", "T:\\programming\\claude\\DateAnalyze"],
+      "port": 8151
+    },
+    {
+      "name": "web3",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8163", "--bind", "127.0.0.1", "--directory", "T:\\programming\\claude\\DateAnalyze"],
+      "port": 8163
     }
   ]
 }
