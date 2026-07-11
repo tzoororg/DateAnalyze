@@ -8,5 +8,5 @@
 // GP_PROXY: Cloudflare Worker route that relays photo bytes (googleusercontent
 //   requires an Authorization header and serves no CORS headers).
 
-export const GP_CLIENT_ID = "";
+export const GP_CLIENT_ID = "769027499995-1g3ae4pshhs55aohcv2uh8dkbiocd311.apps.googleusercontent.com";
 export const GP_PROXY = "https://dateanalyze-feedback.tzoororg.workers.dev/gphoto";
