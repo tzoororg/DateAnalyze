@@ -26,7 +26,11 @@ Every new feature or UI/UX modification starts as a static HTML mock **before** 
 
 Skip the mock only for pure logic/bugfix changes with no visible UI impact.
 
-**Service worker caching caveat:** During development, the SW caches aggressively. After changing files, either unregister the SW in DevTools → Application → Service Workers, or bump the `CACHE` version string in `sw.js`. When adding a new file, also add it to the `SHELL` array in `sw.js`.
+**Service worker caching caveat:** During development, the SW caches aggressively. After changing files, either unregister the SW in DevTools → Application → Service Workers, or bump the `CACHE` version string in `sw.js`. When adding a new file, also add it to the `SHELL` array in `sw.js`. A pre-commit hook in `hooks/pre-commit` bumps the version automatically when app shell files are committed (enable once per clone with `git config core.hooksPath hooks`) — if the hook is enabled, don't bump by hand.
+
+## Finishing a task (required)
+
+When a change is complete and verified, **commit and push without being asked**, in the same turn. The push is what deploys to GitHub Pages, and the phone only picks up the update if the SW `CACHE` version changed — so before committing, confirm the version bump happened (via the hook or by hand). Never end a task with unpushed app changes unless the user said to hold off.
 
 ## Architecture
 
