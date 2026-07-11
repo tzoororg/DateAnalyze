@@ -1,8 +1,8 @@
 // Cloud backend: Firebase (Auth + Firestore), loaded only when the user turns on
 // sync. Mirrors db.js's data interface so store.js can swap backends
-// transparently. Date/text data syncs via Firestore; photo blobs stay
-// device-local because the project is on the free Spark plan (no Cloud Storage).
-// See SYNC_PLAN.md for the full design.
+// transparently. Date/text data and photos both sync via Firestore — photos ride
+// as base64 docs (no Cloud Storage on the free Spark plan). See the photo section
+// below and SYNC_PLAN.md for the full design.
 
 import { firebaseConfig } from "./firebase-config.js";
 import * as local from "./db.js";
@@ -29,7 +29,8 @@ async function ensureFirebase() {
   if (sdk) return sdk;
   assertConfigured();
   // No firebase-storage: the project is on the free Spark plan, which doesn't
-  // include Cloud Storage, so photo blobs stay device-local (see photo section).
+  // include Cloud Storage. Photos sync as base64 Firestore docs instead (see
+  // the photo section below).
   const [appMod, authMod, fsMod] = await Promise.all([
     import(/* @vite-ignore */ `${CDN}/firebase-app.js`),
     import(/* @vite-ignore */ `${CDN}/firebase-auth.js`),
@@ -197,19 +198,90 @@ export async function getDate(id) {
 
 export async function deleteDate(id) {
   const entry = await getDate(id);
-  if (entry?.photos?.length) await Promise.all(entry.photos.map(pid => local.deletePhoto(pid)));
+  if (entry?.photos?.length) await Promise.all(entry.photos.map(pid => deletePhoto(pid)));
   await sdk.deleteDoc(sdk.doc(sdk.fs, "spaces", spaceId, "dates", id));
 }
 
-// ---- Photos: device-local only ----
-// The free Spark plan has no Cloud Storage, so photo blobs live in each device's
-// IndexedDB exactly as in local mode. A date doc's `photos[]` id list still syncs
-// via Firestore, so a partner sees the entry but not any photo they didn't add
-// themselves. (Upgrading to the Blaze plan + firebase-storage would let these
-// sync too — see the photo handling that lived here in git history.)
-export async function putPhoto(blob) { return local.putPhoto(blob); }
-export async function getPhoto(id) { return local.getPhoto(id); }
-export async function deletePhoto(id) { return local.deletePhoto(id); }
+// ---- Photos: base64 Firestore docs ----
+// No Cloud Storage on the free Spark plan, so each photo blob rides along as a
+// base64 field in its own doc under spaces/{spaceId}/photos/{photoId}. The id is
+// the same UUID already in date.photos[], so the date schema and UI are unchanged.
+// Photos aren't streamed by onSnapshot (that listens on `dates`); they're fetched
+// lazily on first view and cached in IndexedDB, mirroring the local-only path.
+// Firestore caps a doc at 1 MiB, so fitUnderLimit() re-encodes before writing.
+const MAX_PHOTO_BYTES = 900_000; // base64 length ceiling, safely under Firestore's 1 MiB doc cap
+
+async function uploadPhoto(id, blob) {
+  const fitted = await fitUnderLimit(blob);
+  const data = await blobToDataURL(fitted);
+  await sdk.setDoc(sdk.doc(sdk.fs, "spaces", spaceId, "photos", id),
+    { data, mime: fitted.type || "image/jpeg", createdAt: sdk.serverTimestamp() });
+  await local.cachePhoto(id, fitted); // warm local cache so the uploader sees it instantly
+}
+
+export async function putPhoto(blob) {
+  const id = crypto.randomUUID();
+  await uploadPhoto(id, blob);
+  return id;
+}
+
+export async function getPhoto(id) {
+  const cached = await local.getPhoto(id);
+  if (cached) return cached;
+  const snap = await sdk.getDoc(sdk.doc(sdk.fs, "spaces", spaceId, "photos", id));
+  if (!snap.exists()) return null;
+  const blob = await dataURLToBlob(snap.data().data);
+  await local.cachePhoto(id, blob);
+  return blob;
+}
+
+export async function deletePhoto(id) {
+  await sdk.deleteDoc(sdk.doc(sdk.fs, "spaces", spaceId, "photos", id));
+  await local.deletePhoto(id);
+}
+
+// Retroactive backfill: push every photo blob that lives only in this device's
+// IndexedDB up to the shared space, reusing its existing id (idempotent — setDoc
+// overwrites). Run once per phone; the partner then lazy-fetches what it was
+// missing. Photos whose only copy is on the other phone come from that phone.
+export async function backfillPhotos(onProgress) {
+  const dates = await getAllDates();
+  const jobs = [];
+  for (const d of dates) {
+    for (const id of (d.photos || [])) {
+      const blob = await local.getPhoto(id);
+      if (blob) jobs.push({ id, blob });
+    }
+  }
+  let done = 0;
+  for (const { id, blob } of jobs) { // ponytail: serial; a couple's few hundred photos, no need to batch
+    await uploadPhoto(id, blob);
+    onProgress?.(++done, jobs.length);
+  }
+  return done;
+}
+
+// Re-encode until the base64 payload fits under a Firestore doc. Only the cloud
+// path uses this; local-mode photo quality is untouched. Reuses the canvas
+// downscale approach from ui.js but keeps sync.js dependency-free.
+async function fitUnderLimit(blob) {
+  const b64len = b => Math.ceil(b.size / 3) * 4; // exact base64 char count for a blob
+  if (b64len(blob) <= MAX_PHOTO_BYTES) return blob;
+  const bitmap = await createImageBitmap(blob);
+  for (const dim of [1280, 1024, 800]) {
+    for (const q of [0.82, 0.7, 0.6]) {
+      const scale = Math.min(1, dim / Math.max(bitmap.width, bitmap.height));
+      const w = Math.round(bitmap.width * scale), h = Math.round(bitmap.height * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = w; canvas.height = h;
+      canvas.getContext("2d").drawImage(bitmap, 0, 0, w, h);
+      const out = await new Promise(res => canvas.toBlob(res, "image/jpeg", q));
+      if (out && b64len(out) <= MAX_PHOTO_BYTES) { bitmap.close?.(); return out; }
+    }
+  }
+  bitmap.close?.();
+  throw new Error("Photo too large to sync even after re-encoding");
+}
 
 export async function exportAll() {
   const dates = await getAllDates();
@@ -229,7 +301,7 @@ export async function importAll(payload, { merge = true } = {}) {
   const photos = payload.photos || {};
   for (const [pid, dataUrl] of Object.entries(photos)) {
     const blob = await dataURLToBlob(dataUrl);
-    await local.cachePhoto(pid, blob);
+    await uploadPhoto(pid, blob); // land imported photos in the shared space, not just locally
   }
   for (const d of payload.dates) await putDate(d);
   return payload.dates.length;
@@ -242,11 +314,16 @@ export async function wipeAll() {
 }
 
 // Push existing local-only data up into a freshly created space (creator only;
-// joiners never auto-push, to avoid duplicating the partner's data). Photo blobs
-// already live in this device's IndexedDB and stay there; only the date docs
-// (with their photos[] id lists) go up to Firestore.
+// joiners never auto-push, to avoid duplicating the partner's data). Both the date
+// docs and their photo blobs go up, so the partner sees the full history.
 export async function migrateLocalData(localDates) {
-  for (const entry of localDates) await putDate(entry);
+  for (const entry of localDates) {
+    await putDate(entry);
+    for (const id of (entry.photos || [])) {
+      const blob = await local.getPhoto(id);
+      if (blob) await uploadPhoto(id, blob);
+    }
+  }
 }
 
 function blobToDataURL(blob) {

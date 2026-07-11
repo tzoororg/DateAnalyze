@@ -68,6 +68,7 @@ function wireChrome() {
   document.getElementById("syncJoinBtn").addEventListener("click", onSyncJoin);
   document.getElementById("syncCopyCodeBtn").addEventListener("click", onSyncCopyCode);
   document.getElementById("syncNotifyBtn").addEventListener("click", onSyncNotify);
+  document.getElementById("syncBackfillBtn").addEventListener("click", onSyncBackfill);
   document.getElementById("syncSignOutBtn").addEventListener("click", onSyncSignOut);
   renderSyncStatus();
 }
@@ -90,6 +91,7 @@ async function renderSyncStatus() {
   const join = document.getElementById("syncJoinBtn");
   const copyCode = document.getElementById("syncCopyCodeBtn");
   const notify = document.getElementById("syncNotifyBtn");
+  const backfill = document.getElementById("syncBackfillBtn");
   const signOut = document.getElementById("syncSignOutBtn");
   const mode = db.getMode();
   const user = db.getUser();
@@ -103,6 +105,7 @@ async function renderSyncStatus() {
     signIn.classList.add("hidden"); create.classList.add("hidden"); join.classList.add("hidden");
     copyCode.classList.toggle("hidden", !lastInviteCode);
     notify.classList.remove("hidden");
+    backfill.classList.remove("hidden");
     signOut.classList.remove("hidden");
   } else if (user) {
     status.textContent = `Signed in as ${user.email} — set up a shared space:`;
@@ -110,12 +113,14 @@ async function renderSyncStatus() {
     signIn.classList.add("hidden"); create.classList.remove("hidden"); join.classList.remove("hidden");
     copyCode.classList.add("hidden");
     notify.classList.add("hidden");
+    backfill.classList.add("hidden");
     signOut.classList.remove("hidden");
   } else {
     status.classList.add("hidden");
     signIn.classList.remove("hidden"); create.classList.add("hidden"); join.classList.add("hidden");
     copyCode.classList.add("hidden");
     notify.classList.add("hidden");
+    backfill.classList.add("hidden");
     signOut.classList.add("hidden");
   }
 }
@@ -125,6 +130,17 @@ async function onSyncNotify() {
     const { msg } = await push.enablePush();
     toast(msg);
   } catch (err) { console.error(err); toast("Couldn't turn on notifications"); }
+}
+
+async function onSyncBackfill() {
+  const btn = document.getElementById("syncBackfillBtn");
+  btn.disabled = true;
+  toast("Uploading photos…");
+  try {
+    const n = await db.backfillPhotos((done, total) => { btn.textContent = `🖼️ Uploading ${done}/${total}…`; });
+    toast(n ? `Uploaded ${n} photo${n > 1 ? "s" : ""} to your partner` : "No local photos to upload");
+  } catch (err) { console.error(err); toast(err.message || "Couldn't upload photos"); }
+  finally { btn.disabled = false; btn.textContent = "🖼️ Sync my photos to partner"; }
 }
 
 async function onSyncCopyCode() {

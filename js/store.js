@@ -96,6 +96,9 @@ export async function getPushToken(vapidKey, swReg) { return cloud ? cloud.getPu
 export async function setMyPushToken(token) { return cloud ? cloud.setMyPushToken(token) : null; }
 export async function getPartnerTokens() { return cloud && mode === "cloud" ? cloud.getPartnerTokens() : []; }
 
+// Retroactively upload this device's local photos to the shared space (cloud-only).
+export async function backfillPhotos(onProgress) { return mode === "cloud" ? cloud.backfillPhotos(onProgress) : 0; }
+
 // Settings always stay local — see file header.
 export async function getSetting(key, fallback = null) { return local.getSetting(key, fallback); }
 export async function setSetting(key, value) { return local.setSetting(key, value); }

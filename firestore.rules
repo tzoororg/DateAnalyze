@@ -22,6 +22,9 @@ service cloud.firestore {
       match /dates/{dateId} {
         allow read, write: if isMember(spaceId);
       }
+      match /photos/{photoId} {
+        allow read, write: if isMember(spaceId);
+      }
     }
   }
 }
