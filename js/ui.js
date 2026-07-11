@@ -27,7 +27,7 @@ export async function init() {
   wireChrome();
   wireIdle();
   // A notification tap opens the app at #history (see sw.js notificationclick).
-  show(location.hash === "#history" ? "history" : (localStorage.getItem("activeTab") || "home"));
+  show(location.hash === "#history" ? "history" : "home");
   refreshRates(db.getSetting, db.setSetting);
   db.subscribe(onRemoteChange);
   push.refreshToken();
@@ -219,7 +219,6 @@ async function onSyncSignOut() {
 function show(tab) {
   if (!["home", "history", "insights", "suggest"].includes(tab)) tab = "home"; // migrates stale "log"
   currentTab = tab;
-  localStorage.setItem("activeTab", tab);
   document.querySelectorAll(".tab").forEach(b =>
     b.setAttribute("aria-selected", String(b.dataset.tab === tab)));
   if (tab === "home") renderHome();
@@ -235,7 +234,6 @@ function renderHome() {
   const v = viewEl();
   const top = suggest(dates, { explore: 0.5 })[0];
   const memories = !memoryDismissed ? A.onThisDay(dates) : [];
-  const s = A.summary(dates);
   const memoryCard = memories.length ? `
     <section class="card memory-card">
       <div class="memory-header">
@@ -268,13 +266,6 @@ function renderHome() {
     ${memoryCard}
     <h3 class="section-title">Recent memories</h3>
     <div id="date-list"></div>
-    ${dates.length ? `
-    <h3 class="section-title">Our story so far</h3>
-    <div class="stat-grid trio">
-      <div class="stat"><div class="num">${s.count}</div><div class="lbl">Dates</div></div>
-      <div class="stat"><div class="num">${s.avgEnjoyment.toFixed(1)}★</div><div class="lbl">Avg joy</div></div>
-      <div class="stat"><div class="num">${s.distinctCategories}/${s.totalCategories}</div><div class="lbl">Categories</div></div>
-    </div>` : ""}
   `;
   bind("home-plan", "click", () => show("suggest"));
   bind("memory-dismiss", "click", () => { memoryDismissed = true; renderHome(); });

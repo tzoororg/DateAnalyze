@@ -18,20 +18,22 @@
       document.querySelector('meta[name="theme-color"]').setAttribute("content", c);
     })();
   </script>
-  <link rel="stylesheet" href="css/styles.css?v=24" />
+  <link rel="stylesheet" href="css/styles.css?v=25" />
 </head>
 <body>
-  <header class="app-header">
-    <h1 class="app-title">Us <span class="heart">♥</span></h1>
-    <button id="menuBtn" class="icon-btn" aria-label="Menu">⋯</button>
-  </header>
+  <div class="app-chrome">
+    <header class="app-header">
+      <h1 class="app-title">Us <span class="heart">♥</span></h1>
+      <button id="menuBtn" class="icon-btn" aria-label="Menu">⋯</button>
+    </header>
 
-  <nav class="tabbar" role="tablist">
-    <button class="tab" data-tab="home" role="tab" aria-selected="true">Home</button>
-    <button class="tab" data-tab="history" role="tab" aria-selected="false">Album</button>
-    <button class="tab" data-tab="suggest" role="tab" aria-selected="false">Ideas</button>
-    <button class="tab" data-tab="insights" role="tab" aria-selected="false">Stats</button>
-  </nav>
+    <nav class="tabbar" role="tablist">
+      <button class="tab" data-tab="home" role="tab" aria-selected="true">Home</button>
+      <button class="tab" data-tab="history" role="tab" aria-selected="false">Album</button>
+      <button class="tab" data-tab="suggest" role="tab" aria-selected="false">Ideas</button>
+      <button class="tab" data-tab="insights" role="tab" aria-selected="false">Stats</button>
+    </nav>
+  </div>
 
   <main id="view" class="view"><!-- active tab renders here --></main>
 
