@@ -16,6 +16,16 @@ Open http://localhost:8000 in Chrome. Use DevTools device toolbar for mobile pre
 
 There is no build, lint, or test command. To populate the app with demo data: **⋯ menu → Add sample dates**.
 
+## Design-first workflow (required)
+
+Every new feature or UI/UX modification starts as a static HTML mock **before** touching app code:
+
+1. Create/update a mock in `design/` (a standalone HTML file styled like the app — see `design/roadmap.html` for the pattern) showing the proposed change.
+2. Share it with the user as screenshots (render the HTML and capture, or use `design/capture.mjs` for app views) and discuss/tune the design iteratively.
+3. Only after the user approves the mock, implement it in the real app.
+
+Skip the mock only for pure logic/bugfix changes with no visible UI impact.
+
 **Service worker caching caveat:** During development, the SW caches aggressively. After changing files, either unregister the SW in DevTools → Application → Service Workers, or bump the `CACHE` version string in `sw.js`. When adding a new file, also add it to the `SHELL` array in `sw.js`.
 
 ## Architecture
