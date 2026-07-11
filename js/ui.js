@@ -400,7 +400,7 @@ function wireForm() {
 
   bind("f-save", "click", saveDraft);
   const cancel = v.querySelector("#f-cancel");
-  if (cancel) cancel.addEventListener("click", () => { resetDraft(); closeLogSheet(); });
+  if (cancel) cancel.addEventListener("click", () => { gpModule?.cancelPick(); resetDraft(); closeLogSheet(); });
 }
 
 async function renderPhotoStrip() {
@@ -427,6 +427,7 @@ async function renderPhotoStrip() {
     menu.classList.add("hidden");
     const v = formEl();
     if (item.dataset.src === "camera") v.querySelector("#f-photo-camera").click();
+    else if (item.dataset.src === "google") pickGooglePhotos();
     else v.querySelector("#f-photo-gallery").click();
   });
   document.addEventListener("click", e => {
@@ -438,17 +439,34 @@ async function renderPhotoStrip() {
   }));
 }
 
+async function addPhotoBlob(file) {
+  const blob = await downscale(file, 1280, 0.82);
+  const id = await db.putPhoto(blob);
+  draft.photos.push(id);
+}
+
 async function onPhotoPick(e) {
   const files = [...e.target.files];
   e.target.value = "";
   for (const file of files) {
-    try {
-      const blob = await downscale(file, 1280, 0.82);
-      const id = await db.putPhoto(blob);
-      draft.photos.push(id);
-    } catch (err) { console.error(err); toast("Couldn't add photo"); }
+    try { await addPhotoBlob(file); }
+    catch (err) { console.error(err); toast("Couldn't add photo"); }
   }
   renderPhotoStrip();
+}
+
+// Google Photos Picker — cloud photos the file input can't see. Lazy-loaded.
+let gpModule = null;
+async function pickGooglePhotos() {
+  try {
+    gpModule = gpModule || await import("./gphotos.js");
+    if (!gpModule.isConfigured()) { toast("Google Photos isn't set up yet"); return; }
+    const n = await gpModule.pickFromGooglePhotos(async blob => {
+      await addPhotoBlob(blob);
+      await renderPhotoStrip();
+    }, toast);
+    toast(n ? `Added ${n} photo${n > 1 ? "s" : ""} from Google Photos` : "No photos picked");
+  } catch (err) { console.error(err); toast(err.message || "Google Photos failed"); }
 }
 
 async function saveDraft() {

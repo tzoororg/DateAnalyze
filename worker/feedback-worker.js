@@ -16,6 +16,9 @@ const MAX_BODY_BYTES = 8 * 1024 * 1024;    // ~8MB guard (photos are downscaled 
 
 export default {
   async fetch(request, env) {
+    const url = new URL(request.url);
+    if (url.pathname === "/gphoto") return gphotoProxy(request, url);
+
     const origin = env.ALLOWED_ORIGIN || "*";
     const cors = {
       "Access-Control-Allow-Origin": origin,
@@ -89,6 +92,36 @@ export default {
     return json({ number: issue.number, url: issue.html_url }, 201, cors);
   },
 };
+
+// Image relay for the Google Photos Picker API: googleusercontent requires an
+// Authorization header and serves no CORS headers, so the app can't fetch picked
+// photo bytes directly — it fetches them through here instead.
+// ponytail: no extra auth gate — the caller must already hold a valid Google
+// bearer token for their own photos, so the proxy adds no access it didn't have.
+async function gphotoProxy(request, url) {
+  const cors = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, OPTIONS",
+    "Access-Control-Allow-Headers": "Authorization",
+    "Access-Control-Max-Age": "86400",
+  };
+  if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
+  if (request.method !== "GET") return json({ error: "method not allowed" }, 405, cors);
+
+  let target;
+  try { target = new URL(url.searchParams.get("u")); } catch { return json({ error: "bad url" }, 400, cors); }
+  if (target.protocol !== "https:" || !target.hostname.endsWith(".googleusercontent.com")) {
+    return json({ error: "bad host" }, 400, cors);
+  }
+  const auth = request.headers.get("Authorization");
+  if (!auth) return json({ error: "missing token" }, 401, cors);
+
+  const res = await fetch(target, { headers: { Authorization: auth } });
+  return new Response(res.body, {
+    status: res.status,
+    headers: { "Content-Type": res.headers.get("Content-Type") || "image/jpeg", ...cors },
+  });
+}
 
 function ghFetch(token) {
   return (path, init = {}) =>

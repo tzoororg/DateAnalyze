@@ -1,7 +1,7 @@
 // Service worker: cache the app shell so the app opens & runs fully offline.
 // User data lives in IndexedDB (not here), so bumping CACHE only refreshes code/assets.
 
-const CACHE = "us-date-tracker-v27";
+const CACHE = "us-date-tracker-v28";
 const SHELL = [
   "./",
   "./index.html",
@@ -19,6 +19,8 @@ const SHELL = [
   "./js/suggest.js",
   "./js/exif.js",
   "./js/sample.js",
+  "./js/gphotos.js",
+  "./js/gphotos-config.js",
   "./js/feedback.js",
   "./js/feedback-config.js",
   "./js/push.js",

@@ -88,7 +88,43 @@ try {
   const inHist = await t.evaluate(`document.querySelector("#view").innerText.includes("Smoke Test Date")`);
   check("logged date appears in history", inHist);
 
-  // 9. no console errors anywhere
+  // 9. Google Photos pick, fully mocked: stub GIS + the picker/proxy endpoints,
+  // click the menu item, and assert a photo lands in the strip. Exercises
+  // token → session → poll → list → proxy download → downscale → IDB → render.
+  t = await shotTab("home");
+  await t.evaluate(`{
+    window.__gpClientId = "test-client";
+    window.open = () => null;
+    window.google = { accounts: { oauth2: { initTokenClient: cfg => ({
+      requestAccessToken: () => cfg.callback({ access_token: "fake", expires_in: 3600 }),
+    }) } } };
+    const real = window.fetch.bind(window);
+    const j = o => new Response(JSON.stringify(o), { headers: { "Content-Type": "application/json" } });
+    const mkBlob = () => new Promise(r => {
+      const c = document.createElement("canvas"); c.width = c.height = 8;
+      c.getContext("2d").fillRect(0, 0, 8, 8); c.toBlob(r, "image/jpeg");
+    });
+    window.fetch = async (input, init) => {
+      const u = String(input.url || input);
+      if (u.includes("photospicker.googleapis.com/v1/sessions") && init?.method === "POST")
+        return j({ id: "s1", pickerUri: "https://photos.google.com/pick", pollingConfig: { pollInterval: "0.1s", timeoutIn: "60s" } });
+      if (u.includes("/v1/sessions/s1")) return j({ mediaItemsSet: true });
+      if (u.includes("/v1/mediaItems"))
+        return j({ mediaItems: [{ type: "PHOTO", mediaFile: { baseUrl: "https://lh3.googleusercontent.com/pic" } }] });
+      if (u.includes("/gphoto?")) return new Response(await mkBlob());
+      return real(input, init);
+    };
+  }`);
+  await t.evaluate(`document.querySelector("#fab").click()`);
+  await t.waitFor(`!document.getElementById("logSheet").classList.contains("hidden")`);
+  await t.evaluate(`document.getElementById("f-add-photo").click()`);
+  await t.evaluate(`document.querySelector('#f-photo-menu [data-src="google"]').click()`);
+  await t.waitFor(`document.querySelectorAll("#f-photos .photo-thumb").length === 1`);
+  check("google photos pick adds a photo to the strip", true);
+  const gpThumbSrc = await t.evaluate(`document.querySelector("#f-photos .photo-thumb img")?.src || ""`);
+  check("google photo stored in IndexedDB (blob url)", gpThumbSrc.startsWith("blob:"), gpThumbSrc);
+
+  // 10. no console errors anywhere
   for (const { state, tab } of tabs) {
     check(`no console errors [${state}]`, tab.errors.length === 0, tab.errors.slice(0, 2).join(" | "));
   }
