@@ -475,6 +475,8 @@ async function saveDraft() {
   if (draft.cost != null) draft.cost = toILS(draft.cost, costCurrency);
   const isNew = !editingId;
   if (isNew) draft.createdAt = Date.now();
+  // attribute the form's enjoyment score to me as a per-person rating (see resolveRatings)
+  draft.ratings = { ...(draft.ratings || {}), [myKey()]: draft.enjoyment };
   await db.putDate(draft);
   if (isNew) push.sendNewDatePush(draft.title); // fire-and-forget; no-op unless syncing
   await reload();
@@ -513,30 +515,80 @@ async function renderList() {
     return;
   }
   const sorted = [...dates].sort((a, b) => entryTimeMs(b) - entryTimeMs(a)).slice(0, 3);
-  host.innerHTML = sorted.map(e => `
-    <div class="card tight">
-      <div class="entry">
-        <div class="thumb" data-thumb="${e.photos?.[0] || ""}">${catEmoji(e.category)}</div>
-        <div class="meta">
+  host.innerHTML = sorted.map(e => {
+    const { lines, mineRated } = resolveRatings(e);
+    const mine = lines.find(l => l.mine);
+    const partner = lines.find(l => !l.mine && l.name);
+    const legacy = lines.find(l => l.key === null);
+    // stars duo: my line (or nudge if only partner rated), partner line
+    let duo = "";
+    if (mine) duo += `<div><span class="who me">${escHtml(mine.initial)}</span>${starStr(mine.value)}</div>`;
+    else if (partner && !mineRated) duo += `<div class="rate-nudge">+ add your stars</div>`;
+    if (partner) duo = `<div><span class="who them">${escHtml(partner.initial)}</span>${starStr(partner.value)}</div>` + duo;
+    if (!mine && !partner && legacy) duo = `<div>${starStr(legacy.value)}</div>`;
+
+    const peek = (e.comments && e.comments.length) ? (() => {
+      const c = e.comments[e.comments.length - 1];
+      const ini = c.author === myKey() ? myInitial() : (c.name?.[0]?.toUpperCase() || "P");
+      return `<div class="comment-peek">💬 ${escHtml(ini)}: ${escHtml(c.text)}</div>`;
+    })() : "";
+
+    return `
+    <div class="card home-card" data-open="${e.id}">
+      <div class="home-photos" data-photos="${(e.photos || []).join(",")}" data-cat="${e.category}"></div>
+      <div class="home-body">
+        <div class="grow">
           <h4>${escHtml(e.title)}</h4>
-          <div class="sub">${fmtDate(e.date)} · ${catLabel(e.category)} · ${fmtMoney(e.cost)}</div>
+          <div class="sub">${fmtDate(e.date)} · ${catLabel(e.category)}</div>
         </div>
-        <div class="score">${"★".repeat(e.enjoyment)}</div>
+        <div class="stars-duo">${duo}</div>
+        <span class="chev">›</span>
       </div>
-      <div class="btn-row" style="margin-top:10px">
-        <button class="btn ghost" data-edit="${e.id}">Edit</button>
-        <button class="btn ghost" data-del="${e.id}">Delete</button>
-      </div>
-    </div>`).join("");
-  host.querySelectorAll("[data-edit]").forEach(b => b.addEventListener("click", () => editEntry(b.dataset.edit)));
-  host.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", () => removeEntry(b.dataset.del)));
-  // fill first-photo thumbnails
-  host.querySelectorAll("[data-thumb]").forEach(async el => {
-    const id = el.dataset.thumb;
-    if (!id) return;
-    const url = await photoURL(id);
-    if (url) el.innerHTML = `<img src="${url}" alt=""/>`;
-  });
+      ${peek}
+    </div>`;
+  }).join("");
+  host.querySelectorAll("[data-open]").forEach(card =>
+    card.addEventListener("click", () => openEntry(card.dataset.open)));
+  host.querySelectorAll("[data-photos]").forEach(el => fillMosaic(el, el.dataset.photos.split(",").filter(Boolean), el.dataset.cat, false));
+}
+
+// Fills a mosaic container: 1 big + up to 2 small (with "+N"), single photo = banner,
+// two = 50/50, zero = emoji banner. `detail` uses the even 2-col grid look (Album).
+async function fillMosaic(el, ids, cat, detail) {
+  if (!ids.length) {
+    el.className = detail ? "detail-mosaic empty" : "home-banner";
+    el.innerHTML = catEmoji(cat);
+    return;
+  }
+  const urls = (await Promise.all(ids.map(id => photoURL(id)))).filter(Boolean);
+  if (!urls.length) { el.className = detail ? "detail-mosaic empty" : "home-banner"; el.innerHTML = catEmoji(cat); return; }
+
+  if (detail) {
+    // even 2-col grid, max 4 tiles, "+N" on the 4th
+    const shown = urls.slice(0, 4);
+    el.className = "mosaic two detail-mosaic";
+    el.innerHTML = shown.map((u, i) => {
+      const more = i === 3 && urls.length > 4 ? `<span class="more-badge">+${urls.length - 4}</span>` : "";
+      return `<div class="ph"><img src="${u}" alt=""/>${more}</div>`;
+    }).join("");
+    return;
+  }
+
+  // Home: 1 photo = banner, 2 = 50/50, 3+ = 1 big + 2 small with "+N"
+  if (urls.length === 1) {
+    el.className = "mosaic one";
+    el.innerHTML = `<div class="ph"><img src="${urls[0]}" alt=""/></div>`;
+  } else if (urls.length === 2) {
+    el.className = "mosaic two";
+    el.innerHTML = urls.map(u => `<div class="ph"><img src="${u}" alt=""/></div>`).join("");
+  } else {
+    el.className = "mosaic";
+    const shown = urls.slice(0, 3);
+    el.innerHTML = shown.map((u, i) => {
+      const more = i === 2 && urls.length > 3 ? `<span class="more-badge">+${urls.length - 3}</span>` : "";
+      return `<div class="ph"><img src="${u}" alt=""/>${more}</div>`;
+    }).join("");
+  }
 }
 
 // ---------- HISTORY tab ----------
@@ -721,54 +773,132 @@ async function renderHistoryList() {
           <h4>${escHtml(e.title)}</h4>
           <div class="sub">${fmtDate(e.date)} · ${catLabel(e.category)}${e.cost != null ? " · " + fmtMoney(e.cost) : ""}</div>
         </div>
-        <div class="score">${"★".repeat(e.enjoyment)}</div>
+        ${isOpen
+          ? `<button class="kebab" data-kebab="${e.id}">⋯</button>`
+          : `<div class="score">${"★".repeat(e.enjoyment)}</div>`}
       </div>
-      ${isOpen ? `
-      <div class="hist-detail">
-        <div class="hist-detail-grid">
-          ${Array.isArray(e.mood) && e.mood.length ? `<div style="grid-column:1/-1"><span class="muted small">Mood</span><br/>${e.mood.map(k => { const m = MOOD_OPTIONS.find(o => o.key === k); return m ? `<span class="mood-tag">${m.emoji} ${m.label}</span>` : ""; }).filter(Boolean).join("")}</div>` : ""}
-          <div><span class="muted small">Effort</span><br/>${"●".repeat(e.effort)}${"○".repeat(5 - e.effort)}</div>
-          <div><span class="muted small">Repeat?</span><br/>${e.wouldRepeat === "yes" ? "Yes!" : e.wouldRepeat === "maybe" ? "Maybe" : "No"}</div>
-          ${e.location ? `<div><span class="muted small">Location</span><br/>${escHtml(e.location)}</div>` : ""}
-        </div>
-        ${e.notes ? `<p class="hist-notes">${escHtml(e.notes)}</p>` : ""}
-        <div class="hist-photos" data-hist-photos="${(e.photos || []).join(",")}"></div>
-        <div class="btn-row" style="margin-top:10px">
-          <button class="btn ghost" data-edit="${e.id}">Edit</button>
-          <button class="btn ghost" data-del="${e.id}">Delete</button>
-        </div>
-      </div>` : ""}
+      ${isOpen ? histDetail(e) : ""}
     </div>`;
   }).join("");
 
-  // wire expand/collapse
-  host.querySelectorAll("[data-toggle]").forEach(row => row.addEventListener("click", () => {
+  // wire expand/collapse (ignore taps inside the open detail)
+  host.querySelectorAll("[data-toggle]").forEach(row => row.addEventListener("click", e => {
+    if (e.target.closest(".kebab")) return;
     hist.expanded = hist.expanded === row.dataset.toggle ? null : row.dataset.toggle;
     renderHistoryList();
   }));
-  // wire edit/delete
-  host.querySelectorAll("[data-edit]").forEach(b => b.addEventListener("click", e => { e.stopPropagation(); editEntry(b.dataset.edit); }));
-  host.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", async e => {
-    e.stopPropagation();
-    await removeEntry(b.dataset.del);
-    hist.expanded = null;
-    renderHistoryList();
-  }));
-  // load thumbnails
-  host.querySelectorAll("[data-thumb]").forEach(async el => {
+  wireHistDetail(host);
+  // load collapsed-row thumbnails
+  host.querySelectorAll(".hist-row [data-thumb]").forEach(async el => {
     const id = el.dataset.thumb;
     if (!id) return;
     const url = await photoURL(id);
     if (url) el.innerHTML = `<img src="${url}" alt=""/>`;
   });
-  // load detail photos
+}
+
+function histDetail(e) {
+  const { lines, mineRated } = resolveRatings(e);
+  const rateLines = lines.map(l => `
+    <div class="rate-line">
+      ${l.initial === "★" ? "" : `<span class="who ${l.mine ? "me" : "them"}">${escHtml(l.initial)}</span>`}
+      ${l.name ? `<span class="name">${escHtml(l.name)}</span>` : ""}
+      <span class="stars">${starStr(l.value)}</span>
+    </div>`).join("");
+  const rateInput = mineRated ? "" : `
+    <div class="rate-line">
+      <span class="who me">${escHtml(myInitial())}</span><span class="name">You</span>
+      <span class="big-stars" data-rate="${e.id}">${[1, 2, 3, 4, 5].map(n => `<span class="rk off" data-k="${n}">★</span>`).join("")}</span>
+    </div>
+    <div class="muted small" style="margin-left:30px">tap to rate</div>`;
+
+  const chips = [];
+  if (Array.isArray(e.mood)) e.mood.forEach((k, i) => {
+    const m = MOOD_OPTIONS.find(o => o.key === k);
+    if (m) chips.push(`<span class="chip ${i % 2 ? "butter" : "mint"}">${m.emoji} ${escHtml(m.label)}</span>`);
+  });
+  if (e.effort) chips.push(`<span class="chip"><span class="dots">${"●".repeat(e.effort)}</span>${"○".repeat(5 - e.effort)} effort</span>`);
+  if (e.wouldRepeat) chips.push(`<span class="chip">${e.wouldRepeat === "yes" ? "🔁 would repeat" : e.wouldRepeat === "maybe" ? "🤔 maybe again" : "🚫 not again"}</span>`);
+  if (e.location) chips.push(`<span class="chip loc">📍 ${escHtml(e.location)}</span>`);
+
+  const comments = (e.comments || []).map(c => {
+    const isMine = c.author === myKey();
+    const ini = isMine ? myInitial() : (c.name?.[0]?.toUpperCase() || "P");
+    return `<div class="cmt">
+      <span class="who ${isMine ? "me" : "them"}">${escHtml(ini)}</span>
+      <div><div class="bubble">${escHtml(c.text)}</div><div class="when">${relTime(c.ts)}</div></div>
+    </div>`;
+  }).join("");
+
+  return `
+  <div class="hist-detail">
+    <div class="hist-photos mosaic-slot" data-hist-photos="${(e.photos || []).join(",")}" data-cat="${e.category}"></div>
+    <div class="rate-meta">
+      <div class="rate-col">${rateLines}${rateInput}</div>
+      ${chips.length ? `<div class="meta-col">${chips.join("")}</div>` : ""}
+    </div>
+    ${e.notes ? `<p class="notes">${escHtml(e.notes)}</p>` : ""}
+    <div class="comments">
+      <h5>Notes to each other 💬</h5>
+      ${comments}
+      <div class="cmt-input">
+        <input placeholder="Add a note…" data-cmt="${e.id}"/><button data-cmt-send="${e.id}">➤</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function wireHistDetail(host) {
+  // kebab popover menu
+  host.querySelectorAll("[data-kebab]").forEach(btn => btn.addEventListener("click", ev => {
+    ev.stopPropagation();
+    host.querySelectorAll(".menu-pop").forEach(m => m.remove());
+    const id = btn.dataset.kebab;
+    const pop = document.createElement("div");
+    pop.className = "menu-pop";
+    pop.innerHTML = `<div data-edit="${id}">✎ Edit</div><div class="danger" data-del="${id}">🗑 Delete</div>`;
+    btn.closest(".hist-entry").appendChild(pop);
+    pop.querySelector("[data-edit]").addEventListener("click", ev2 => { ev2.stopPropagation(); editEntry(id); });
+    pop.querySelector("[data-del]").addEventListener("click", async ev2 => {
+      ev2.stopPropagation();
+      await removeEntry(id);
+      hist.expanded = null;
+      renderHistoryList();
+    });
+    const close = ev2 => { if (!pop.contains(ev2.target) && ev2.target !== btn) { pop.remove(); document.removeEventListener("click", close); } };
+    setTimeout(() => document.addEventListener("click", close), 0);
+  }));
+
+  // tap-to-rate stars
+  host.querySelectorAll("[data-rate]").forEach(group => group.addEventListener("click", async ev => {
+    const star = ev.target.closest("[data-k]"); if (!star) return;
+    ev.stopPropagation();
+    await saveMyRating(group.dataset.rate, Number(star.dataset.k));
+    renderHistoryList();
+  }));
+
+  // comments
+  host.querySelectorAll("[data-cmt-send]").forEach(btn => btn.addEventListener("click", async ev => {
+    ev.stopPropagation();
+    const input = host.querySelector(`[data-cmt="${btn.dataset.cmtSend}"]`);
+    await addComment(btn.dataset.cmtSend, input.value);
+    renderHistoryList();
+  }));
+  host.querySelectorAll("[data-cmt]").forEach(input => input.addEventListener("keydown", async ev => {
+    if (ev.key !== "Enter") return;
+    ev.stopPropagation();
+    await addComment(input.dataset.cmt, input.value);
+    renderHistoryList();
+  }));
+
+  // load detail photo mosaic (tap any tile → lightbox with ALL photos)
   host.querySelectorAll("[data-hist-photos]").forEach(async el => {
     const ids = el.dataset.histPhotos.split(",").filter(Boolean);
-    if (!ids.length) { el.style.display = "none"; return; }
+    await fillMosaic(el, ids, el.dataset.cat, true);
+    if (!ids.length) return;
     const urls = (await Promise.all(ids.map(id => photoURL(id)))).filter(Boolean);
-    el.innerHTML = urls.map(u => `<img src="${u}" alt=""/>`).join("");
-    el.querySelectorAll("img").forEach((img, i) =>
-      img.addEventListener("click", () => openLightbox(urls.map(url => ({ url })), i)));
+    el.querySelectorAll(".ph").forEach((tile, i) =>
+      tile.addEventListener("click", ev => { ev.stopPropagation(); openLightbox(urls.map(url => ({ url })), i); }));
   });
 }
 
@@ -1197,6 +1327,63 @@ function closeTriage(box) {
   triageItems = null;
   box.remove();
 }
+
+// ---------- per-person ratings + comments ----------
+// authorKey identifies "me": my cloud uid, or "local" when not syncing.
+function myKey() { return db.getUser()?.uid || "local"; }
+function myInitial() { return (db.getUser()?.displayName || "You").trim()[0]?.toUpperCase() || "Y"; }
+
+// Resolve who rated what. Returns [{ key, mine, initial, name, value }] plus a `mineRated` flag.
+// Falls back to the legacy single `enjoyment` score (attributed to me) when there are no
+// per-person ratings yet — old entries still show their star line and I can still add mine.
+function resolveRatings(e) {
+  const mk = myKey();
+  const ratings = e.ratings && Object.keys(e.ratings).length ? e.ratings : null;
+  const lines = [];
+  if (ratings) {
+    for (const [key, value] of Object.entries(ratings)) {
+      const mine = key === mk;
+      lines.push({ key, mine, value, initial: mine ? myInitial() : "P", name: mine ? "You" : "Partner" });
+    }
+    lines.sort((a, b) => (a.mine === b.mine ? 0 : a.mine ? -1 : 1)); // me first
+  } else if (e.enjoyment) {
+    // legacy: unattributed single score — show it, but not "mine" so tap-to-rate still offers.
+    lines.push({ key: null, mine: false, value: e.enjoyment, initial: "★", name: "" });
+  }
+  return { lines, mineRated: !!(ratings && mk in ratings) };
+}
+
+async function saveMyRating(id, n) {
+  const e = await db.getDate(id);
+  if (!e) return;
+  // ponytail: read-modify-write can clobber a concurrent partner edit; last-write-wins is fine here.
+  e.ratings = { ...(e.ratings || {}), [myKey()]: n };
+  await db.putDate(e);
+  await reload();
+}
+
+async function addComment(id, text) {
+  text = text.trim();
+  if (!text) return;
+  const e = await db.getDate(id);
+  if (!e) return;
+  const c = { id: crypto.randomUUID(), author: myKey(), name: db.getUser()?.displayName || "You", text, ts: Date.now() };
+  // ponytail: same last-write-wins caveat as ratings.
+  e.comments = [...(e.comments || []), c];
+  await db.putDate(e);
+  await reload();
+}
+
+function relTime(ts) {
+  const s = (Date.now() - ts) / 1000;
+  if (s < 60) return "just now";
+  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+  if (s < 172800) return "yesterday";
+  return `${Math.floor(s / 86400)}d ago`;
+}
+
+function starStr(n) { return "★".repeat(n) + `<span class="stars off">${"★".repeat(5 - n)}</span>`; }
 
 // ---------- small helpers ----------
 // ids are unique app-wide (form ids live in the log sheet, tab ids in #view)

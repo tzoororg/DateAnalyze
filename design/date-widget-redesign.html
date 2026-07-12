@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>Date widget redesign — mock v2</title>
+<style>
+:root {
+  --bg: #2a1b26; --bg-soft: #33222e; --card: #3b2a37; --card-2: #4a3444;
+  --line: #54394c; --text: #f5e6ee; --muted: #c99bb0;
+  --accent: #ff7fa2; --accent-2: #ff9fba;
+  --good: #7ed3ab; --warn: #eec97a; --bad: #f08a8a;
+  --mint-bg: #2e4a3e; --mint-fg: #8fd6b5; --butter-bg: #4a3d22; --butter-fg: #eec97a;
+  --radius: 18px; --shadow: 0 6px 16px rgba(0,0,0,.35);
+  --cursive: "Segoe Script", "Comic Sans MS", cursive;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 24px; background: #1a1017; color: var(--text);
+  font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  display: flex; gap: 28px; flex-wrap: wrap; align-items: flex-start;
+}
+.frame { width: 390px; flex: none; }
+.frame-label { font: 700 15px var(--cursive); color: var(--accent); margin: 0 0 10px 4px; }
+.frame-note { font-size: 12px; color: #9a7f8e; margin: 4px 4px 12px; line-height: 1.5; }
+.phone {
+  background: radial-gradient(120% 60% at 50% 0%, var(--bg-soft), var(--bg));
+  border-radius: 28px; padding: 16px; border: 1px solid #000;
+}
+.section-title { font-size: 12px; text-transform: uppercase; letter-spacing: .14em; font-weight: 800; color: var(--muted); margin: 18px 4px 10px; }
+.card { background: var(--card); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); margin-bottom: 14px; position: relative; }
+.card.tight { padding: 12px 14px; }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+.stars { color: var(--warn); font-weight: 800; letter-spacing: 1px; }
+.who {
+  display: inline-grid; place-items: center; width: 17px; height: 17px; border-radius: 50%;
+  font-size: 10px; font-weight: 800; margin-right: 4px; vertical-align: 1px;
+}
+.who.me { background: var(--accent); color: #fff; }
+.who.them { background: var(--mint-bg); color: var(--mint-fg); }
+
+/* photo mosaic (shared: Home banner + Album detail) */
+.mosaic { display: grid; grid-template-columns: 2fr 1fr; grid-auto-rows: 74px; gap: 4px; }
+.mosaic .ph { display: grid; place-items: center; font-size: 28px; position: relative; }
+.mosaic .ph:first-child { grid-row: span 2; font-size: 44px; }
+.mosaic.two { grid-template-columns: 1fr 1fr; }
+.mosaic.two .ph { grid-row: auto; font-size: 36px; }
+.g1 { background: linear-gradient(130deg, #7a4a63, #4a3444); }
+.g2 { background: linear-gradient(130deg, #46618a, #2e3a54); }
+.g3 { background: linear-gradient(130deg, #5a7a52, #37432e); }
+.more-badge { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(0,0,0,.45); color: #fff; font-size: 16px; font-weight: 800; }
+
+/* ---------- HOME card ---------- */
+.home-card { padding: 0; overflow: hidden; cursor: pointer; }
+.home-card .mosaic { border-radius: var(--radius) var(--radius) 0 0; overflow: hidden; }
+.home-banner { height: 110px; display: grid; place-items: center; font-size: 38px; background: linear-gradient(130deg, #5a7a52, #37432e); border-radius: var(--radius) var(--radius) 0 0; }
+.home-body { padding: 12px 14px; display: flex; align-items: center; gap: 10px; }
+.home-body h4 { margin: 0; font-size: 16px; }
+.home-body .sub { color: var(--muted); font-size: 13px; }
+.home-body .grow { flex: 1; min-width: 0; }
+.stars-duo { text-align: right; font-size: 13px; line-height: 1.5; white-space: nowrap; }
+.rate-nudge { color: var(--accent-2); font-size: 12px; font-weight: 700; }
+.chev { color: var(--muted); font-size: 18px; }
+.comment-peek {
+  border-top: 1px solid var(--line); padding: 8px 14px; font-size: 13px; color: var(--muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ---------- ALBUM opened card ---------- */
+.entry { display: flex; gap: 12px; align-items: center; cursor: pointer; }
+.thumb { width: 52px; height: 52px; border-radius: 14px; background: var(--card-2); display: grid; place-items: center; font-size: 22px; flex: none; }
+.meta { flex: 1; min-width: 0; }
+.meta h4 { margin: 0; font-size: 16px; }
+.meta .sub { color: var(--muted); font-size: 13px; }
+.detail-mosaic { margin-top: 12px; }
+.detail-mosaic .ph { border-radius: 12px; }
+
+.kebab {
+  width: 32px; height: 32px; border: none; flex: none;
+  border-radius: 10px; background: var(--card-2); color: var(--muted); font-size: 17px; cursor: pointer;
+}
+.menu-pop {
+  position: absolute; top: 46px; right: 10px; background: var(--card-2); border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0,0,0,.5); padding: 6px; z-index: 2; font-size: 14px;
+}
+.menu-pop div { padding: 8px 16px; border-radius: 8px; }
+.menu-pop .danger { color: var(--bad); }
+
+/* ratings left + vertical meta chips right */
+.rate-meta { display: flex; gap: 12px; margin-top: 12px; align-items: flex-start; }
+.rate-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.rate-line { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.rate-line .who { width: 22px; height: 22px; font-size: 11px; margin: 0; }
+.rate-line .name { color: var(--muted); font-size: 13px; width: 48px; }
+.big-stars { font-size: 19px; letter-spacing: 3px; color: var(--warn); }
+.big-stars .off { color: var(--line); }
+.meta-col { flex: none; display: flex; flex-direction: column; gap: 5px; align-items: flex-end; }
+.chip {
+  display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600;
+  background: var(--card-2); color: var(--text); border-radius: 999px; padding: 3px 9px;
+}
+.chip.mint { background: var(--mint-bg); color: var(--mint-fg); }
+.chip.butter { background: var(--butter-bg); color: var(--butter-fg); }
+.chip .dots { color: var(--accent-2); letter-spacing: 1px; }
+.notes { color: var(--muted); font-size: 14px; margin: 12px 0 0; }
+
+/* comments */
+.comments { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 12px; }
+.comments h5 { margin: 0 0 8px; font: 700 14px var(--cursive); color: var(--accent); }
+.cmt { display: flex; gap: 8px; margin-bottom: 8px; align-items: flex-start; }
+.cmt .who { width: 24px; height: 24px; flex: none; font-size: 11px; margin-top: 2px; }
+.cmt .bubble { background: var(--card-2); border-radius: 4px 14px 14px 14px; padding: 7px 11px; font-size: 14px; }
+.cmt .when { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.cmt-input { display: flex; gap: 8px; margin-top: 10px; }
+.cmt-input input {
+  flex: 1; background: var(--card-2); border: none; border-radius: 999px; padding: 9px 14px;
+  color: var(--text); font-size: 14px;
+}
+.cmt-input button { border: none; border-radius: 50%; width: 36px; height: 36px; background: var(--accent); color: #fff; font-size: 15px; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<!-- ================= FRAME 1: HOME ================= -->
+<div class="frame">
+  <p class="frame-label">Home — mosaic cards</p>
+  <p class="frame-note">Top of each card is now a photo mosaic (1 big + up to 2 small, “+N” badge beyond that; a single photo fills the whole width). No edit/delete; the whole card taps through to the Album with this date opened. No photos → emoji banner.</p>
+  <div class="phone">
+    <div class="section-title">Recent memories</div>
+
+    <div class="card home-card">
+      <div class="mosaic">
+        <div class="ph g1">🍝</div>
+        <div class="ph g2">🥂</div>
+        <div class="ph g3">😊<span class="more-badge">+2</span></div>
+      </div>
+      <div class="home-body">
+        <div class="grow">
+          <h4>Pasta making class</h4>
+          <div class="sub">Fri, Jul 10 · Food & drink</div>
+        </div>
+        <div class="stars-duo">
+          <div><span class="who me">T</span><span class="stars">★★★★★</span></div>
+          <div><span class="who them">P</span><span class="stars">★★★★</span><span class="stars" style="color:var(--line)">★</span></div>
+        </div>
+        <span class="chev">›</span>
+      </div>
+      <div class="comment-peek">💬 P: “the chef definitely judged our ravioli 😂”</div>
+    </div>
+
+    <div class="card home-card">
+      <div class="mosaic two" style="grid-auto-rows:100px">
+        <div class="ph g2">🎬</div>
+        <div class="ph g1">🌭</div>
+      </div>
+      <div class="home-body">
+        <div class="grow">
+          <h4>Drive-in movie night</h4>
+          <div class="sub">Sat, Jul 4 · Entertainment</div>
+        </div>
+        <div class="stars-duo">
+          <div><span class="who them">P</span><span class="stars">★★★★</span><span class="stars" style="color:var(--line)">★</span></div>
+          <div class="rate-nudge">+ add your stars</div>
+        </div>
+        <span class="chev">›</span>
+      </div>
+    </div>
+
+    <div class="card home-card">
+      <div class="home-banner">🥾</div>
+      <div class="home-body">
+        <div class="grow">
+          <h4>Sunrise hike</h4>
+          <div class="sub">Sun, Jun 28 · Outdoors</div>
+        </div>
+        <div class="stars-duo">
+          <div><span class="who me">T</span><span class="stars">★★★★</span><span class="stars" style="color:var(--line)">★</span></div>
+        </div>
+        <span class="chev">›</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= FRAME 2: ALBUM opened ================= -->
+<div class="frame">
+  <p class="frame-label">Album, opened — final direction</p>
+  <p class="frame-note">Option B refined: ⋯ menu for edit/delete (collapsed here), photos in an even 50/50 grid (“+N” badge past 4), then one row that pairs the ratings (left) with the metadata as a compact vertical chip stack (right) — no labels, no grid. Notes, then comments. The 1-big mosaic stays a Home-only look.</p>
+  <div class="phone">
+    <div class="card tight">
+      <div class="entry">
+        <div class="thumb">🍝</div>
+        <div class="meta">
+          <h4>Pasta making class</h4>
+          <div class="sub">Fri, Jul 10 · Food & drink · $80</div>
+        </div>
+        <button class="kebab">⋯</button>
+      </div>
+
+      <div class="mosaic two detail-mosaic" style="grid-auto-rows:100px">
+        <div class="ph g1">🍝</div>
+        <div class="ph g2">🥂</div>
+        <div class="ph g3">😊</div>
+        <div class="ph g2">🍷<span class="more-badge">+1</span></div>
+      </div>
+
+      <div class="rate-meta">
+        <div class="rate-col">
+          <div class="rate-line"><span class="who me">T</span><span class="name">You</span><span class="stars">★★★★★</span></div>
+          <div class="rate-line"><span class="who them">P</span><span class="name">Partner</span><span class="stars">★★★★</span><span class="stars" style="color:var(--line)">★</span></div>
+        </div>
+        <div class="meta-col">
+          <span class="chip mint">😄 Fun</span>
+          <span class="chip butter">💞 Romantic</span>
+          <span class="chip"><span class="dots">●●●</span>○○ effort</span>
+          <span class="chip">🔁 would repeat</span>
+          <span class="chip">📍 Nonna's Kitchen</span>
+        </div>
+      </div>
+
+      <p class="notes">We were terrible at it and it was perfect. Take the 6pm slot next time — less crowded.</p>
+
+      <div class="comments">
+        <h5>Notes to each other 💬</h5>
+        <div class="cmt">
+          <span class="who them">P</span>
+          <div><div class="bubble">the chef definitely judged our ravioli 😂</div><div class="when">yesterday</div></div>
+        </div>
+        <div class="cmt">
+          <span class="who me">T</span>
+          <div><div class="bubble">worth it for the tiramisu alone</div><div class="when">3h ago</div></div>
+        </div>
+        <div class="cmt-input">
+          <input placeholder="Add a note…"/><button>➤</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= FRAME 3: ALBUM opened, unrated + menu open ================= -->
+<div class="frame">
+  <p class="frame-label">Album, opened — unrated state & ⋯ menu</p>
+  <p class="frame-note">Same layout, showing: the ⋯ menu popped open, and the tap-to-rate stars when you haven't rated yet. Few chips → the stack stays short; the row just isn't tall.</p>
+  <div class="phone">
+    <div class="card tight">
+      <div class="entry">
+        <div class="thumb">🎬</div>
+        <div class="meta">
+          <h4>Drive-in movie night</h4>
+          <div class="sub">Sat, Jul 4 · Entertainment · $30</div>
+        </div>
+        <button class="kebab">⋯</button>
+      </div>
+      <div class="menu-pop"><div>✎ Edit</div><div class="danger">🗑 Delete</div></div>
+
+      <div class="mosaic two detail-mosaic" style="grid-auto-rows:100px">
+        <div class="ph g2">🎬</div>
+        <div class="ph g1">🌭</div>
+      </div>
+
+      <div class="rate-meta">
+        <div class="rate-col">
+          <div class="rate-line"><span class="who them">P</span><span class="name">Partner</span><span class="stars">★★★★</span><span class="stars" style="color:var(--line)">★</span></div>
+          <div class="rate-line">
+            <span class="who me">T</span><span class="name">You</span>
+            <span class="big-stars">★★★<span class="off">★★</span></span>
+          </div>
+          <div class="muted small" style="margin-left:30px">tap to rate</div>
+        </div>
+        <div class="meta-col">
+          <span class="chip mint">😌 Cozy</span>
+          <span class="chip"><span class="dots">●●</span>○○○ effort</span>
+          <span class="chip">🤔 maybe again</span>
+        </div>
+      </div>
+
+      <div class="comments">
+        <h5>Notes to each other 💬</h5>
+        <div class="cmt-input">
+          <input placeholder="Add a note…"/><button>➤</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

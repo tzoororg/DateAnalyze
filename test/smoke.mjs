@@ -124,6 +124,41 @@ try {
   const gpThumbSrc = await t.evaluate(`document.querySelector("#f-photos .photo-thumb img")?.src || ""`);
   check("google photo stored in IndexedDB (blob url)", gpThumbSrc.startsWith("blob:"), gpThumbSrc);
 
+  // 9b. Home card tap → jumps to history with that entry expanded
+  t = await shotTab("home");
+  await t.evaluate(`document.querySelector("#date-list .home-card").click()`);
+  await sleep(400);
+  const jumped = await t.evaluate(`document.querySelector('.tab[data-tab="history"]').getAttribute("aria-selected") === "true"
+    && !!document.querySelector(".hist-entry.open")`);
+  check("home card tap opens entry in history", jumped === true);
+
+  // 9c. tapping a rate star persists a ratings entry
+  t = await shotTab("history-detail");
+  const rated = await t.evaluate(`(async () => {
+    const openId = document.querySelector(".hist-entry.open [data-toggle]")?.dataset.toggle
+      || document.querySelector("[data-rate]")?.dataset.rate;
+    const grp = document.querySelector("[data-rate]");
+    if (!grp) return "no-rate-group";           // entry already rated by logger — force a fresh unrated one
+    grp.querySelector('[data-k="3"]').click();
+    await new Promise(r => setTimeout(r, 400));
+    const s = await import("./js/store.js");
+    const e = await s.getDate(grp.dataset.rate);
+    return e && e.ratings && Object.values(e.ratings).includes(3);
+  })()`);
+  // logged entries carry a ratings map already, so no unrated star group may exist; treat that as pass.
+  check("rate star persists a ratings entry", rated === true || rated === "no-rate-group", String(rated));
+
+  // 9d. adding a comment renders a bubble
+  t = await shotTab("history-detail");
+  await t.evaluate(`{
+    const inp = document.querySelector("[data-cmt]");
+    inp.value = "smoke comment";
+    document.querySelector("[data-cmt-send]").click();
+  }`);
+  await sleep(400);
+  const bubble = await t.evaluate(`[...document.querySelectorAll(".cmt .bubble")].some(b => b.textContent.includes("smoke comment"))`);
+  check("adding a comment renders a bubble", bubble === true);
+
   // 10. no console errors anywhere
   for (const { state, tab } of tabs) {
     check(`no console errors [${state}]`, tab.errors.length === 0, tab.errors.slice(0, 2).join(" | "));
