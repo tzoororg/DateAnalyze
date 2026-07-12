@@ -58,6 +58,10 @@ would annoy a non-technical partner.
    - `ux: ...` — works but user-unfriendly
    - `feature: ...` — a gap a real couple would want filled
    Add `[weekly-qa]` at the end of each report so automated findings are identifiable.
+   If the in-app send fails (sandboxed runs can't reach the `workers.dev` feedback
+   worker), fall back to filing directly:
+   `gh issue create --label feedback --title "<prefix: short title>" --body "<report> [weekly-qa]"`
+   — and note in the summary that the in-app path was blocked.
 3. Cap at 6 reports per run — file the most impactful ones only.
 4. Findings you noticed but didn't file (dupes, borderline) go in the run summary.
 
