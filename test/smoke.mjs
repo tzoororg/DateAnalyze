@@ -88,6 +88,21 @@ try {
   const inHist = await t.evaluate(`document.querySelector("#view").innerText.includes("Smoke Test Date")`);
   check("logged date appears in history", inHist);
 
+  // 8b. regression for #11: edit a date, close via the X (not save/cancel),
+  // then open the ＋ button — the new-date form must be blank, not the edited entry.
+  t = await shotTab("history-detail");
+  await t.evaluate(`document.querySelector("[data-kebab]")?.click()`);
+  await t.evaluate(`document.querySelector("[data-edit]")?.click()`);
+  await t.waitFor(`!document.getElementById("logSheet").classList.contains("hidden")`);
+  const editedTitle = await t.evaluate(`document.getElementById("f-title").value`);
+  await t.evaluate(`document.getElementById("logCloseBtn").click()`);
+  await t.waitFor(`document.getElementById("logSheet").classList.contains("hidden")`);
+  await t.evaluate(`document.querySelector("#fab").click()`);
+  await t.waitFor(`!document.getElementById("logSheet").classList.contains("hidden")`);
+  const newFormTitle = await t.evaluate(`document.getElementById("f-title").value`);
+  check("closing edit via X then + opens a blank form (#11)", newFormTitle === "" && editedTitle !== "", `edited="${editedTitle}" new="${newFormTitle}"`);
+  await t.evaluate(`document.getElementById("logCloseBtn").click()`);
+
   // 9. Google Photos pick, fully mocked: stub GIS + the picker/proxy endpoints,
   // click the menu item, and assert a photo lands in the strip. Exercises
   // token → session → poll → list → proxy download → downscale → IDB → render.

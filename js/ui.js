@@ -282,6 +282,7 @@ function openLogSheet() {
 function closeLogSheet() {
   document.getElementById("logSheet").classList.add("hidden");
   document.body.style.overflow = "";
+  resetDraft();
 }
 
 // ---------- log form (renders inside the log sheet) ----------
@@ -400,7 +401,7 @@ function wireForm() {
 
   bind("f-save", "click", saveDraft);
   const cancel = v.querySelector("#f-cancel");
-  if (cancel) cancel.addEventListener("click", () => { gpModule?.cancelPick(); resetDraft(); closeLogSheet(); });
+  if (cancel) cancel.addEventListener("click", () => { gpModule?.cancelPick(); closeLogSheet(); });
 }
 
 async function renderPhotoStrip() {
