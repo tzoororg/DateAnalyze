@@ -119,6 +119,18 @@ un-done ideas. One shared filter, tested.
 **Skipped for later:** reminders/calendar for planned dates (see #4), reordering,
 "planned" as a distinct middle state — start with just idea/done.
 
+**Priority.** Important × Not urgent — closes a real dead-end in the app
+(Suggest results can't be acted on) and directly matches a user ask, but
+nobody's blocked on it today. Ship after #1/#2.
+
+**User feedback (issue [#4](https://github.com/tzoororg/DateAnalyze/issues/4)):**
+"add option to save an idea for a future date, maybe with url link" — this is
+the same wishlist feature already planned above. The one net-new detail is an
+optional **URL field** on the saved idea (e.g. a restaurant page or Pinterest
+link) — add `url` alongside `status` in the `js/model.js` schema change,
+rendered as a link on the wishlist card and in the pre-filled log form. No
+other change needed; folded into this item rather than a separate one.
+
 ---
 
 ## 4. Gentle reminders (opt-in push)

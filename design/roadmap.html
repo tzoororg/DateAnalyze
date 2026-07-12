@@ -57,8 +57,9 @@
 <section class="point" id="p3">
   <span class="crumb">Roadmap #3 · Ideas + Album tabs</span>
   <h2>Wishlist — close the Suggest → Log loop <span class="badge med">Medium</span></h2>
-  <p class="what">Save a suggestion as "want to try"; saved ideas live in a wishlist and pre-fill the log form when the date actually happens. Schema: <code>status: "idea" | "done"</code> on entries; analytics must exclude non-done entries (the real work).</p>
-  <p class="touches">Touches: <code>js/model.js</code> (status field) · <code>js/analytics.js</code>/<code>js/suggest.js</code> (done-only filter) · <code>js/ui.js</code> Ideas cards + Album view</p>
+  <p class="what">Save a suggestion as "want to try"; saved ideas live in a wishlist and pre-fill the log form when the date actually happens. Schema: <code>status: "idea" | "done"</code> plus optional <code>url</code> on entries; analytics must exclude non-done entries (the real work).</p>
+  <p class="touches">Touches: <code>js/model.js</code> (status + url fields) · <code>js/analytics.js</code>/<code>js/suggest.js</code> (done-only filter) · <code>js/ui.js</code> Ideas cards + Album view</p>
+  <p class="note"><b>Priority:</b> Important × Not urgent — closes a dead-end in Suggest and matches user feedback (<a href="https://github.com/tzoororg/DateAnalyze/issues/4">issue #4</a>: "save an idea for a future date, maybe with url link"), but ships after #1/#2. The URL field is the one new detail from that issue — a link to a restaurant/Pinterest page, shown on the wishlist card.</p>
   <div class="ba">
     <div class="col before"><h3>Before</h3><figure><img src="shots/suggest.png" alt=""/><figcaption>Ideas today — a card can only be logged, not kept</figcaption></figure></div>
     <div class="col after"><h3>After</h3><figure><img src="shots/after-wishlist-suggest.png" alt=""/><figcaption>"♡ Save to wishlist" on every card; saved sticker on kept ones</figcaption></figure></div>
