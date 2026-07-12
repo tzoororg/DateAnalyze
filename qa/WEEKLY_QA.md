@@ -9,6 +9,8 @@ logic, or user-unfriendly UI — and report findings through the app's own feedb
 1. From the repo root, start (both in background):
    - `python -m http.server 8000`
    - `firebase emulators:start --only auth,firestore --project us-date-tracker-c988b`
+     (needs Java; if `java` isn't on PATH in your shell, prepend
+     `C:\Program Files\Eclipse Adoptium\jre-21.0.11.10-hotspot\bin` — don't go hunting for it)
 2. Launch two headless-Chrome "phones" the way `test/sync.mjs` does (import
    `test/cdp.mjs`, two profiles, two ports). Open each at
    `http://127.0.0.1:8000/index.html?emu=1` (NOT `?shot=` — you want the real app flow).
