@@ -23,6 +23,7 @@ Every new feature or UI/UX modification starts as a static HTML mock **before** 
 1. Create/update a mock in `design/` (a standalone HTML file styled like the app — see `design/roadmap.html` for the pattern) showing the proposed change.
 2. Share it with the user as screenshots (render the HTML and capture, or use `design/capture.mjs` for app views) and discuss/tune the design iteratively.
 3. Only after the user approves the mock, implement it in the real app.
+4. After a design/UI change ships, update `design/current.html` (the living catalog of every view): re-run `node design/capture.mjs` (dev server running) to refresh the screenshots, and edit the notes for the components that changed.
 
 Skip the mock only for pure logic/bugfix changes with no visible UI impact.
 
