@@ -1384,7 +1384,7 @@ function relTime(ts) {
   return `${Math.floor(s / 86400)}d ago`;
 }
 
-function starStr(n) { return "★".repeat(n) + `<span class="stars off">${"★".repeat(5 - n)}</span>`; }
+function starStr(n) { return `<span class="star-on">${"★".repeat(n)}</span><span class="star-off">${"★".repeat(5 - n)}</span>`; }
 
 // ---------- small helpers ----------
 // ids are unique app-wide (form ids live in the log sheet, tab ids in #view)
