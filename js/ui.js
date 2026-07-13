@@ -282,6 +282,7 @@ function openLogSheet() {
 function closeLogSheet() {
   document.getElementById("logSheet").classList.add("hidden");
   document.body.style.overflow = "";
+  resetDraft();
 }
 
 // ---------- log form (renders inside the log sheet) ----------
@@ -400,7 +401,7 @@ function wireForm() {
 
   bind("f-save", "click", saveDraft);
   const cancel = v.querySelector("#f-cancel");
-  if (cancel) cancel.addEventListener("click", () => { gpModule?.cancelPick(); resetDraft(); closeLogSheet(); });
+  if (cancel) cancel.addEventListener("click", () => { gpModule?.cancelPick(); closeLogSheet(); });
 }
 
 async function renderPhotoStrip() {
@@ -1383,7 +1384,7 @@ function relTime(ts) {
   return `${Math.floor(s / 86400)}d ago`;
 }
 
-function starStr(n) { return "★".repeat(n) + `<span class="stars off">${"★".repeat(5 - n)}</span>`; }
+function starStr(n) { return `<span class="star-on">${"★".repeat(n)}</span><span class="star-off">${"★".repeat(5 - n)}</span>`; }
 
 // ---------- small helpers ----------
 // ids are unique app-wide (form ids live in the log sheet, tab ids in #view)
@@ -1488,6 +1489,7 @@ const IDLE_MS = 60000;
 function resetIdle() { clearTimeout(idleTimer); idleTimer = setTimeout(maybeScreensaver, IDLE_MS); }
 function maybeScreensaver() {
   if (document.visibilityState !== "visible") return;
+  if (!document.hasFocus()) return;   // another app/picker is in front — don't count it as idle
   if (document.querySelector(".lightbox")) return;
   if (!dates.some(d => Array.isArray(d.photos) && d.photos.length)) return;
   startSlideshow();
@@ -1496,6 +1498,7 @@ function wireIdle() {
   ["pointerdown", "keydown", "touchstart"].forEach(ev =>
     document.addEventListener(ev, resetIdle, { passive: true }));
   document.addEventListener("visibilitychange", resetIdle);
+  window.addEventListener("focus", resetIdle);   // returning from a picker/other app restarts the clock
   resetIdle();
 }
 

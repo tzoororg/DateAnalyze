@@ -271,13 +271,14 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); bo
 /* ---- Home mosaic cards ---- */
 .home-card { padding: 0; overflow: hidden; cursor: pointer; }
 .home-card .mosaic { border-radius: var(--radius) var(--radius) 0 0; overflow: hidden; }
+.home-card .mosaic.two { grid-auto-rows: 150px; }   /* match the ~150px height of 1-photo & 3+ cards */
 .home-banner { height: 110px; display: grid; place-items: center; font-size: 38px; background: var(--card-2); border-radius: var(--radius) var(--radius) 0 0; }
 .home-body { padding: 12px 14px; display: flex; align-items: center; gap: 10px; }
 .home-body h4 { margin: 0; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .home-body .sub { color: var(--muted); font-size: 13px; }
 .home-body .grow { flex: 1; min-width: 0; }
 .stars-duo { text-align: right; font-size: 13px; line-height: 1.5; white-space: nowrap; }
-.stars-duo .stars { color: var(--warn); font-weight: 800; letter-spacing: 1px; }
+.stars-duo .star-on, .stars-duo .star-off { font-weight: 800; letter-spacing: 1px; }
 .rate-nudge { color: var(--accent-2); font-size: 12px; font-weight: 700; }
 .chev { color: var(--muted); font-size: 18px; }
 .comment-peek { border-top: 1px solid var(--line); padding: 8px 14px; font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -286,7 +287,8 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); bo
 .who { display: inline-grid; place-items: center; width: 17px; height: 17px; border-radius: 50%; font-size: 10px; font-weight: 800; margin-right: 4px; vertical-align: 1px; }
 .who.me { background: var(--accent); color: #fff; }
 .who.them { background: var(--mint-bg); color: var(--mint-fg); }
-.stars .off { color: var(--line); }
+.star-on { color: var(--warn); }
+.star-off { color: var(--line); }
 
 /* ---- Album kebab menu ---- */
 .kebab { width: 32px; height: 32px; border: none; flex: none; border-radius: 10px; background: var(--card-2); color: var(--muted); font-size: 17px; cursor: pointer; }
