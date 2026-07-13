@@ -1489,6 +1489,7 @@ const IDLE_MS = 60000;
 function resetIdle() { clearTimeout(idleTimer); idleTimer = setTimeout(maybeScreensaver, IDLE_MS); }
 function maybeScreensaver() {
   if (document.visibilityState !== "visible") return;
+  if (!document.hasFocus()) return;   // another app/picker is in front — don't count it as idle
   if (document.querySelector(".lightbox")) return;
   if (!dates.some(d => Array.isArray(d.photos) && d.photos.length)) return;
   startSlideshow();
@@ -1497,6 +1498,7 @@ function wireIdle() {
   ["pointerdown", "keydown", "touchstart"].forEach(ev =>
     document.addEventListener(ev, resetIdle, { passive: true }));
   document.addEventListener("visibilitychange", resetIdle);
+  window.addEventListener("focus", resetIdle);   // returning from a picker/other app restarts the clock
   resetIdle();
 }
 
