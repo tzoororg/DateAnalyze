@@ -371,6 +371,17 @@ emotional payoff.
 **Effort.** Tiny — smallest item on either list; do it whenever.
 **Risk.** None worth naming.
 
+## 12. Make the app work on iOS
+
+**What.** Install and run as a home-screen PWA on iPhone. Audit done 2026-07-15;
+CSS/safe-area/viewport already iOS-ready. Remaining: a PNG `apple-touch-icon`
+(iOS ignores the current SVG), a `signInWithRedirect` fallback for the Firebase
+popup (unreliable in installed iOS PWAs), and a real-device verification pass
+(push, IndexedDB persistence, sign-in). Full plan: [IOS_PLAN.md](IOS_PLAN.md).
+
+**Effort.** Small (icon + auth fallback) + one on-device test session.
+**Risk.** iOS PWA quirks can't be emulated — the device pass is the real gate.
+
 ## Wave-2 ranking
 
 1. **#6 import** — changes the adoption curve itself.
