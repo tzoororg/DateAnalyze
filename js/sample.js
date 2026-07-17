@@ -42,3 +42,38 @@ export const SAMPLE_DATES = ROWS.map(r => () => {
     title, category, enjoyment, mood, effort, wouldRepeat, cost, location, notes,
   };
 });
+
+function makePhotoBlob([c1, c2], emoji) {
+  const cv = document.createElement("canvas");
+  cv.width = 640; cv.height = 480;
+  const ctx = cv.getContext("2d");
+  const g = ctx.createLinearGradient(0, 0, 640, 480);
+  g.addColorStop(0, c1); g.addColorStop(1, c2);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, 640, 480);
+  ctx.font = "140px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText(emoji, 320, 240);
+  return new Promise(r => cv.toBlob(r, "image/jpeg", 0.8));
+}
+
+const PALETTES = [
+  [["#f3a683", "#f7d794"], "🌅"], [["#78e08f", "#38ada9"], "🌲"],
+  [["#e77f67", "#cf6a87"], "🍜"], [["#82ccdd", "#60a3bc"], "⛸️"],
+  [["#f8c291", "#e55039"], "🎳"], [["#b8e994", "#78e08f"], "🧺"],
+];
+
+// Give the 3 most recent seeded entries 1, 2, and 3 placeholder photos, so
+// photo flows (gallery, mosaics, detail) always have single/multi cases.
+// `backend` is the db/store module (needs getAllDates, putPhoto, putDate).
+export async function attachSamplePhotos(backend) {
+  const all = (await backend.getAllDates()).sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 3);
+  let p = 0;
+  for (let n = 0; n < all.length; n++) {
+    const e = all[n];
+    e.photos = [];
+    for (let i = 0; i <= n; i++) {
+      const [colors, emoji] = PALETTES[p++ % PALETTES.length];
+      e.photos.push(await backend.putPhoto(await makePhotoBlob(colors, emoji)));
+    }
+    await backend.putDate(e);
+  }
+}

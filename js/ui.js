@@ -1200,8 +1200,9 @@ async function onImport(e) {
 }
 
 async function onSeed() {
-  const { SAMPLE_DATES } = await import("./sample.js");
+  const { SAMPLE_DATES, attachSamplePhotos } = await import("./sample.js");
   for (const e of SAMPLE_DATES) await db.putDate(e());
+  await attachSamplePhotos(db);
   await reload();
   document.getElementById("sheet").classList.add("hidden");
   toast("Added sample dates");

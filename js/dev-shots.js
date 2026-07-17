@@ -16,23 +16,12 @@ function isoDaysAgo(n) {
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 }
 
-function makePhotoBlob([c1, c2], emoji) {
-  const cv = document.createElement("canvas");
-  cv.width = 640; cv.height = 480;
-  const ctx = cv.getContext("2d");
-  const g = ctx.createLinearGradient(0, 0, 640, 480);
-  g.addColorStop(0, c1); g.addColorStop(1, c2);
-  ctx.fillStyle = g; ctx.fillRect(0, 0, 640, 480);
-  ctx.font = "140px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  ctx.fillText(emoji, 320, 240);
-  return new Promise(r => cv.toBlob(r, "image/jpeg", 0.8));
-}
-
 // Seed sample dates + a year-ago entry (memory card) + placeholder photos.
 export async function seed() {
   if ((await db.getAllDates()).length) return;
-  const { SAMPLE_DATES } = await import("./sample.js");
+  const { SAMPLE_DATES, attachSamplePhotos } = await import("./sample.js");
   for (const e of SAMPLE_DATES) await db.putDate(e());
+  await attachSamplePhotos(db);
 
   await db.putDate({
     ...blankEntry(), date: isoDaysAgo(365), createdAt: Date.now() - 365 * 86400000,
@@ -41,21 +30,6 @@ export async function seed() {
     location: "Rooftop 21", notes: "Anniversary — the city lights were unreal.",
   });
 
-  const palettes = [
-    [["#f3a683", "#f7d794"], "🌅"], [["#78e08f", "#38ada9"], "🌲"],
-    [["#e77f67", "#cf6a87"], "🍜"], [["#82ccdd", "#60a3bc"], "⛸️"],
-    [["#f8c291", "#e55039"], "🎳"], [["#b8e994", "#78e08f"], "🧺"],
-  ];
-  const all = (await db.getAllDates()).sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 3);
-  let p = 0;
-  for (const e of all) {
-    e.photos = [];
-    for (let i = 0; i < 2; i++) {
-      const [colors, emoji] = palettes[p++ % palettes.length];
-      e.photos.push(await db.putPhoto(await makePhotoBlob(colors, emoji)));
-    }
-    await db.putDate(e);
-  }
 }
 
 // ---------- state drivers ----------
