@@ -40,10 +40,12 @@ self.addEventListener("install", e => {
 
 self.addEventListener("activate", e => {
   e.waitUntil(
-    // Cache Storage is origin-wide, and the beta deploy (a "beta-"-prefixed CACHE
-    // under /beta/) shares this origin — only clean up our own cache family.
+    // Cache Storage is origin-wide, and the beta deploy (a "beta-<sha>-"-prefixed
+    // CACHE under /beta/) shares this origin — delete our own channel's old caches
+    // (any SHA/version) but never the other channel's.
     caches.keys().then(keys => Promise.all(
-      keys.filter(k => k.startsWith(CACHE.slice(0, CACHE.lastIndexOf("v"))) && k !== CACHE)
+      keys.filter(k => k !== CACHE && k.includes("us-date-tracker-") &&
+                       k.startsWith("beta-") === CACHE.startsWith("beta-"))
           .map(k => caches.delete(k))
     ))
       .then(() => self.clients.claim())
@@ -80,11 +82,12 @@ self.addEventListener("notificationclick", e => {
 self.addEventListener("fetch", e => {
   const { request } = e;
   if (request.method !== "GET" || new URL(request.url).origin !== self.location.origin) return;
+  // Match only OUR cache — caches.match() searches every cache on the origin
+  // and would serve stale files from an old (or the other channel's) cache.
   e.respondWith(
-    caches.match(request).then(hit => hit || fetch(request).then(res => {
-      const copy = res.clone();
-      caches.open(CACHE).then(c => c.put(request, copy)).catch(() => {});
+    caches.open(CACHE).then(c => c.match(request).then(hit => hit || fetch(request).then(res => {
+      c.put(request, res.clone()).catch(() => {});
       return res;
-    }).catch(() => caches.match("./index.html")))
+    }).catch(() => c.match("./index.html"))))
   );
 });
