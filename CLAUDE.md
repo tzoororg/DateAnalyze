@@ -29,7 +29,7 @@ Skip the mock only for pure logic/bugfix changes with no visible UI impact.
 
 **Service worker caching caveat:** During development, the SW caches aggressively. After changing files, either unregister the SW in DevTools → Application → Service Workers, or bump the `CACHE` version string in `sw.js`. When adding a new file, also add it to the `SHELL` array in `sw.js`.
 
-**Versioning (semver):** the `CACHE` string in `sw.js` is `us-date-tracker-vMAJOR.MINOR.PATCH`. The model doing a task decides which part to bump and sets it by hand in `sw.js` before committing: **major** = big redesign or a data-model change, **minor** = new feature, **patch** = bugfix/tweak. The pre-commit hook in `hooks/pre-commit` (enable once per clone with `git config core.hooksPath hooks`) is only a safety net — it bumps PATCH automatically if app shell files are committed without a hand bump.
+**Versioning (semver):** the `CACHE` string in `sw.js` is `us-date-tracker-vMAJOR.MINOR.PATCH`. **Do NOT bump it on day-to-day dev commits** — the deploy workflow stamps the dev commit SHA into the beta app's SW cache name, so every beta deploy busts the cache automatically. The version is bumped by hand exactly once per release, as part of preparing the merge to master, covering everything since the last release: **major** = big redesign or a data-model change, **minor** = new feature, **patch** = bugfix/tweak. The pre-commit hook in `hooks/pre-commit` (enable once per clone with `git config core.hooksPath hooks`) is a safety net on master only — it bumps PATCH if app shell files are committed there without a hand bump (note: a fast-forward merge creates no commit, so the hook won't fire — bump on dev before merging).
 
 ## Testing (required after every feature/redesign)
 
@@ -48,7 +48,7 @@ node test/sync.mjs                # two-phone sync; needs the server AND the emu
 
 ## Finishing a task (required)
 
-When a change is complete and verified, **commit and push without being asked**, in the same turn. Day-to-day work is committed and pushed on the **`dev` branch** — a GitHub Actions workflow (`.github/workflows/deploy.yml`) deploys `dev` to the **beta app** at `/beta/` and `master` to the production app at the site root. Releasing = merging `dev` into `master` and pushing, **only when the user asks for a release**. The phone only picks up an update if the SW `CACHE` version changed — so before committing, confirm the version bump happened (via the hook or by hand). Never end a task with unpushed app changes unless the user said to hold off.
+When a change is complete and verified, **commit and push without being asked**, in the same turn. Day-to-day work is committed and pushed on the **`dev` branch** — a GitHub Actions workflow (`.github/workflows/deploy.yml`) deploys `dev` to the **beta app** at `/beta/` and `master` to the production app at the site root. Releasing = bump the SW `CACHE` version on `dev` (one semver bump covering everything since the last release — production phones only update when it changes), then merge `dev` into `master` and push, **only when the user asks for a release**. Beta phones update on every dev push automatically (SHA-stamped cache), so dev commits need no version bump. Never end a task with unpushed app changes unless the user said to hold off.
 
 ## Architecture
 

@@ -5,6 +5,9 @@
 # task picks the bump and sets it by hand; this hook is the safety net that
 # bumps PATCH when nobody touched the version.
 # Enabled via: git config core.hooksPath hooks
+# Only on master: dev deploys get a per-commit SHA stamped into the beta SW cache
+# by deploy.yml, so dev commits never need a version bump.
+[ "$(git symbolic-ref --short -q HEAD)" = "master" ] || exit 0
 staged=$(git diff --cached --name-only)
 echo "$staged" | grep -qE '^(index\.html|app\.js|sw\.js|manifest\.webmanifest|css/|js/|icons/)' || exit 0
 # already bumped by hand in this commit? then leave it alone
