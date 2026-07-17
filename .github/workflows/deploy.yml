@@ -35,7 +35,7 @@ jobs:
           rsync -a --exclude .git master/ site/
           rsync -a --exclude .git dev/ site/beta/
           # Beta identity: separate app name + icon tint so it installs as a second PWA
-          sed -i 's/"Us — Date Tracker"/"Us β — Demo"/; s/"Us ♥"/"Us β"/' site/beta/manifest.webmanifest
+          sed -i 's/"Us — Date Tracker"/"Us β — Demo"/; s/"Us ♥"/"Us β"/; s/"us-date-tracker"/"us-date-tracker-beta"/' site/beta/manifest.webmanifest
           sed -i 's/#e0567a/#2fbf8f/; s/#9b6cf0/#1f8ac0/' site/beta/icons/icon.svg site/beta/icons/icon-maskable.svg
           # Cache Storage is origin-wide: prefix beta's SW cache so the two apps never clash
           sed -i 's/"us-date-tracker-v/"beta-us-date-tracker-v/' site/beta/sw.js
