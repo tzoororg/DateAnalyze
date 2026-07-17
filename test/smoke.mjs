@@ -70,6 +70,19 @@ try {
   t = await shotTab("menu");
   check("menu opens with seed button", await t.evaluate(`!!document.querySelector("#seedBtn")`));
 
+  // 7b. idle slideshow honors the configured delay (and Off disables it)
+  await t.evaluate(`localStorage.setItem("idleMs", "1500")`);
+  t = await shotTab("history-gallery"); // seeded with photos; fresh load reads idleMs
+  await t.evaluate(`{ document.hasFocus = () => true; document.dispatchEvent(new Event("keydown")); }`);
+  await sleep(2500);
+  check("idle slideshow starts after configured delay", await t.evaluate(`!!document.querySelector(".lightbox.slideshow")`));
+  await t.evaluate(`localStorage.setItem("idleMs", "0")`);
+  t = await shotTab("history-gallery");
+  await t.evaluate(`{ document.hasFocus = () => true; document.dispatchEvent(new Event("keydown")); }`);
+  await sleep(2500);
+  check("idle slideshow disabled when Off", await t.evaluate(`!document.querySelector(".lightbox.slideshow")`));
+  await t.evaluate(`localStorage.removeItem("idleMs")`);
+
   // 8. log round-trip: open form, type title, save, verify in store + history
   t = await shotTab("home");
   await t.evaluate(`document.querySelector("#fab").click()`);

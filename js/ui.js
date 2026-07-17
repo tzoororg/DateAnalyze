@@ -73,6 +73,15 @@ function wireChrome() {
   });
   sheet.querySelectorAll("[data-close]").forEach(el => el.addEventListener("click", () => sheet.classList.add("hidden")));
 
+  const idleSel = document.getElementById("idleSelect");
+  idleSel.value = String(idleMs);
+  idleSel.addEventListener("change", () => {
+    idleMs = +idleSel.value;
+    localStorage.setItem("idleMs", idleSel.value);
+    resetIdle();
+    toast(idleMs ? "Slideshow starts after idle" : "Idle slideshow off");
+  });
+
   document.getElementById("exportBtn").addEventListener("click", onExport);
   document.getElementById("importInput").addEventListener("change", onImport);
   document.getElementById("importPhotosInput").addEventListener("change", onImportPhotos);
@@ -1485,8 +1494,11 @@ function openEntry(entryId) {
 // Idle screensaver: after IDLE_MS of no interaction, auto-start the slideshow
 // (only when the tab is visible, nothing is already open, and photos exist).
 let idleTimer = null;
-const IDLE_MS = 60000;
-function resetIdle() { clearTimeout(idleTimer); idleTimer = setTimeout(maybeScreensaver, IDLE_MS); }
+let idleMs = localStorage.getItem("idleMs") == null ? 60000 : +localStorage.getItem("idleMs");
+function resetIdle() {
+  clearTimeout(idleTimer);
+  if (idleMs > 0) idleTimer = setTimeout(maybeScreensaver, idleMs);
+}
 function maybeScreensaver() {
   if (document.visibilityState !== "visible") return;
   if (!document.hasFocus()) return;   // another app/picker is in front — don't count it as idle

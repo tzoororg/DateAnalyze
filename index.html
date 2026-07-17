@@ -61,6 +61,16 @@
           <button class="tseg tseg-navy" data-theme-pick="navy">🌙 Navy</button>
         </div>
       </div>
+      <div class="menu-row theme-row">
+        <span>🎞️ Slideshow when idle</span>
+        <select id="idleSelect">
+          <option value="0">Off</option>
+          <option value="30000">30 s</option>
+          <option value="60000">1 min</option>
+          <option value="120000">2 min</option>
+          <option value="300000">5 min</option>
+        </select>
+      </div>
       <button class="menu-row" id="exportBtn">⬇️ Export data (JSON backup)</button>
       <label class="menu-row" for="importInput">⬆️ Import data (restore)</label>
       <input id="importInput" type="file" accept="application/json" hidden />
