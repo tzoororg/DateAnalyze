@@ -27,6 +27,9 @@ Ranked by (differentiation × emotional ROI ÷ effort). Ship #1 and #2 first.
 
 ## 1. Milestone / streak strip
 
+**Status.** ✅ Shipped, then removed by choice — the strip didn't earn its
+space on the Log tab. Recoverable from git history if wanted.
+
 **What.** A one-line stat strip surfaced on the Log tab: e.g.
 `47 dates · 3-month streak · ₪12,400 shared · longest gap 19 days`.
 
@@ -139,24 +142,22 @@ other change needed; folded into this item rather than a separate one.
 *Rooftop dinner* (5★). Do it again?"; (b) inactivity — "It's been 3 weeks since
 your last date."
 
-**Why.** Competitors' retention runs on notifications; we send none. On-brand *if*
-strictly opt-in — fits the privacy-first, local-first stance.
+**Why.** Competitors' retention runs on notifications; ours only fire for
+partner-sync events. On-brand *if* strictly opt-in — fits the privacy-first,
+local-first stance.
 
 **Where it plugs in.**
-- Content already computable: `onThisDay()` (`js/analytics.js:136`) for the
+- Content already computable: `onThisDay()` (`js/analytics.js`) for the
   anniversary nudge; "days since last date" from `entryTimeMs()` for inactivity.
-- Delivery is the lift. PWA push needs a service worker `push`/notification handler
-  in `sw.js` and permission UX. **Cheapest first step:** no server — use the
-  Notification API + a `periodicSync`/on-open check that fires a local notification
-  when the app is opened after a gap, before committing to Web Push + a Worker
-  (we already run a Cloudflare Worker for feedback — see `FEEDBACK_PLAN.md` — so a
-  push endpoint is a plausible later home).
+- Delivery already exists: the push Worker + `js/push.js` + `sw.js` handler and
+  permission UX shipped for partner-new-date notifications. This item is now
+  mostly the two content triggers plus its own opt-in row in the ⋯ menu.
 - Settings: reminder on/off + time, stored via `getSetting`/`setSetting`
-  (`js/store.js:95`, kept local).
+  (`js/store.js`, kept local).
 
-**Effort.** Medium→Large (true background push is the large part). **Risk.** iOS
-PWA notification support is historically flaky; verify on target devices before
-investing. Start with local, open-triggered notifications.
+**Effort.** Medium (was Medium→Large before the push infrastructure shipped).
+**Risk.** iOS PWA notification support is historically flaky; verify on target
+devices.
 
 **Skipped until validated:** server-driven Web Push, scheduled quiet hours.
 
@@ -301,6 +302,10 @@ an afterthought. Phrase everything as observation ("has trended"), not
 prophecy.
 
 ## 9. Cost-of-happiness optimizer
+
+**Status.** ◐ Half shipped — the Suggest-side budget cap (`budget` filter in
+`js/suggest.js` + "Max budget" field in the Ideas tab) is live. What remains is
+the Insights side (cost-band bucketing, plateau/best-value claims).
 
 **What.** Insights that connect money to joy: "your enjoyment plateaus above
 ₪200", "best value category: At home, 4.6★ at ₪40 avg", plus a budget slider on
