@@ -269,8 +269,8 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); bo
 
 /* ---- Home sticker cards: photos edge-to-edge, metadata as edge stickers ---- */
 .home-card { padding: 0; overflow: hidden; cursor: pointer; position: relative; }
-.home-card .mosaic { grid-template-columns: 3fr 2fr; grid-auto-rows: 103px; gap: 3px; }
-.home-card .mosaic.one, .home-card .mosaic.two { grid-auto-rows: 209px; } /* all photo counts = same card height */
+.home-card .mosaic { grid-template-columns: 3fr 2fr; grid-auto-rows: 208px; gap: 3px; }
+.home-card .mosaic.one, .home-card .mosaic.two { grid-auto-rows: 419px; } /* all photo counts = same card height */
 .home-card .mosaic.one { grid-template-columns: 1fr; } /* beat .home-card .mosaic's 3fr 2fr */
 .home-card .mosaic.two { grid-template-columns: 1fr 1fr; }
 .home-card .mosaic.one .ph:first-child { grid-row: auto; } /* single photo: no span-2 double height */
