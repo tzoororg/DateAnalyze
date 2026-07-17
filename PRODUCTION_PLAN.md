@@ -117,23 +117,45 @@ the entire `dates` collection on every app open.
 - [ ] Move to the Blaze plan before public launch; set a billing budget + alert.
 - [ ] Migrate photos to Cloud Storage (upload/download path + `storage.rules` are preserved
       in git history per CLAUDE.md); keep base64 docs as a read-fallback during migration.
-- [ ] Cost model: estimate reads/writes/storage per couple/month; the whole-collection
-      snapshot per open is the dominant read cost — plan a `updatedAt`-cursor delta sync
-      when it matters (not before).
+- [ ] **Enable Firestore persistent local cache** (`persistentLocalCache` in the SDK init in
+      sync.js) at the same time as the Blaze migration. `attachSpace` snapshots the whole
+      `dates` collection on every app open; without the cache every doc bills as a read every
+      time (~$25–45/mo at 1,000 couples with multi-year histories). With it, only changed
+      docs bill — the dominant variable cost drops ~99%. This makes an `updatedAt`-cursor
+      delta sync unnecessary; revisit only if cache misses show up in billing.
+- [ ] Cost model sanity check: photos are the only real storage cost, ~1–3 cents per couple
+      per year (downscaled ~300 KB, egress once per photo per partner — IndexedDB caches
+      forever after). Costs scale linearly with couples; no cliff. Fixed costs are the store
+      fees (Play $25 once, Apple $99/yr), not infrastructure.
 
-### 3.3 Admin access to user data — decide and disclose
-Today: yes — the Firebase project owner can read every couple's dates, notes, and photos in
-plaintext from the console. That's normal for hosted apps but must be disclosed, and stores
-ask about it directly (data-safety forms).
+### 3.3 Admin access to user data → end-to-end encryption (decided: yes, before launch)
+Today the Firebase project owner can read every couple's dates, notes, and photos in
+plaintext from the console. Decision: ship client-side E2EE so the operator sees only
+ciphertext — this is also the best possible answer on the store data-safety forms
+("we cannot read your data"). Must land **before** launch: retrofitting E2EE after general
+users have plaintext data is far harder than the migration below.
 
-- [ ] Minimum bar: privacy policy states what's stored, where (Google Cloud region), and
-      that operators can technically access it; restrict console access to one account with
-      2FA; never look at user spaces except for support with consent.
-- [ ] Optional (real product differentiator, real work): client-side encryption — derive a
-      couple key during pairing (the invite exchange is a natural channel), encrypt
-      title/notes/location/photo bytes before Firestore. Decide before launch, because
-      retrofitting E2EE after users have plaintext data is much harder. If skipped now,
-      record it as an explicit product decision.
+Design (all WebCrypto, no dependencies, fits the no-build-step constraint):
+- [ ] Key generation: on `createSpace`, generate a random AES-256-GCM key on-device.
+- [ ] Key exchange rides the pairing flow, never touching the server: append the key
+      (base64) to the invite code itself, so the combined code transfers phone-to-phone
+      (spoken/pasted/QR). The server-stored invite doc keeps only the spaceId — zero
+      knowledge of the key. Hide the longer code behind a share-link/QR flow.
+- [ ] Encrypt before Firestore: title, notes, location, mood, and photo bytes. Keep
+      plaintext: id, date, category, enjoyment/effort, wouldRepeat (needed nowhere
+      server-side today, but cheap to encrypt too — default to encrypting everything except
+      id/date; timestamps and doc counts remain visible metadata, disclose that).
+- [ ] Key storage: IndexedDB settings (local-only, never routed to cloud — the existing
+      settings path already guarantees this).
+- [ ] Recovery story: lost key = lost cloud data. The existing JSON export (plaintext,
+      on-device) is the backup; add an "export reminder" nudge (see 3.1) and show the key
+      as a recovery phrase the couple can store.
+- [ ] Migration for existing plaintext spaces: client re-writes every doc encrypted, then
+      deletes plaintext versions (both partners must update first — gate on an app-version
+      field in the space doc).
+- [ ] Privacy policy then states: content is end-to-end encrypted; operators can see only
+      entry counts, timestamps, and space membership. Console access still restricted to
+      one 2FA-protected account.
 
 ## 4. Store submission requirements
 
@@ -168,5 +190,5 @@ ask about it directly (data-safety forms).
    (storage persistence) — small, do now.
 2. Launch blockers: 3.2 (Blaze + Cloud Storage), 2 (OAuth verification, sign-in in
    wrappers), 4 (policy pages, account deletion, packaging).
-3. Hardening: 1.3–1.6, 5.
-4. Decide explicitly: 3.3 E2EE — yes/no before launch.
+3. Launch blocker (decided): 3.3 E2EE — must ship before general users have plaintext data.
+4. Hardening: 1.3–1.6, 5.
