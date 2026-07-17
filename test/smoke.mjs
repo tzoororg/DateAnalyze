@@ -35,6 +35,12 @@ try {
   t = await shotTab("home");
   const homeText = await t.evaluate(`document.querySelector("#view").innerText`);
   check("home shows seeded content", homeText.length > 50);
+  const stickers = await t.evaluate(`[
+    document.querySelectorAll("#date-list .home-card").length,
+    document.querySelectorAll("#date-list .home-card .stk.caption").length,
+    document.querySelectorAll("#date-list .home-card .stk.hearts").length]`);
+  check("home widget cards carry sticker metadata", stickers[0] > 0 && stickers[1] === stickers[0] && stickers[2] === stickers[0],
+    `cards=${stickers[0]} captions=${stickers[1]} hearts=${stickers[2]}`);
 
   // 3. history list
   t = await shotTab("history-list");
@@ -90,12 +96,21 @@ try {
   await t.evaluate(`{
     const i = document.getElementById("f-title");
     i.value = "Smoke Test Date"; i.dispatchEvent(new Event("input"));
+    const vb = document.getElementById("f-vibe");
+    vb.value = "smoky"; vb.dispatchEvent(new Event("input"));
+    document.querySelector('#f-cost [data-tier="low"]').click();
     document.getElementById("f-save").click();
   }`);
   await t.waitFor(`document.getElementById("logSheet").classList.contains("hidden")`);
   const stored = await t.evaluate(`import("./js/store.js").then(s => s.getAllDates())
-    .then(ds => ds.some(d => d.title === "Smoke Test Date"))`);
-  check("log round-trip persists via store", stored === true);
+    .then(ds => {
+      const d = ds.find(x => x.title === "Smoke Test Date");
+      return d ? { vibe: d.vibe, costTier: d.costTier, cost: d.cost, rep: d.wouldRepeat, enj: d.enjoyment } : null;
+    })`);
+  check("log round-trip persists via store", !!stored);
+  check("v2 fields persist (vibe + cost tier + meter mapping)",
+    stored && stored.vibe === "smoky" && stored.costTier === "low" && stored.cost === 60
+    && stored.enj === 4 && stored.rep === "yes", JSON.stringify(stored));
   await t.evaluate(`document.querySelector('.tab[data-tab="history"]').click()`);
   await sleep(400);
   const inHist = await t.evaluate(`document.querySelector("#view").innerText.includes("Smoke Test Date")`);

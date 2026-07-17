@@ -1,13 +1,18 @@
 #!/bin/sh
 # Auto-bump the SW cache version whenever app shell files are committed,
 # so phones pick up the update without anyone remembering to do it.
+# Versioning is semver (us-date-tracker-vMAJOR.MINOR.PATCH): the agent doing the
+# task picks the bump and sets it by hand; this hook is the safety net that
+# bumps PATCH when nobody touched the version.
 # Enabled via: git config core.hooksPath hooks
 staged=$(git diff --cached --name-only)
 echo "$staged" | grep -qE '^(index\.html|app\.js|sw\.js|manifest\.webmanifest|css/|js/|icons/)' || exit 0
 # already bumped by hand in this commit? then leave it alone
 git diff --cached -U0 -- sw.js | grep -q 'const CACHE' && exit 0
-n=$(sed -nE 's/.*us-date-tracker-v([0-9]+).*/\1/p' sw.js)
-[ -n "$n" ] || exit 0
-sed -i -E "s/us-date-tracker-v[0-9]+/us-date-tracker-v$((n+1))/" sw.js
+v=$(sed -nE 's/.*us-date-tracker-v([0-9]+\.[0-9]+\.[0-9]+).*/\1/p' sw.js)
+[ -n "$v" ] || exit 0
+maj=${v%%.*}; rest=${v#*.}; min=${rest%%.*}; pat=${rest#*.}
+new="$maj.$min.$((pat+1))"
+sed -i -E "s/us-date-tracker-v[0-9.]+/us-date-tracker-v$new/" sw.js
 git add sw.js
-echo "pre-commit: bumped SW cache to us-date-tracker-v$((n+1))"
+echo "pre-commit: bumped SW cache to us-date-tracker-v$new"

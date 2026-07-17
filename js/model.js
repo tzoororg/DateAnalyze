@@ -25,6 +25,33 @@ export const REPEAT_OPTIONS = [
   { key: "no",    label: "No",    weight: 0.0 },
 ];
 
+// v2 log form: categorical cost tiers. `ils` is a representative amount stored in
+// the numeric `cost` field so spend analytics keep working on approximations.
+export const COST_TIERS = [
+  { key: "free", label: "Free", ils: 0 },
+  { key: "low",  label: "$",    ils: 60 },
+  { key: "mid",  label: "$$",   ils: 180 },
+  { key: "high", label: "$$$",  ils: 450 },
+];
+export function tierLabel(key) { return COST_TIERS.find(t => t.key === key)?.label || ""; }
+// Bucket a legacy numeric cost into the nearest tier (for pre-selecting on edit).
+export function tierForCost(n) {
+  if (n == null || isNaN(n)) return null;
+  return n <= 0 ? "free" : n <= 100 ? "low" : n <= 300 ? "mid" : "high";
+}
+
+// v2 log form: the again-o-meter. One 1–5 drag answers enjoyment AND wouldRepeat.
+export const METER = [
+  { face: "😵", word: "never again" },
+  { face: "😕", word: "probably not" },
+  { face: "🙂", word: "it was fine" },
+  { face: "😊", word: "so good — we'd do it again" },
+  { face: "😍", word: "drop everything, we're going back" },
+];
+export function repeatForEnjoyment(n) { return n >= 4 ? "yes" : n === 3 ? "maybe" : "no"; }
+
+// Legacy fixed mood list — replaced in the v2 form by the free-text `vibe` word,
+// but still used to display/filter entries logged before the redesign.
 export const MOOD_OPTIONS = [
   { key: "romantic",   label: "Romantic",   emoji: "💕" },
   { key: "spicy",      label: "Spicy",      emoji: "🔥" },
@@ -46,9 +73,11 @@ export function blankEntry() {
     category: "dining",
     enjoyment: 4,
     mood: [],
+    vibe: "",
     effort: 3,
     wouldRepeat: "yes",
     cost: null,
+    costTier: null,
     location: "",
     notes: "",
     photos: [], // array of photo blob ids

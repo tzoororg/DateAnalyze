@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>v4 — Polaroid form + vertical again-o-meter · Sticker home widget</title>
+<style>
+:root {
+  --bg: #2a1b26; --bg-soft: #33222e; --card: #3b2a37; --card-2: #4a3444;
+  --line: #54394c; --text: #f5e6ee; --muted: #c99bb0;
+  --accent: #ff7fa2; --accent-2: #ff9fba;
+  --good: #7ed3ab; --warn: #eec97a; --bad: #f08a8a;
+  --radius: 18px; --shadow: 0 6px 16px rgba(0,0,0,.35);
+  --cursive: "Segoe Script", "Comic Sans MS", cursive;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 28px; background: #1a1017; color: var(--text);
+  font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+h1 { font: 700 26px var(--cursive); color: var(--accent); margin: 0 0 6px; }
+.intro { color: var(--muted); font-size: 13px; max-width: 780px; line-height: 1.6; margin: 0 0 10px; }
+.sec-h { font: 700 20px var(--cursive); color: var(--accent); margin: 44px 0 4px; }
+.sec-note { font-size: 13px; color: #9a7f8e; max-width: 780px; line-height: 1.6; margin: 0 0 16px; }
+.sec-note b { color: var(--muted); }
+.row { display: flex; gap: 26px; flex-wrap: wrap; align-items: flex-start; }
+.frame { width: 390px; flex: none; }
+.view-label { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .12em; margin: 0 4px 8px; }
+.frame-note { font-size: 12px; color: #9a7f8e; margin: 8px 4px 0; line-height: 1.5; }
+.phone {
+  background: radial-gradient(120% 60% at 50% 0%, var(--bg-soft), var(--bg));
+  border-radius: 28px; padding: 16px; border: 1px solid #000; min-height: 700px;
+  position: relative; overflow: hidden; display: flex; flex-direction: column;
+}
+.muted { color: var(--muted); }
+.g1 { background: linear-gradient(130deg, #7a4a63, #4a3444); }
+.g2 { background: linear-gradient(130deg, #46618a, #2e3a54); }
+.g3 { background: linear-gradient(130deg, #5a7a52, #37432e); }
+
+/* ===== shared chrome ===== */
+.topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.topbar .x { width: 34px; height: 34px; border-radius: 50%; background: var(--card); display: grid; place-items: center; color: var(--muted); font-size: 15px; }
+.sheet-title { font: 700 24px var(--cursive); color: var(--accent); transform: rotate(-2deg); }
+.savebtn {
+  margin-top: auto; border: none; border-radius: 999px; padding: 14px; width: 100%;
+  background: var(--accent); color: #fff; font-size: 16px; font-weight: 800; box-shadow: var(--shadow);
+}
+
+/* ===== polaroid (from option 8) ===== */
+.pol-wrap { position: relative; margin: 2px 6px 16px; }
+.polaroid {
+  background: #fdf6ee; border-radius: 6px; padding: 12px 12px 10px; box-shadow: var(--shadow);
+  transform: rotate(-1.2deg); position: relative; z-index: 1;
+}
+.polaroid.behind { position: absolute; inset: 0; transform: rotate(2.4deg) translate(6px, -4px); z-index: 0; }
+.pshot { height: 210px; border-radius: 3px; display: grid; place-items: center; position: relative; overflow: hidden; }
+.pshot.empty { background: #efe4d8; border: 2px dashed #cbb59f; color: #8d735c; text-align: center; }
+.pshot.empty .big { font-size: 42px; }
+.pshot.empty .hint { font-size: 15px; font-weight: 700; margin-top: 4px; }
+.pshot.empty .srcs { font-size: 12px; margin-top: 6px; color: #a98f76; }
+.pshot .emoji { font-size: 60px; }
+.count-badge {
+  position: absolute; right: 10px; bottom: 10px; background: rgba(0,0,0,.55); color: #fff;
+  border-radius: 999px; padding: 3px 10px; font-size: 13px; font-weight: 800;
+}
+.pol-caption {
+  margin-top: 10px; font: 400 19px var(--cursive); color: #5a4636; padding: 2px 4px;
+  border-bottom: 1.5px dashed #cbb59f;
+}
+.pol-caption.ghost { color: #b9a288; }
+
+/* ===== two-column zone: fields left, meter right ===== */
+.form-grid { display: flex; gap: 12px; align-items: stretch; }
+.form-grid .fields { flex: 1; min-width: 0; }
+.qrow { display: flex; gap: 8px; align-items: center; }
+.pillbtn {
+  background: var(--card); border-radius: 999px; padding: 9px 13px; font-size: 14px; font-weight: 600;
+  color: var(--text); white-space: nowrap; flex: none;
+}
+.cat-scroll { display: flex; gap: 6px; overflow: hidden; flex: 1; min-width: 0; align-items: center; }
+.cat-dot {
+  width: 40px; height: 40px; flex: none; border-radius: 50%; background: var(--card);
+  display: grid; place-items: center; font-size: 19px;
+}
+.cat-dot.on { background: var(--accent); box-shadow: 0 0 0 3px rgba(255,127,162,.35); }
+.cat-fade { width: 22px; height: 40px; flex: none; margin-left: -26px; background: linear-gradient(90deg, transparent, var(--bg)); position: relative; }
+.blocklabel { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); margin: 16px 4px 8px; }
+.seg4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.seg4 button {
+  border: 1.5px solid var(--line); background: var(--card); color: var(--text); border-radius: 12px;
+  padding: 10px 0; font-size: 14px; font-weight: 700;
+}
+.seg4 .on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.vibe-input {
+  background: var(--card); border-radius: 12px; padding: 11px 14px; font-size: 15px;
+  color: var(--text); font-family: var(--cursive);
+}
+.vibe-input.ghost { color: var(--muted); }
+.vibe-sugs { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.vibe-sug { font-size: 12px; color: var(--muted); background: var(--card); border-radius: 999px; padding: 4px 11px; font-family: var(--cursive); }
+.addnote { font-size: 13px; color: var(--accent-2); font-weight: 700; margin: 12px 4px; }
+
+/* ===== vertical again-o-meter (from option 9, rotated) ===== */
+.meter-col {
+  flex: none; width: 78px; display: flex; flex-direction: column; align-items: center;
+  background: var(--card); border-radius: 16px; padding: 10px 6px; gap: 6px;
+}
+.meter-col .end { font-size: 20px; line-height: 1; }
+.meter-col .end-lbl { font-size: 9.5px; color: var(--muted); font-weight: 700; text-align: center; line-height: 1.25; }
+.vtrack { flex: 1; width: 8px; border-radius: 99px; background: rgba(255,255,255,.12); position: relative; margin: 6px 0; }
+.vtrack .fill { position: absolute; left: 0; right: 0; bottom: 0; background: linear-gradient(0deg, #8a5a6a, var(--accent)); border-radius: 99px; }
+.vtrack .thumb {
+  position: absolute; left: 50%; transform: translate(-50%, -50%); width: 46px; height: 46px;
+  border-radius: 50%; background: var(--card-2); border: 3px solid var(--accent);
+  display: grid; place-items: center; font-size: 22px; box-shadow: var(--shadow);
+}
+.vtrack.idle .thumb { border-color: var(--line); }
+.verdict-word { text-align: center; font: 700 16px var(--cursive); color: var(--accent-2); margin: 12px 4px 0; }
+.verdict-word.ghost { color: #9a7f8e; font-size: 14px; }
+
+/* ===================================================== */
+/* ===== HOME WIDGET — sticker cards (option 11 look) ===== */
+.section-title { font-size: 12px; text-transform: uppercase; letter-spacing: .14em; font-weight: 800; color: var(--muted); margin: 4px 4px 10px; }
+.wcard {
+  border-radius: var(--radius); overflow: hidden; position: relative; box-shadow: var(--shadow);
+  margin-bottom: 14px; cursor: pointer;
+}
+.wmosaic { display: grid; gap: 3px; }
+.wmosaic .ph { display: grid; place-items: center; font-size: 40px; min-height: 0; }
+.wm1 { grid-template-columns: 1fr; grid-auto-rows: 210px; }
+.wm1 .ph { font-size: 54px; }
+.wm2 { grid-template-columns: 1fr 1fr; grid-auto-rows: 210px; }
+.wm3 { grid-template-columns: 3fr 2fr; grid-auto-rows: 103.5px; }
+.wm3 .ph:first-child { grid-row: span 2; font-size: 54px; }
+.wm3 .ph { font-size: 32px; }
+/* dark scrim only at the very bottom so the caption reads */
+.wcard::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 74px;
+  background: linear-gradient(180deg, transparent, rgba(15,6,12,.72)); pointer-events: none;
+}
+/* stickers */
+.stk { position: absolute; z-index: 2; }
+.stk.tape {
+  background: rgba(253,246,238,.92); padding: 4px 12px; box-shadow: 0 3px 8px rgba(0,0,0,.3);
+  font-family: var(--cursive); color: #5a4636; font-size: 12.5px;
+  top: 10px; left: 12px; transform: rotate(-2deg);
+}
+.stk.cat {
+  top: 10px; right: 12px; transform: rotate(6deg); background: #fff; width: 40px; height: 40px;
+  border-radius: 50%; display: grid; place-items: center; font-size: 20px;
+  border: 2.5px solid var(--accent); box-shadow: 0 4px 10px rgba(0,0,0,.35);
+}
+.stk.hearts {
+  bottom: 12px; right: 12px; transform: rotate(-4deg); background: var(--accent); color: #fff;
+  padding: 5px 11px; font-size: 12.5px; font-weight: 800; border-radius: 999px;
+  box-shadow: 0 4px 10px rgba(0,0,0,.35); white-space: nowrap;
+}
+.stk.vibe {
+  bottom: 44px; right: 16px; transform: rotate(7deg); background: rgba(253,246,238,.92);
+  padding: 3px 10px; font: 600 12.5px var(--cursive); color: #5a4636; border-radius: 4px;
+  box-shadow: 0 3px 8px rgba(0,0,0,.3);
+}
+.stk.caption {
+  left: 14px; right: 96px; bottom: 10px; font: 600 18px var(--cursive); color: #fff;
+  text-shadow: 0 2px 6px rgba(0,0,0,.7); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.stk.caption .sub { display: block; font: 400 11.5px sans-serif; color: rgba(255,255,255,.75); text-shadow: 0 1px 4px rgba(0,0,0,.8); margin-top: 1px; letter-spacing: .02em; }
+.more-badge { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(0,0,0,.45); color: #fff; font-size: 16px; font-weight: 800; }
+/* no-photo fallback */
+.wcard.nophoto .wm1 .ph { background: linear-gradient(130deg, var(--card-2), var(--card)); }
+</style>
+</head>
+<body>
+
+<h1>v4 — the picked direction, tuned</h1>
+<p class="intro">
+  Two changes vs the option sheet: <b>①</b> Option 8 (Polaroid) with the hearts replaced by Option 9's again-o-meter,
+  rotated vertical and docked on the right — it spans from the category row down to the vibe field, so the whole
+  "verdict" is one thumb-drag next to the facts. <b>②</b> Option 11's sticker look applied to the Home "Recent memories"
+  widget: the photos ARE the card, all metadata lands on them as small edge stickers.
+</p>
+
+<!-- ================================================== -->
+<h2 class="sec-h">① Log form — Polaroid + vertical again-o-meter</h2>
+<p class="sec-note">
+  The meter replaces the 1–5 hearts entirely. Drag maps to <b>enjoyment + wouldRepeat</b> in one gesture
+  (bottom = never again, top = again ASAP); the face on the thumb and the cursive verdict line under the grid
+  change live as you drag. Everything else is Option 8 unchanged: caption-as-title on the polaroid,
+  swipeable category dots, Free/$/$$/$$$ cost, free-text vibe word with your past words as suggestions.
+</p>
+<div class="row">
+  <div class="frame">
+    <p class="view-label">View 1 · Empty</p>
+    <div class="phone">
+      <div class="topbar"><span class="sheet-title">New page!</span><span class="x">✕</span></div>
+      <div class="pol-wrap">
+        <div class="polaroid">
+          <div class="pshot empty">
+            <div>
+              <div class="big">📸</div>
+              <div class="hint">Tap to add photos</div>
+              <div class="srcs">Camera · Gallery · Google Photos</div>
+            </div>
+          </div>
+          <div class="pol-caption ghost">write a caption…</div>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="fields">
+          <div class="qrow">
+            <span class="pillbtn">📅 Today</span>
+            <div class="cat-scroll">
+              <span class="cat-dot on">🍽️</span><span class="cat-dot">🌳</span><span class="cat-dot">🎬</span>
+              <span class="cat-dot">✈️</span><span class="cat-dot">🎨</span><span class="cat-dot">🏠</span>
+            </div>
+            <div class="cat-fade"></div>
+          </div>
+          <div class="blocklabel">Cost</div>
+          <div class="seg4"><button>Free</button><button>$</button><button>$$</button><button>$$$</button></div>
+          <div class="blocklabel">One word for the vibe</div>
+          <div class="vibe-input ghost">magical? chaotic? cozy?</div>
+          <div class="vibe-sugs"><span class="vibe-sug">cozy</span><span class="vibe-sug">spontaneous</span><span class="vibe-sug">giggly</span></div>
+        </div>
+        <div class="meter-col">
+          <span class="end">😍</span>
+          <span class="end-lbl">again<br/>ASAP</span>
+          <div class="vtrack idle">
+            <div class="fill" style="height:50%"></div>
+            <div class="thumb" style="top:50%">🙂</div>
+          </div>
+          <span class="end-lbl">never<br/>again</span>
+          <span class="end">😵</span>
+        </div>
+      </div>
+      <div class="verdict-word ghost">drag the face — would you do it again?</div>
+      <button class="savebtn">Save date ♥</button>
+    </div>
+  </div>
+  <div class="frame">
+    <p class="view-label">View 2 · Filled</p>
+    <div class="phone">
+      <div class="topbar"><span class="sheet-title">New page!</span><span class="x">✕</span></div>
+      <div class="pol-wrap">
+        <div class="polaroid behind"></div>
+        <div class="polaroid">
+          <div class="pshot g3"><span class="emoji">🌄</span><span class="count-badge">+2</span></div>
+          <div class="pol-caption">Sunset hike at the cliffs</div>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="fields">
+          <div class="qrow">
+            <span class="pillbtn">📅 Jul 16</span>
+            <div class="cat-scroll">
+              <span class="cat-dot">🍽️</span><span class="cat-dot on">🌳</span><span class="cat-dot">🎬</span>
+              <span class="cat-dot">✈️</span><span class="cat-dot">🎨</span><span class="cat-dot">🏠</span>
+            </div>
+            <div class="cat-fade"></div>
+          </div>
+          <div class="blocklabel">Cost</div>
+          <div class="seg4"><button class="on">Free</button><button>$</button><button>$$</button><button>$$$</button></div>
+          <div class="blocklabel">One word for the vibe</div>
+          <div class="vibe-input">breathless</div>
+          <div class="addnote">+ add a note</div>
+        </div>
+        <div class="meter-col">
+          <span class="end">😍</span>
+          <span class="end-lbl">again<br/>ASAP</span>
+          <div class="vtrack">
+            <div class="fill" style="height:82%"></div>
+            <div class="thumb" style="top:18%">😍</div>
+          </div>
+          <span class="end-lbl">never<br/>again</span>
+          <span class="end">😵</span>
+        </div>
+      </div>
+      <div class="verdict-word">“drop everything, we're going back”</div>
+      <button class="savebtn">Save date ♥</button>
+    </div>
+  </div>
+</div>
+<p class="frame-note" style="max-width:780px">
+  The meter column sits exactly beside the stack it replaces the hearts of: category row → cost → vibe.
+  Internally the thumb position maps to enjoyment 1–5 and wouldRepeat (top third = yes, middle = maybe, bottom = no),
+  so analytics and the suggestion engine keep working unchanged.
+</p>
+
+<!-- ================================================== -->
+<h2 class="sec-h">② Home widget — photos maximized, metadata as stickers</h2>
+<p class="sec-note">
+  The Recent-memories card is now just the photo mosaic, edge to edge — no text body below it.
+  Everything the old card body held moves onto the image as Option-11 stickers, all pinned to edges/corners so
+  the photo center stays clear: <b>date</b> = tape strip (top-left) · <b>category</b> = round badge (top-right) ·
+  <b>title</b> = handwritten caption over a bottom scrim · <b>verdict</b> = hearts pill (bottom-right) ·
+  <b>vibe word</b> = small tape label above the hearts. Tap anywhere → opens the date in History.
+</p>
+<div class="row">
+  <div class="frame">
+    <p class="view-label">Widget · 1, 2 and 3+ photos</p>
+    <div class="phone" style="min-height:0">
+      <div class="section-title">Recent memories</div>
+
+      <!-- 1 photo -->
+      <div class="wcard">
+        <div class="wmosaic wm1"><div class="ph g1">🍝</div></div>
+        <span class="stk tape">Fri, Jul 10</span>
+        <span class="stk cat">🍽️</span>
+        <span class="stk vibe">giggly</span>
+        <span class="stk hearts">♥♥♥♥♥</span>
+        <span class="stk caption">Pasta making class<span class="sub">Dining · $$</span></span>
+      </div>
+
+      <!-- 2 photos -->
+      <div class="wcard">
+        <div class="wmosaic wm2"><div class="ph g2">🎬</div><div class="ph g1">🌭</div></div>
+        <span class="stk tape">Sat, Jul 4</span>
+        <span class="stk cat">🎬</span>
+        <span class="stk hearts">♥♥♥♡♡</span>
+        <span class="stk caption">Drive-in movie night<span class="sub">Movie · $</span></span>
+      </div>
+
+      <!-- 3 photos (4th+ → +N badge) -->
+      <div class="wcard">
+        <div class="wmosaic wm3">
+          <div class="ph g3">🌄</div>
+          <div class="ph g2">🥾</div>
+          <div class="ph g1">🧺<span class="more-badge">+2</span></div>
+        </div>
+        <span class="stk tape">Sun, Jun 28</span>
+        <span class="stk cat">🌳</span>
+        <span class="stk vibe">breathless</span>
+        <span class="stk hearts">♥♥♥♥♡</span>
+        <span class="stk caption">Sunset hike at the cliffs<span class="sub">Outdoors · Free</span></span>
+      </div>
+    </div>
+    <p class="frame-note">
+      1 photo = full-bleed · 2 photos = 50/50 split · 3 photos = big-left mosaic, "+N" badge past three.
+      Stickers hug corners; only the bottom ~70px gets a scrim for the caption.
+    </p>
+  </div>
+  <div class="frame">
+    <p class="view-label">No-photo fallback</p>
+    <div class="phone" style="min-height:0">
+      <div class="section-title">Recent memories</div>
+      <div class="wcard nophoto">
+        <div class="wmosaic wm1" style="grid-auto-rows:150px"><div class="ph">🥂</div></div>
+        <span class="stk tape">Wed, Jun 17</span>
+        <span class="stk cat">🍸</span>
+        <span class="stk hearts">♥♥♥♥♡</span>
+        <span class="stk caption">Rooftop cocktails<span class="sub">Nightlife · $$$</span></span>
+      </div>
+    </div>
+    <p class="frame-note">
+      No photos → the category emoji on a plum gradient at a shorter height; same sticker layout so the feed stays uniform.
+    </p>
+  </div>
+</div>
+
+</body>
+</html>

@@ -27,7 +27,9 @@ Every new feature or UI/UX modification starts as a static HTML mock **before** 
 
 Skip the mock only for pure logic/bugfix changes with no visible UI impact.
 
-**Service worker caching caveat:** During development, the SW caches aggressively. After changing files, either unregister the SW in DevTools → Application → Service Workers, or bump the `CACHE` version string in `sw.js`. When adding a new file, also add it to the `SHELL` array in `sw.js`. A pre-commit hook in `hooks/pre-commit` bumps the version automatically when app shell files are committed (enable once per clone with `git config core.hooksPath hooks`) — if the hook is enabled, don't bump by hand.
+**Service worker caching caveat:** During development, the SW caches aggressively. After changing files, either unregister the SW in DevTools → Application → Service Workers, or bump the `CACHE` version string in `sw.js`. When adding a new file, also add it to the `SHELL` array in `sw.js`.
+
+**Versioning (semver):** the `CACHE` string in `sw.js` is `us-date-tracker-vMAJOR.MINOR.PATCH`. The model doing a task decides which part to bump and sets it by hand in `sw.js` before committing: **major** = big redesign or a data-model change, **minor** = new feature, **patch** = bugfix/tweak. The pre-commit hook in `hooks/pre-commit` (enable once per clone with `git config core.hooksPath hooks`) is only a safety net — it bumps PATCH automatically if app shell files are committed without a hand bump.
 
 ## Testing (required after every feature/redesign)
 

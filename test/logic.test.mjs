@@ -6,6 +6,7 @@ import assert from "node:assert/strict";
 import {
   CATEGORIES, MOOD_OPTIONS, blankEntry, normTitle, daysBetween,
   entryTimeMs, toILS, fmtMoney,
+  COST_TIERS, tierForCost, tierLabel, repeatForEnjoyment, METER,
 } from "../js/model.js";
 import * as analytics from "../js/analytics.js";
 import { suggest } from "../js/suggest.js";
@@ -18,6 +19,31 @@ const legacyMoodEntry = { ...blankEntry(), title: "Old entry", mood: 4, enjoymen
 const noDateEntry = { ...blankEntry(), date: "", createdAt: 1700000000000, title: "No date field" };
 
 // ================= model =================
+
+test("again-o-meter maps enjoyment to wouldRepeat (top=yes, mid=maybe, low=no)", () => {
+  assert.equal(repeatForEnjoyment(5), "yes");
+  assert.equal(repeatForEnjoyment(4), "yes");
+  assert.equal(repeatForEnjoyment(3), "maybe");
+  assert.equal(repeatForEnjoyment(2), "no");
+  assert.equal(repeatForEnjoyment(1), "no");
+  assert.equal(METER.length, 5);
+});
+
+test("cost tiers bucket legacy numeric costs and label correctly", () => {
+  assert.equal(tierForCost(null), null);
+  assert.equal(tierForCost(0), "free");
+  assert.equal(tierForCost(80), "low");
+  assert.equal(tierForCost(250), "mid");
+  assert.equal(tierForCost(900), "high");
+  assert.equal(tierLabel("mid"), "$$");
+  for (const t of COST_TIERS) assert.equal(tierForCost(t.ils), t.key); // representative ₪ round-trips
+});
+
+test("blankEntry v2 fields: free-text vibe and costTier", () => {
+  const e = blankEntry();
+  assert.equal(e.vibe, "");
+  assert.equal(e.costTier, null);
+});
 
 test("normTitle trims, lowercases, collapses whitespace", () => {
   assert.equal(normTitle("  Mini  GOLF \n"), "mini golf");

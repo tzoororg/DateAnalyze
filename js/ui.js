@@ -2,8 +2,8 @@
 
 import * as db from "./store.js";
 import {
-  CATEGORIES, REPEAT_OPTIONS, MOOD_OPTIONS, CURRENCIES, catLabel, catEmoji,
-  blankEntry, fmtMoney, fmtDate, entryTimeMs, toILS, refreshRates,
+  CATEGORIES, MOOD_OPTIONS, COST_TIERS, METER, catLabel, catEmoji,
+  blankEntry, fmtMoney, fmtDate, entryTimeMs, tierLabel, tierForCost, repeatForEnjoyment,
 } from "./model.js";
 import * as A from "./analytics.js";
 import * as C from "./charts.js";
@@ -19,7 +19,6 @@ let currentTab = "home";
 const sug = { explore: 0.5, budget: null, maxEffort: null, category: null, moods: [] };
 const hist = { sort: "date-desc", category: null, moods: [], query: "", view: "list", expanded: null };
 let memoryDismissed = false;
-let costCurrency = "ILS";
 const urlCache = new Map();      // photoId -> objectURL
 
 export async function init() {
@@ -28,7 +27,6 @@ export async function init() {
   wireIdle();
   // A notification tap opens the app at #history (see sw.js notificationclick).
   show(location.hash === "#history" ? "history" : "home");
-  refreshRates(db.getSetting, db.setSetting);
   db.subscribe(onRemoteChange);
   push.refreshToken();
 }
@@ -299,49 +297,56 @@ function renderLog() {
   const v = formEl();
   const isEdit = !!editingId;
   document.querySelector(".logsheet-title").textContent = isEdit ? "Edit date" : "New page!";
+  const selTier = draft.costTier ?? tierForCost(draft.cost);
+  const vibeSugs = pastVibes().filter(w => w !== (draft.vibe || "").trim().toLowerCase()).slice(0, 4);
   v.innerHTML = `
-    <section class="card">
-      <label class="field" style="margin-top:0"><span>What did you do?</span>
-        <input id="f-title" type="text" placeholder="e.g. Sunset hike at the cliffs" value="${escAttr(draft.title)}"/></label>
-
-      <label class="field"><span>Photos</span></label>
+    <section class="card logform">
+      <div class="polaroid">
+        <button class="pshot empty" id="f-add-photo" type="button"></button>
+        <div class="photo-menu hidden" id="f-photo-menu">
+          <button class="photo-menu-item" data-src="camera">📷 Camera</button>
+          <button class="photo-menu-item" data-src="gallery">🖼️ Gallery</button>
+          <button class="photo-menu-item" data-src="google">📸 Google Photos</button>
+        </div>
+        <input id="f-title" class="pol-caption" type="text" placeholder="write a caption…" value="${escAttr(draft.title)}"/>
+      </div>
       <div class="photo-strip" id="f-photos"></div>
       <input id="f-photo-camera" type="file" accept="image/*" capture="environment" hidden/>
       <input id="f-photo-gallery" type="file" accept="image/*" hidden multiple/>
 
-      <label class="field"><span>Category</span></label>
-      <div class="chips" id="f-category">
-        ${CATEGORIES.map(c => `<button class="chip ${draft.category === c.key ? "on" : ""}" data-cat="${c.key}">${c.emoji} ${c.label}</button>`).join("")}
+      <div class="form-grid">
+        <div class="fields">
+          <div class="qrow">
+            <input id="f-date" type="date" value="${draft.date}"/>
+            <div class="cat-scroll" id="f-category">
+              ${CATEGORIES.map(c => `<button class="cat-dot ${draft.category === c.key ? "on" : ""}" data-cat="${c.key}" title="${c.label}" aria-label="${c.label}">${c.emoji}</button>`).join("")}
+            </div>
+          </div>
+          <div class="blocklabel">Cost</div>
+          <div class="seg4" id="f-cost">
+            ${COST_TIERS.map(t => `<button class="${selTier === t.key ? "on" : ""}" data-tier="${t.key}">${t.label}</button>`).join("")}
+          </div>
+          <div class="blocklabel">One word for the vibe</div>
+          <input id="f-vibe" type="text" class="vibe-input" placeholder="magical? chaotic? cozy?" value="${escAttr(draft.vibe || "")}"/>
+          <div class="vibe-sugs" id="f-vibe-sugs">
+            ${vibeSugs.map(w => `<button type="button" class="vibe-sug" data-vibe="${escAttr(w)}">${escHtml(w)}</button>`).join("")}
+          </div>
+        </div>
+        <div class="meter-col">
+          <span class="end">😍</span>
+          <span class="end-lbl">again<br/>ASAP</span>
+          <div class="vtrack" id="f-meter">
+            <div class="fill" id="f-meter-fill"></div>
+            <div class="thumb" id="f-meter-thumb"></div>
+          </div>
+          <span class="end-lbl">never<br/>again</span>
+          <span class="end">😵</span>
+        </div>
       </div>
+      <div class="verdict-word" id="f-verdict"></div>
 
-      <label class="field"><span>When</span>
-        <input id="f-date" type="date" value="${draft.date}"/></label>
-
-      ${ratingBlock("Enjoyment", "enjoyment", draft.enjoyment, "★")}
-
-      <label class="field"><span>Mood / vibe <span class="muted" style="font-weight:400;font-size:12px">(pick any that fit)</span></span></label>
-      <div class="chips" id="f-mood">
-        ${MOOD_OPTIONS.map(m => `<button class="chip ${Array.isArray(draft.mood) && draft.mood.includes(m.key) ? "on" : ""}" data-mood="${m.key}">${m.emoji} ${m.label}</button>`).join("")}
-      </div>
-
-      ${ratingBlock("Effort it took", "effort", draft.effort, "")}
-
-      <label class="field"><span>Would you do it again?</span></label>
-      <div class="chips" id="f-repeat">
-        ${REPEAT_OPTIONS.map(o => `<button class="chip ${draft.wouldRepeat === o.key ? "on" : ""}" data-rep="${o.key}">${o.label}</button>`).join("")}
-      </div>
-
-      <div class="row">
-        <label class="field"><span>Cost</span>
-          <div class="cost-row">
-            <select id="f-currency" class="cost-cur">${CURRENCIES.map(c => `<option value="${c.key}" ${costCurrency === c.key ? "selected" : ""}>${c.label}</option>`).join("")}</select>
-            <input id="f-cost" type="number" inputmode="decimal" min="0" placeholder="0" value="${draft.cost ?? ""}"/>
-          </div></label>
-        <label class="field"><span>Location</span>
-          <input id="f-location" type="text" placeholder="optional" value="${escAttr(draft.location)}"/></label>
-      </div>
-
-      <label class="field"><span>Notes / memories</span>
+      <button class="addnote-link" id="f-note-toggle" type="button">+ add a note</button>
+      <label class="field ${draft.notes ? "" : "hidden"}" id="f-notes-wrap"><span>Notes / memories</span>
         <textarea id="f-notes" placeholder="What made it good (or not)?">${escHtml(draft.notes)}</textarea></label>
 
       <div class="btn-row">
@@ -351,13 +356,31 @@ function renderLog() {
     </section>
   `;
   wireForm();
+  paintMeter();
   renderPhotoStrip();
 }
 
-function ratingBlock(label, field, value, unit) {
-  const pills = [1, 2, 3, 4, 5].map(n =>
-    `<button class="${n === value ? "on" : ""}" data-rating="${field}" data-val="${n}">${n}${unit}</button>`).join("");
-  return `<label class="field"><span>${label}</span></label><div class="rating ${unit ? "stars" : ""}" data-rating-group="${field}">${pills}</div>`;
+// Most-used past vibe words for the suggestion chips (defaults for a fresh diary).
+function pastVibes() {
+  const freq = new Map();
+  for (const d of dates) {
+    const w = (d.vibe || "").trim().toLowerCase();
+    if (w) freq.set(w, (freq.get(w) || 0) + 1);
+  }
+  const mine = [...freq.entries()].sort((a, b) => b[1] - a[1]).map(([w]) => w);
+  return mine.length ? mine : ["cozy", "spontaneous", "giggly", "romantic"];
+}
+
+// Paint the again-o-meter from draft.enjoyment (1–5).
+function paintMeter() {
+  const v = formEl();
+  const m = METER[draft.enjoyment - 1] || METER[3];
+  const pct = ((draft.enjoyment - 1) / 4) * 100;
+  v.querySelector("#f-meter-fill").style.height = pct + "%";
+  const thumb = v.querySelector("#f-meter-thumb");
+  thumb.style.top = (100 - pct) + "%";
+  thumb.textContent = m.face;
+  v.querySelector("#f-verdict").textContent = `“${m.word}”`;
 }
 
 function wireForm() {
@@ -365,46 +388,63 @@ function wireForm() {
   // text-ish inputs update the draft without re-rendering (keeps focus/caret)
   bind("f-title", "input", e => draft.title = e.target.value);
   bind("f-date", "change", e => draft.date = e.target.value);
-  bind("f-cost", "input", e => draft.cost = e.target.value === "" ? null : Number(e.target.value));
-  bind("f-currency", "change", e => costCurrency = e.target.value);
-  bind("f-location", "input", e => draft.location = e.target.value);
+  bind("f-vibe", "input", e => draft.vibe = e.target.value);
   bind("f-notes", "input", e => draft.notes = e.target.value);
 
-  // category chips
+  // category dots
   v.querySelector("#f-category").addEventListener("click", e => {
     const b = e.target.closest("[data-cat]"); if (!b) return;
     draft.category = b.dataset.cat;
-    setOn(v.querySelectorAll("#f-category .chip"), b);
-  });
-  // repeat chips
-  v.querySelector("#f-repeat").addEventListener("click", e => {
-    const b = e.target.closest("[data-rep]"); if (!b) return;
-    draft.wouldRepeat = b.dataset.rep;
-    setOn(v.querySelectorAll("#f-repeat .chip"), b);
-  });
-  // ratings (enjoyment, effort)
-  v.querySelectorAll("[data-rating-group]").forEach(group => {
-    group.addEventListener("click", e => {
-      const b = e.target.closest("[data-rating]"); if (!b) return;
-      draft[b.dataset.rating] = Number(b.dataset.val);
-      setOn(group.querySelectorAll("button"), b);
-    });
-  });
-  // mood chips (multi-select toggle)
-  v.querySelector("#f-mood").addEventListener("click", e => {
-    const b = e.target.closest("[data-mood]"); if (!b) return;
-    const key = b.dataset.mood;
-    if (!Array.isArray(draft.mood)) draft.mood = [];
-    if (draft.mood.includes(key)) {
-      draft.mood = draft.mood.filter(k => k !== key);
-      b.classList.remove("on");
-    } else {
-      draft.mood.push(key);
-      b.classList.add("on");
-    }
+    setOn(v.querySelectorAll("#f-category .cat-dot"), b);
   });
 
-  // photos
+  // cost tiers — the tier is canonical; a representative ₪ lands in `cost` so
+  // spend analytics keep working (approximate by design)
+  v.querySelector("#f-cost").addEventListener("click", e => {
+    const b = e.target.closest("[data-tier]"); if (!b) return;
+    draft.costTier = b.dataset.tier;
+    draft.cost = COST_TIERS.find(t => t.key === b.dataset.tier).ils;
+    setOn(v.querySelectorAll("#f-cost button"), b);
+  });
+
+  // vibe suggestion chips fill the input
+  v.querySelector("#f-vibe-sugs").addEventListener("click", e => {
+    const b = e.target.closest("[data-vibe]"); if (!b) return;
+    draft.vibe = b.dataset.vibe;
+    v.querySelector("#f-vibe").value = draft.vibe;
+  });
+
+  // again-o-meter: one drag/tap sets enjoyment AND wouldRepeat
+  const track = v.querySelector("#f-meter");
+  const setFromY = ev => {
+    const r = track.getBoundingClientRect();
+    const frac = 1 - Math.min(1, Math.max(0, (ev.clientY - r.top) / r.height));
+    draft.enjoyment = Math.round(frac * 4) + 1;
+    draft.wouldRepeat = repeatForEnjoyment(draft.enjoyment);
+    paintMeter();
+  };
+  track.addEventListener("pointerdown", ev => { ev.preventDefault(); track.setPointerCapture(ev.pointerId); setFromY(ev); });
+  track.addEventListener("pointermove", ev => { if (ev.buttons) setFromY(ev); });
+
+  bind("f-note-toggle", "click", () => {
+    v.querySelector("#f-notes-wrap").classList.toggle("hidden");
+    v.querySelector("#f-notes").focus();
+  });
+
+  // photo source menu, opened by tapping the polaroid shot
+  const addBtn = v.querySelector("#f-add-photo");
+  const menu = v.querySelector("#f-photo-menu");
+  addBtn.addEventListener("click", () => menu.classList.toggle("hidden"));
+  menu.addEventListener("click", e => {
+    const item = e.target.closest("[data-src]"); if (!item) return;
+    menu.classList.add("hidden");
+    if (item.dataset.src === "camera") v.querySelector("#f-photo-camera").click();
+    else if (item.dataset.src === "google") pickGooglePhotos();
+    else v.querySelector("#f-photo-gallery").click();
+  });
+  document.addEventListener("click", e => {
+    if (!addBtn.contains(e.target) && !menu.contains(e.target)) menu.classList.add("hidden");
+  });
   v.querySelector("#f-photo-camera").addEventListener("change", onPhotoPick);
   v.querySelector("#f-photo-gallery").addEventListener("change", onPhotoPick);
 
@@ -413,36 +453,22 @@ function wireForm() {
   if (cancel) cancel.addEventListener("click", () => { gpModule?.cancelPick(); closeLogSheet(); });
 }
 
+// Fills the polaroid shot (first photo + "+N" badge) and the manage strip below it.
 async function renderPhotoStrip() {
-  const strip = formEl().querySelector("#f-photos");
-  if (!strip) return;
-  const thumbs = await Promise.all(draft.photos.map(async id => {
-    const url = await photoURL(id);
-    return `<div class="photo-thumb"><img src="${url}" alt=""/><button data-rm="${id}">✕</button></div>`;
-  }));
-  strip.innerHTML = thumbs.join("") +
-    `<div class="photo-add-wrap">
-      <button class="add-photo" id="f-add-photo" type="button">＋</button>
-      <div class="photo-menu hidden" id="f-photo-menu">
-        <button class="photo-menu-item" data-src="camera">📷 Camera</button>
-        <button class="photo-menu-item" data-src="gallery">🖼️ Gallery</button>
-        <button class="photo-menu-item" data-src="google">📸 Google Photos</button>
-      </div>
-    </div>`;
-  const addBtn = strip.querySelector("#f-add-photo");
-  const menu = strip.querySelector("#f-photo-menu");
-  addBtn.addEventListener("click", () => menu.classList.toggle("hidden"));
-  menu.addEventListener("click", e => {
-    const item = e.target.closest("[data-src]"); if (!item) return;
-    menu.classList.add("hidden");
-    const v = formEl();
-    if (item.dataset.src === "camera") v.querySelector("#f-photo-camera").click();
-    else if (item.dataset.src === "google") pickGooglePhotos();
-    else v.querySelector("#f-photo-gallery").click();
-  });
-  document.addEventListener("click", e => {
-    if (!addBtn.contains(e.target) && !menu.contains(e.target)) menu.classList.add("hidden");
-  });
+  const v = formEl();
+  const shot = v.querySelector("#f-add-photo");
+  const strip = v.querySelector("#f-photos");
+  if (!shot || !strip) return;
+  const thumbs = (await Promise.all(draft.photos.map(async id => ({ id, url: await photoURL(id) }))))
+    .filter(t => t.url);
+
+  shot.classList.toggle("empty", !thumbs.length);
+  shot.innerHTML = thumbs.length
+    ? `<img src="${thumbs[0].url}" alt=""/>${thumbs.length > 1 ? `<span class="count-badge">+${thumbs.length - 1}</span>` : ""}`
+    : `<span class="pshot-empty"><span class="big">📸</span><span class="hint">Tap to add photos</span><span class="srcs">Camera · Gallery · Google Photos</span></span>`;
+
+  strip.innerHTML = thumbs.map(t =>
+    `<div class="photo-thumb"><img src="${t.url}" alt=""/><button data-rm="${t.id}">✕</button></div>`).join("");
   strip.querySelectorAll("[data-rm]").forEach(b => b.addEventListener("click", () => {
     draft.photos = draft.photos.filter(p => p !== b.dataset.rm);
     renderPhotoStrip();
@@ -480,9 +506,9 @@ async function pickGooglePhotos() {
 }
 
 async function saveDraft() {
-  if (!draft.title.trim()) { toast("Add what you did first"); return; }
+  if (!draft.title.trim()) { toast("Write a caption first"); return; }
   draft.title = draft.title.trim();
-  if (draft.cost != null) draft.cost = toILS(draft.cost, costCurrency);
+  draft.vibe = (draft.vibe || "").trim();
   const isNew = !editingId;
   if (isNew) draft.createdAt = Date.now();
   // attribute the form's enjoyment score to me as a per-person rating (see resolveRatings)
@@ -490,10 +516,8 @@ async function saveDraft() {
   await db.putDate(draft);
   if (isNew) push.sendNewDatePush(draft.title); // fire-and-forget; no-op unless syncing
   await reload();
-  const saved = costCurrency !== "ILS" && draft.cost != null ? ` (${fmtMoney(draft.cost)})` : "";
-  toast((editingId ? "Updated ♥" : "Date saved ♥") + saved);
+  toast(editingId ? "Updated ♥" : "Date saved ♥");
   resetDraft();
-  costCurrency = "ILS";
   closeLogSheet();
   show(currentTab);
 }
@@ -526,35 +550,18 @@ async function renderList() {
   }
   const sorted = [...dates].sort((a, b) => entryTimeMs(b) - entryTimeMs(a)).slice(0, 3);
   host.innerHTML = sorted.map(e => {
-    const { lines, mineRated } = resolveRatings(e);
-    const mine = lines.find(l => l.mine);
-    const partner = lines.find(l => !l.mine && l.name);
-    const legacy = lines.find(l => l.key === null);
-    // stars duo: my line (or nudge if only partner rated), partner line
-    let duo = "";
-    if (mine) duo += `<div><span class="who me">${escHtml(mine.initial)}</span>${starStr(mine.value)}</div>`;
-    else if (partner && !mineRated) duo += `<div class="rate-nudge">+ add your stars</div>`;
-    if (partner) duo = `<div><span class="who them">${escHtml(partner.initial)}</span>${starStr(partner.value)}</div>` + duo;
-    if (!mine && !partner && legacy) duo = `<div>${starStr(legacy.value)}</div>`;
-
-    const peek = (e.comments && e.comments.length) ? (() => {
-      const c = e.comments[e.comments.length - 1];
-      const ini = c.author === myKey() ? myInitial() : (c.name?.[0]?.toUpperCase() || "P");
-      return `<div class="comment-peek">💬 ${escHtml(ini)}: ${escHtml(c.text)}</div>`;
-    })() : "";
-
+    // one hearts sticker: my rating, else partner's, else the legacy enjoyment score
+    const { lines } = resolveRatings(e);
+    const r = lines.find(l => l.mine) || lines.find(l => !l.mine && l.name) || lines.find(l => l.key === null);
+    const cost = e.costTier ? tierLabel(e.costTier) : e.cost === 0 ? "Free" : (e.cost != null ? fmtMoney(e.cost) : "");
     return `
     <div class="card home-card" data-open="${e.id}">
       <div class="home-photos" data-photos="${(e.photos || []).join(",")}" data-cat="${e.category}"></div>
-      <div class="home-body">
-        <div class="grow">
-          <h4>${escHtml(e.title)}</h4>
-          <div class="sub">${fmtDate(e.date)} · ${catLabel(e.category)}</div>
-        </div>
-        <div class="stars-duo">${duo}</div>
-        <span class="chev">›</span>
-      </div>
-      ${peek}
+      <span class="stk tape">${fmtDate(e.date)}</span>
+      <span class="stk cat">${catEmoji(e.category)}</span>
+      ${e.vibe ? `<span class="stk vibe">${escHtml(e.vibe)}</span>` : ""}
+      ${r ? `<span class="stk hearts">${"♥".repeat(r.value)}${"♡".repeat(5 - r.value)}</span>` : ""}
+      <span class="stk caption">${escHtml(e.title)}<span class="sub">${catLabel(e.category)}${cost ? " · " + cost : ""}</span></span>
     </div>`;
   }).join("");
   host.querySelectorAll("[data-open]").forEach(card =>
@@ -781,7 +788,7 @@ async function renderHistoryList() {
         <div class="thumb" data-thumb="${e.photos?.[0] || ""}">${catEmoji(e.category)}</div>
         <div class="meta">
           <h4>${escHtml(e.title)}</h4>
-          <div class="sub">${fmtDate(e.date)} · ${catLabel(e.category)}${e.cost != null ? " · " + fmtMoney(e.cost) : ""}</div>
+          <div class="sub">${fmtDate(e.date)} · ${catLabel(e.category)}${e.costTier ? " · " + tierLabel(e.costTier) : e.cost != null ? " · " + fmtMoney(e.cost) : ""}</div>
         </div>
         ${isOpen
           ? `<button class="kebab" data-kebab="${e.id}">⋯</button>`
@@ -823,6 +830,7 @@ function histDetail(e) {
     <div class="muted small" style="margin-left:30px">tap to rate</div>`;
 
   const chips = [];
+  if (e.vibe) chips.push(`<span class="chip mint">✨ ${escHtml(e.vibe)}</span>`);
   if (Array.isArray(e.mood)) e.mood.forEach((k, i) => {
     const m = MOOD_OPTIONS.find(o => o.key === k);
     if (m) chips.push(`<span class="chip ${i % 2 ? "butter" : "mint"}">${m.emoji} ${escHtml(m.label)}</span>`);
