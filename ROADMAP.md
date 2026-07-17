@@ -136,33 +136,6 @@ other change needed; folded into this item rather than a separate one.
 
 ---
 
-## 4. Gentle reminders (opt-in push)
-
-**What.** Two nudges: (a) anniversary-of-a-great-date — "A year ago you loved
-*Rooftop dinner* (5★). Do it again?"; (b) inactivity — "It's been 3 weeks since
-your last date."
-
-**Why.** Competitors' retention runs on notifications; ours only fire for
-partner-sync events. On-brand *if* strictly opt-in — fits the privacy-first,
-local-first stance.
-
-**Where it plugs in.**
-- Content already computable: `onThisDay()` (`js/analytics.js`) for the
-  anniversary nudge; "days since last date" from `entryTimeMs()` for inactivity.
-- Delivery already exists: the push Worker + `js/push.js` + `sw.js` handler and
-  permission UX shipped for partner-new-date notifications. This item is now
-  mostly the two content triggers plus its own opt-in row in the ⋯ menu.
-- Settings: reminder on/off + time, stored via `getSetting`/`setSetting`
-  (`js/store.js`, kept local).
-
-**Effort.** Medium (was Medium→Large before the push infrastructure shipped).
-**Risk.** iOS PWA notification support is historically flaky; verify on target
-devices.
-
-**Skipped until validated:** server-driven Web Push, scheduled quiet hours.
-
----
-
 ## 5. Double-blind date match (speculative — needs sync adoption)
 
 **What.** Over sync, both partners privately mark suggestions yes/no; only mutual
@@ -276,87 +249,6 @@ this makes the log a byproduct of the evening instead of homework afterwards.
 recovery draft covers it. No geolocation tracking during the date (creepy,
 off-brand); location stays a manual field.
 
-## 8. Relationship forecasting (predictive insights)
-
-**What.** Forward-looking cards on Insights: "At your current pace, date #50
-lands in March", "Your enjoyment dips every ~6 weeks", "Dining has trended down
-3 months straight — rotate it out?".
-
-**Why.** Every current insight looks backward; every competitor's advice is
-generic. Deriving predictions from the couple's own curve is the deepest
-version of our quantified-relationship moat, and it's pure math over data we
-already aggregate.
-
-**Where it plugs in.**
-- New pure functions in `js/analytics.js`: pace projection (median gap between
-  dates → project the Nth date), per-category enjoyment slope over
-  `monthlyTrend()`-style buckets (simple least-squares over the last ~6 months),
-  and a "gap warning" (current gap vs. historical median).
-- Render as cards in `renderInsights()` (`js/ui.js`). Suppress every card below
-  a minimum sample size (e.g. <10 dates or <3 buckets) — a wrong confident
-  prediction is worse than none.
-
-**Effort.** Small→Medium (it's analytics-only; no storage, no new UI system).
-**Risk.** Overclaiming from noise — the sample-size gates are the feature, not
-an afterthought. Phrase everything as observation ("has trended"), not
-prophecy.
-
-## 9. Cost-of-happiness optimizer
-
-**Status.** ◐ Half shipped — the Suggest-side budget cap (`budget` filter in
-`js/suggest.js` + "Max budget" field in the Ideas tab) is live. What remains is
-the Insights side (cost-band bucketing, plateau/best-value claims).
-
-**What.** Insights that connect money to joy: "your enjoyment plateaus above
-₪200", "best value category: At home, 4.6★ at ₪40 avg", plus a budget slider on
-Suggest — "best month of dates for ₪600" assembled from high-value candidates.
-
-**Why.** We uniquely hold (cost, enjoyment) pairs per activity. No competitor
-can even attempt a quantified value claim. `valueForMoney()` and
-`enjoymentVsCost()` in `js/analytics.js` are already half the work.
-
-**Where it plugs in.**
-- Analytics: bucket enjoyment by cost band (e.g. 0 / <100 / 100–250 / 250+) to
-  find the plateau; per-category `avgEnjoyment / avgCost` already falls out of
-  `byCategory()`.
-- Suggest: add an optional budget cap to `suggest()` (`js/suggest.js`) —
-  filter/penalize candidates whose known avg cost or catalog `estCost` busts
-  the budget; greedy-fill a "month plan" of 4 picks under the cap.
-- UI: one new card in `renderInsights()`, one slider/field in `renderSuggest()`.
-
-**Effort.** Medium. **Risk.** Cost data is optional and sparse — every claim
-needs an n≥ threshold, and candidates with unknown cost must degrade gracefully
-(assume category average, not zero).
-
-## 10. AI post-date interviewer
-
-**What.** Optional conversational logging: instead of the form, answer ~3 short
-questions in free text ("How was it? Best moment? Do it again?"); an LLM maps
-the answers into the schema fields and keeps the best line as a display quote.
-
-**Why.** Forms feel like spreadsheets; a 30-second chat feels like telling a
-friend. The extracted quote also makes History and the Wrapped card (#2)
-dramatically warmer. Biggest *feel* upgrade available.
-
-**Where it plugs in.**
-- Backend: we already run a Cloudflare Worker for feedback
-  (`worker/feedback-worker.js`, see `FEEDBACK_PLAN.md`); add a second Worker (or
-  route) that calls Workers AI or the Claude API with a strict JSON-schema
-  extraction prompt → `{ title, category, enjoyment, mood[], wouldRepeat, cost,
-  location, notes, quote }`. Keys stay server-side.
-- Client: a chat-style sheet on the Log tab; on completion, populate the
-  existing `draft` object and drop into the normal form for review — **the user
-  always confirms before save**, the AI never writes to the DB directly.
-- Schema: one optional `quote` string on the entry (`js/model.js`), ignored by
-  analytics.
-- Offline/local-first caveat: this is the first feature where logging touches a
-  server. It must be a clearly optional path; the form remains the default.
-
-**Effort.** Medium (worker + extraction prompt + chat sheet). **Risk.** Sends
-date descriptions to a third-party model — needs an explicit consent note in
-the UI. Extraction errors are harmless because the form review step catches
-them.
-
 ## 11. Time-capsule notes
 
 **What.** When logging, an optional "note to your future selves" field; it
@@ -391,9 +283,7 @@ popup (unreliable in installed iOS PWAs), and a real-device verification pass
 
 1. **#6 import** — changes the adoption curve itself.
 2. **#7 Date Night mode** — attacks the core friction of the whole category.
-3. **#8/#9 forecasting + optimizer** — deepest moat, cheap, analytics-only.
-4. **#10 AI interviewer** — biggest feel upgrade, first server-touching log path.
-5. **#11 time capsule** — trivial; slot in anywhere.
+3. **#11 time capsule** — trivial; slot in anywhere.
 
 ## Explicitly NOT doing
 

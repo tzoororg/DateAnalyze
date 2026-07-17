@@ -72,18 +72,6 @@
   </div>
 </section>
 
-<section class="point" id="p4">
-  <span class="crumb">Roadmap #4 · ⋯ menu (+ system notifications)</span>
-  <h2>Gentle reminders (opt-in) <span class="badge med">Medium</span></h2>
-  <p class="what">Two nudges: anniversary-of-a-great-date ("A year ago you loved <i>Rooftop dinner</i> — do it again?") and inactivity ("3 weeks since your last date"). The push Worker + permission UX already exist from partner notifications, so this is mostly two content triggers.</p>
-  <p class="touches">Touches: <code>js/ui.js</code> menu · <code>js/push.js</code>/<code>sw.js</code> · <code>js/analytics.js onThisDay()</code> (already exists)</p>
-  <div class="ba">
-    <div class="col before"><h3>Before</h3><figure><img src="shots/menu.png" alt=""/><figcaption>Menu today — notifications exist only for partner sync events</figcaption></figure></div>
-    <div class="col after"><h3>After</h3><figure><img src="shots/after-reminders.png" alt=""/><figcaption>New "🔔 Gentle reminders" row with its own opt-in state</figcaption></figure></div>
-    <div class="note"><b>Note:</b> the notification itself renders as a system notification (not screenshotable here); the in-app change is just this settings row.</div>
-  </div>
-</section>
-
 <section class="point" id="p5">
   <span class="crumb">Roadmap #5 · Ideas tab</span>
   <h2>Double-blind date match <span class="badge large">Large</span><span class="badge parked">Parked — needs sync adoption</span></h2>
@@ -104,41 +92,6 @@
     <div class="col before"><h3>Before</h3><figure><img src="shots/home.png" alt=""/><figcaption>Home today — the app exists only before and after a date</figcaption></figure></div>
     <div class="col after"><h3>After</h3><figure><img src="shots/after-datenight-home.png" alt=""/><figcaption>Idle: a "Start date night" card on Home</figcaption></figure></div>
     <div class="col after"><h3>After (active)</h3><figure><img src="shots/after-datenight-active.png" alt=""/><figcaption>Active: elapsed time, photo count, 📷 and End — shown on every tab</figcaption></figure></div>
-  </div>
-</section>
-
-<section class="point" id="p8">
-  <span class="crumb">Roadmap #8 · Stats tab</span>
-  <h2>Relationship forecasting <span class="badge small">Small→Medium</span></h2>
-  <p class="what">Forward-looking cards: pace projection ("date #25 lands mid-August"), per-category enjoyment slopes, gap warnings. Pure math over existing aggregates; every card suppressed below a minimum sample size.</p>
-  <p class="touches">Touches: <code>js/analytics.js</code> (new pure functions) · <code>js/ui.js renderInsights()</code></p>
-  <div class="ba">
-    <div class="col before"><h3>Before</h3><figure><img src="shots/insights.png" alt=""/><figcaption>Stats today — every insight looks backward</figcaption></figure></div>
-    <div class="col after"><h3>After</h3><figure><img src="shots/after-forecast.png" alt=""/><figcaption>"Looking ahead 🔮" cards above the existing stats</figcaption></figure></div>
-    <div class="note"><b>Guardrail:</b> phrased as observation, never prophecy; hidden under ~10 dates.</div>
-  </div>
-</section>
-
-<section class="point" id="p9">
-  <span class="crumb">Roadmap #9 · Stats tab (Ideas half already shipped)</span>
-  <h2>Cost-of-happiness optimizer <span class="badge med">Medium</span></h2>
-  <p class="what">Connect money to joy: enjoyment by cost band ("plateaus above ₪200"), best-value category. The Ideas-tab budget cap from this item <b>already shipped</b>; what remains is the Insights side.</p>
-  <p class="touches">Touches: <code>js/analytics.js</code> (cost-band bucketing) · <code>js/ui.js renderInsights()</code></p>
-  <div class="ba">
-    <div class="col before"><h3>Before</h3><figure><img src="shots/insights.png" alt=""/><figcaption>Stats today — value-for-money list exists, but no cost-band claims</figcaption></figure></div>
-    <div class="col after"><h3>After</h3><figure><img src="shots/after-value.png" alt=""/><figcaption>"Cost of happiness 💸" card with plateau + best-value claims</figcaption></figure></div>
-  </div>
-</section>
-
-<section class="point" id="p10">
-  <span class="crumb">Roadmap #10 · Log sheet</span>
-  <h2>AI post-date interviewer <span class="badge med">Medium</span></h2>
-  <p class="what">Optional conversational logging: answer ~3 free-text questions; an LLM (via a Cloudflare Worker, keys server-side) maps answers into the schema and keeps the best line as a quote. The user always reviews the filled form before saving — the AI never writes to the DB.</p>
-  <p class="touches">Touches: new Worker route · <code>js/ui.js</code> log sheet · <code>js/model.js</code> (optional <code>quote</code>)</p>
-  <div class="ba">
-    <div class="col before"><h3>Before</h3><figure><img src="shots/log.png" alt=""/><figcaption>Log sheet today — a form, i.e. homework</figcaption></figure></div>
-    <div class="col after"><h3>After</h3><figure><img src="shots/after-interview.png" alt=""/><figcaption>Chat option above the form; answers fill the form for review</figcaption></figure></div>
-    <div class="note"><b>Caveat:</b> first log path that touches a server — clearly optional, with a consent note.</div>
   </div>
 </section>
 
