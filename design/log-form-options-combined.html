@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Log form redesign — all 11 options</title>
+<style>
+:root {
+  --bg: #2a1b26; --bg-soft: #33222e; --card: #3b2a37; --card-2: #4a3444;
+  --line: #54394c; --text: #f5e6ee; --muted: #c99bb0;
+  --accent: #ff7fa2; --accent-2: #ff9fba;
+  --good: #7ed3ab; --warn: #eec97a; --bad: #f08a8a;
+  --mint-bg: #2e4a3e; --mint-fg: #8fd6b5;
+  --radius: 18px; --shadow: 0 6px 16px rgba(0,0,0,.35);
+  --cursive: "Segoe Script", "Comic Sans MS", cursive;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 28px; background: #1a1017; color: var(--text);
+  font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+h1.main { font: 700 28px var(--cursive); color: var(--accent); margin: 0 0 6px; }
+p.main-intro { color: var(--muted); font-size: 13px; max-width: 780px; line-height: 1.6; margin: 0 0 10px; }
+.batch-h {
+  font: 800 16px sans-serif; text-transform: uppercase; letter-spacing: .14em; color: var(--accent-2);
+  border-top: 2px solid var(--line); padding-top: 22px; margin: 56px 0 18px;
+}
+.batch-h span { color: #9a7f8e; font-weight: 600; text-transform: none; letter-spacing: 0; font-size: 13px; }
+
+/* ================= batch 1 (options 1–3, from log-form-redesign_v1.html) ================= */
+.b1 * { box-sizing: border-box; }
+.b1 h1 { font: 700 22px var(--cursive); color: var(--accent); margin: 0 0 4px; }
+.b1 .intro { color: var(--muted); font-size: 13px; max-width: 760px; margin-bottom: 26px; }
+.b1 .option-title { font: 700 19px var(--cursive); color: var(--accent); margin: 34px 0 2px; }
+.b1 .option-blurb { color: var(--muted); font-size: 13px; max-width: 780px; margin: 0 0 16px; line-height: 1.6; }
+.b1 .option-blurb b { color: var(--text); }
+.b1 .frames { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+.b1 .frame { width: 360px; flex: none; }
+.b1 .frame-label { font-size: 12px; text-transform: uppercase; letter-spacing: .12em; font-weight: 800; color: var(--muted); margin: 0 0 8px 4px; }
+.b1 .frame-note { font-size: 12px; color: #9a7f8e; margin: 8px 4px 0; line-height: 1.5; }
+.b1 .phone {
+  background: radial-gradient(120% 60% at 50% 0%, var(--bg-soft), var(--bg));
+  border-radius: 28px; padding: 18px 16px; border: 1px solid #000; min-height: 540px;
+  display: flex; flex-direction: column;
+}
+.b1 .sheet-title { font: 700 20px var(--cursive); color: var(--accent); margin: 0 0 14px; text-align: center; }
+.b1 input, .b1 textarea { font: inherit; color: var(--text); }
+.b1 .lbl { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin: 14px 2px 6px; }
+.b1 .lbl:first-of-type { margin-top: 0; }
+.b1 .txt {
+  width: 100%; background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+  padding: 11px 14px; font-size: 16px;
+}
+.b1 .txt::placeholder { color: #9a7f8e; }
+.b1 .btn-save {
+  margin-top: auto; border: none; border-radius: 16px; padding: 14px; width: 100%;
+  background: var(--accent); color: #fff; font-size: 17px; font-weight: 800; box-shadow: var(--shadow);
+}
+/* ============ OPTION 1: SNAP ============ */
+.b1 .snap-row { display: flex; gap: 10px; align-items: center; }
+.b1 .snap-row .txt { flex: 1; }
+.b1 .date-mini {
+  flex: none; background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+  padding: 11px 12px; font-size: 14px; color: var(--muted); white-space: nowrap;
+}
+.b1 .cat-scroll { display: flex; gap: 8px; overflow-x: auto; padding: 2px; margin: 0 -2px; }
+.b1 .cat-dot {
+  flex: none; width: 46px; height: 46px; border-radius: 50%; background: var(--card);
+  border: 2px solid var(--line); display: grid; place-items: center; font-size: 21px;
+}
+.b1 .cat-dot.on { border-color: var(--accent); background: var(--card-2); box-shadow: 0 0 0 3px rgba(255,127,162,.25); }
+.b1 .cat-fade { position: relative; }
+.b1 .cat-fade::after { content: ""; position: absolute; right: 0; top: 0; bottom: 0; width: 32px;
+  background: linear-gradient(90deg, transparent, var(--bg)); pointer-events: none; }
+.b1 .verdict { display: flex; gap: 8px; }
+.b1 .verdict button {
+  flex: 1; border: 2px solid var(--line); background: var(--card); border-radius: 16px;
+  padding: 10px 2px 8px; color: var(--muted); font-size: 12px; font-weight: 700; line-height: 1.3;
+}
+.b1 .verdict .vemoji { display: block; font-size: 26px; margin-bottom: 2px; }
+.b1 .verdict button.on { border-color: var(--accent); background: var(--card-2); color: var(--text); box-shadow: 0 0 0 3px rgba(255,127,162,.25); }
+.b1 .pills { display: flex; gap: 8px; }
+.b1 .pills button {
+  flex: 1; border: 1.5px solid var(--line); background: var(--card); border-radius: 999px;
+  padding: 9px 0; color: var(--muted); font-size: 14px; font-weight: 700;
+}
+.b1 .pills button.on { border-color: var(--good); color: var(--good); background: var(--mint-bg); }
+.b1 .photo-mini-row { display: flex; gap: 8px; }
+.b1 .photo-mini {
+  width: 56px; height: 56px; border-radius: 14px; background: var(--card-2);
+  display: grid; place-items: center; font-size: 22px;
+}
+.b1 .photo-mini.add { background: var(--card); border: 2px dashed var(--line); color: var(--muted); font-size: 24px; }
+.b1 .more-link {
+  margin: 16px 0 12px; background: none; border: none; color: var(--accent-2); font-size: 14px;
+  font-weight: 700; text-align: center; width: 100%;
+}
+.b1 .more-area { border-top: 1px dashed var(--line); padding-top: 4px; }
+.b1 .txt.area { min-height: 64px; resize: none; }
+/* ============ OPTION 2: THREE QUESTIONS ============ */
+.b1 .wiz-progress { display: flex; gap: 6px; margin-bottom: 18px; }
+.b1 .wiz-progress i { flex: 1; height: 4px; border-radius: 2px; background: var(--line); }
+.b1 .wiz-progress i.done { background: var(--accent); }
+.b1 .wiz-q { font-size: 22px; font-weight: 800; margin: 4px 0 18px; text-align: center; }
+.b1 .wiz-q small { display: block; font-size: 13px; color: var(--muted); font-weight: 400; margin-top: 4px; }
+.b1 .cat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.b1 .cat-cell {
+  background: var(--card); border: 2px solid var(--line); border-radius: 14px; padding: 9px 2px 7px;
+  text-align: center; font-size: 10.5px; color: var(--muted); font-weight: 700;
+}
+.b1 .cat-cell span { display: block; font-size: 21px; margin-bottom: 2px; }
+.b1 .cat-cell.on { border-color: var(--accent); background: var(--card-2); color: var(--text); }
+.b1 .meter-wrap { display: flex; gap: 16px; align-items: stretch; justify-content: center; padding: 6px 8px 0; }
+.b1 .meter-track {
+  width: 56px; border-radius: 28px; position: relative; flex: none; height: 280px;
+  background: linear-gradient(180deg, var(--good), var(--warn) 55%, var(--bad));
+  opacity: .9;
+}
+.b1 .meter-thumb {
+  position: absolute; left: 50%; transform: translate(-50%, -50%); top: 22%;
+  width: 68px; height: 68px; border-radius: 50%; background: var(--card); border: 3px solid #fff;
+  display: grid; place-items: center; font-size: 32px; box-shadow: var(--shadow);
+}
+.b1 .meter-labels { display: flex; flex-direction: column; justify-content: space-between; padding: 4px 0; font-size: 13px; color: var(--muted); font-weight: 600; }
+.b1 .meter-labels .cur { color: var(--text); font-weight: 800; font-size: 15px; }
+.b1 .wiz-nav { display: flex; gap: 10px; margin-top: auto; }
+.b1 .wiz-nav .back { flex: none; width: 90px; background: var(--card); color: var(--muted); border: 1px solid var(--line); border-radius: 16px; font-size: 15px; font-weight: 700; }
+.b1 .wiz-nav .next { flex: 1; border: none; border-radius: 16px; padding: 14px; background: var(--accent); color: #fff; font-size: 17px; font-weight: 800; }
+.b1 .big-pills { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.b1 .big-pills button {
+  border: 2px solid var(--line); background: var(--card); border-radius: 14px; padding: 12px 0;
+  color: var(--muted); font-size: 15px; font-weight: 800;
+}
+.b1 .big-pills button.on { border-color: var(--good); color: var(--good); background: var(--mint-bg); }
+.b1 .photo-hero {
+  height: 150px; border-radius: 18px; border: 2px dashed var(--line); background: var(--card);
+  display: grid; place-items: center; text-align: center; color: var(--muted); font-size: 14px;
+}
+.b1 .photo-hero span { display: block; font-size: 34px; margin-bottom: 6px; }
+.b1 .skip-note { text-align: center; color: #9a7f8e; font-size: 12px; margin-top: 10px; }
+/* ============ OPTION 3: POSTCARD ============ */
+.b1 .postcard {
+  background: #f7efe4; color: #3d2f2a; border-radius: 14px; overflow: hidden;
+  box-shadow: var(--shadow); position: relative;
+  font-family: Georgia, "Times New Roman", serif;
+}
+.b1 .pc-photo {
+  height: 140px; background: linear-gradient(130deg, #7a4a63, #4a3444);
+  display: grid; place-items: center; color: rgba(255,255,255,.85); font-size: 14px;
+}
+.b1 .pc-photo span { display: block; text-align: center; }
+.b1 .pc-photo .big { font-size: 32px; }
+.b1 .pc-body { padding: 14px 16px 16px; }
+.b1 .pc-title {
+  width: 100%; background: transparent; border: none; border-bottom: 2px dotted #c9b8a4;
+  font: 400 22px var(--cursive); color: #3d2f2a; padding: 4px 2px;
+}
+.b1 .pc-title::placeholder { color: #b3a48f; }
+.b1 .pc-meta { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 13px; color: #8a7660; }
+.b1 .pc-meta .postmark {
+  margin-left: auto; border: 2px solid #b3a48f; color: #8a7660; border-radius: 50%;
+  width: 58px; height: 58px; display: grid; place-items: center; font-size: 9px; text-align: center;
+  transform: rotate(8deg); line-height: 1.3; font-weight: 700; letter-spacing: .05em;
+}
+.b1 .pc-note {
+  width: 100%; background: transparent; border: none; resize: none; min-height: 84px;
+  font: 400 16px/1.7 var(--cursive); color: #52413a; margin-top: 8px;
+  background-image: repeating-linear-gradient(transparent, transparent 26px, #d9cab4 26px, #d9cab4 27px);
+}
+.b1 .pc-note::placeholder { color: #b3a48f; }
+.b1 .stamp-row { display: flex; gap: 10px; margin-top: 14px; justify-content: center; }
+.b1 .stamp {
+  border: 3px solid; border-radius: 8px; padding: 7px 10px; font: 800 13px/1 sans-serif;
+  letter-spacing: .08em; text-transform: uppercase; background: transparent; opacity: .38;
+  transform: rotate(-4deg);
+}
+.b1 .stamp:nth-child(2) { transform: rotate(3deg); }
+.b1 .stamp:nth-child(3) { transform: rotate(-2deg); }
+.b1 .stamp.love { color: #c0392b; border-color: #c0392b; }
+.b1 .stamp.nice { color: #1f7a53; border-color: #1f7a53; }
+.b1 .stamp.once { color: #6b6255; border-color: #6b6255; }
+.b1 .stamp.on { opacity: 1; box-shadow: 0 0 0 4px rgba(0,0,0,.06); }
+.b1 .tag-line { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; align-items: center; }
+.b1 .tag {
+  background: #e8dcc8; color: #6b5a44; border-radius: 999px; padding: 4px 12px;
+  font: 600 13px sans-serif;
+}
+.b1 .tag .x { color: #b3a48f; margin-left: 4px; }
+.b1 .tag-input { border: none; background: transparent; font: 600 13px sans-serif; color: #6b5a44; width: 90px; }
+.b1 .tag-input::placeholder { color: #b3a48f; }
+.b1 .tag-suggest { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.b1 .tag-suggest button {
+  background: transparent; border: 1px dashed #b3a48f; color: #8a7660; border-radius: 999px;
+  padding: 3px 11px; font: 600 12px sans-serif;
+}
+.b1 .pc-save {
+  margin-top: 16px; width: 100%; border: none; border-radius: 12px; padding: 13px;
+  background: #3d2f2a; color: #f7efe4; font: 800 16px sans-serif;
+}
+.b1 .flip-hint { text-align: center; color: var(--muted); font-size: 12px; margin-top: 10px; }
+
+
+/* ================= batch 2 (options 4–7, from log-form-redesign_v2.html) ================= */
+.b2 /* page chrome (light, like roadmap.html) */
+.b2 body { font:15px/1.55 system-ui,sans-serif; color:var(--text); background:#faf6f9; margin:0; padding:32px 20px 80px; }
+.b2 header.page { max-width:1200px; margin:0 auto 12px; }
+.b2 h1 { font-size:28px; margin:0 0 6px; }
+.b2 h1 .heart { color:var(--accent); }
+.b2 .sub { color:var(--muted); max-width:80ch; }
+.b2 .fixes { max-width:1200px; margin:0 auto 30px; font-size:14px; color:var(--muted); }
+.b2 .fixes b { color:var(--text); }
+.b2 section.opt { max-width:1200px; margin:0 auto 70px; border-top:1px solid var(--line); padding-top:26px; }
+.b2 .crumb { font-size:13px; color:var(--accent); font-weight:700; letter-spacing:.5px; text-transform:uppercase; }
+.b2 h2 { font-size:22px; margin:2px 0 8px; }
+.b2 .what { color:var(--muted); max-width:80ch; margin:0 0 14px; }
+.b2 table.solve { border-collapse:collapse; font-size:13px; margin:0 0 20px; }
+.b2 table.solve td { border:1px solid var(--line); padding:5px 12px; }
+.b2 table.solve td:first-child { color:var(--muted); white-space:nowrap; }
+.b2 .row-frames { display:flex; gap:28px; flex-wrap:wrap; align-items:flex-start; }
+.b2 figure { margin:0; }
+.b2 figcaption { font-size:12px; color:var(--muted); margin-top:8px; text-align:center; max-width:340px; }
+/* ===== phone frame + app theme (plum) ===== */
+.b2 .phone {
+    width:340px; height:660px; border-radius:34px; overflow:hidden;
+    background:radial-gradient(120% 60% at 50% 0%, #33222e, #2a1b26);
+    color:#f5e6ee; box-shadow:0 14px 40px rgba(60,20,50,.28); border:6px solid #1b1018;
+    font:14px/1.4 -apple-system,"Segoe UI",Roboto,system-ui,sans-serif;
+    position:relative; display:flex; flex-direction:column;
+  }
+.b2 .phone * { box-sizing:border-box; }
+.b2 .ph-head { padding:14px 16px 8px; display:flex; align-items:center; justify-content:space-between; flex:0 0 auto; }
+.b2 .ph-title { font:700 19px "Segoe Script","Comic Sans MS",cursive; color:#ff7fa2; transform:rotate(-2deg); }
+.b2 .ph-x { width:30px; height:30px; border-radius:11px; background:#3b2a37; color:#c99bb0; display:grid; place-items:center; font-size:14px; }
+.b2 .ph-body { flex:1; overflow:hidden; padding:4px 14px 14px; display:flex; flex-direction:column; gap:10px; }
+.b2 .muted { color:#c99bb0; }
+.b2 .card { background:#3b2a37; border-radius:16px; padding:12px; box-shadow:0 6px 16px rgba(0,0,0,.35); }
+.b2 .lbl { font-size:11px; text-transform:uppercase; letter-spacing:.12em; font-weight:800; color:#c99bb0; margin:0 0 6px; }
+.b2 .input { background:#2f2029; border:1.5px solid #54394c; border-radius:12px; padding:9px 11px; color:#f5e6ee; font-size:14px; }
+.b2 .input.ghost-text { color:#8d7383; }
+.b2 .btn { background:#ff7fa2; color:#fff; border:none; border-radius:999px; padding:12px; font-weight:800; font-size:15px; text-align:center; box-shadow:0 6px 16px rgba(232,87,126,.4); }
+.b2 .btn.ghost { background:transparent; color:#c99bb0; box-shadow:none; border:1.5px solid #54394c; }
+.b2 .chip { display:inline-flex; align-items:center; gap:4px; background:#3b2a37; border:1.5px solid #54394c; color:#c99bb0; border-radius:999px; padding:6px 11px; font-size:13px; font-weight:600; white-space:nowrap; }
+.b2 .chip.on { background:#5a2e40; border-color:#ff7fa2; color:#ffd3e0; }
+/* ===== Option A: polaroid one-card ===== */
+.b2 .polaroid { background:#fdf9f4; border-radius:6px; padding:10px 10px 34px; transform:rotate(-1.5deg); box-shadow:0 10px 24px rgba(0,0,0,.45); position:relative; }
+.b2 .polaroid .well { height:190px; border-radius:3px; display:grid; place-items:center; text-align:center;
+    background:repeating-linear-gradient(45deg,#efe4dc 0 12px,#f6ede6 12px 24px); color:#a08a7c; }
+.b2 .polaroid .well.filled { background:linear-gradient(135deg,#d98aa5,#7c5a8f 60%,#3f3a66); color:#fff; }
+.b2 .polaroid .well .big { font-size:38px; }
+.b2 .polaroid .cap { position:absolute; left:0; right:0; bottom:7px; text-align:center; font:600 15px "Segoe Script",cursive; color:#6b5464; }
+.b2 .mini-thumbs { display:flex; gap:6px; justify-content:center; margin-top:-2px; }
+.b2 .mini-thumbs span { width:34px; height:34px; border-radius:8px; background:linear-gradient(135deg,#b06a8a,#5a4a7c); border:2px solid #fdf9f4; box-shadow:0 3px 8px rgba(0,0,0,.4); }
+.b2 .mini-thumbs .add { background:#3b2a37; color:#c99bb0; display:grid; place-items:center; font-size:16px; border:2px dashed #54394c; }
+.b2 .verdict { display:flex; gap:8px; }
+.b2 .verdict button { flex:1; background:#2f2029; border:1.5px solid #54394c; border-radius:14px; padding:8px 2px 6px; color:#c99bb0; text-align:center; }
+.b2 .verdict button .f { font-size:24px; display:block; }
+.b2 .verdict button span:last-child { font-size:10.5px; font-weight:700; }
+.b2 .verdict button.on { background:#5a2e40; border-color:#ff7fa2; color:#ffd3e0; box-shadow:0 0 0 2px rgba(255,127,162,.25); }
+.b2 .seg { display:flex; background:#2f2029; border:1.5px solid #54394c; border-radius:12px; overflow:hidden; }
+.b2 .seg button { flex:1; padding:8px 0; background:transparent; border:none; color:#c99bb0; font-weight:800; font-size:13px; }
+.b2 .seg button.on { background:#5a2e40; color:#ffd3e0; }
+.b2 .scrollchips { display:flex; gap:6px; overflow:hidden; }
+.b2 .fold { font-size:13px; color:#ff9fba; font-weight:700; }
+/* ===== Option B: 3-step story ===== */
+.b2 .stepdots { display:flex; gap:6px; justify-content:center; margin:2px 0; }
+.b2 .stepdots i { width:22px; height:5px; border-radius:99px; background:#54394c; }
+.b2 .stepdots i.on { background:#ff7fa2; }
+.b2 .bigwell { flex:1; border-radius:20px; border:2.5px dashed #54394c; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; text-align:center; color:#c99bb0; }
+.b2 .bigwell.filled { border:none; background:linear-gradient(160deg,#c4788f 0%,#6d5087 55%,#33305c 100%); color:#fff; justify-content:flex-end; padding:14px; align-items:stretch; }
+.b2 .bigwell .cambtn { width:74px; height:74px; border-radius:50%; background:#ff7fa2; color:#fff; font-size:32px; display:grid; place-items:center; box-shadow:0 8px 20px rgba(232,87,126,.45); }
+.b2 .catgrid { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; }
+.b2 .catgrid button { background:#2f2029; border:1.5px solid #54394c; border-radius:14px; color:#c99bb0; padding:9px 2px 7px; text-align:center; }
+.b2 .catgrid button .e { font-size:21px; display:block; }
+.b2 .catgrid button span:last-child { font-size:10.5px; font-weight:700; }
+.b2 .catgrid button.on { background:#5a2e40; border-color:#ff7fa2; color:#ffd3e0; }
+.b2 .slider-face { text-align:center; font-size:52px; }
+.b2 .slider { position:relative; height:12px; border-radius:99px; background:linear-gradient(90deg,#8a5a6a,#ff7fa2); margin:8px 4px 2px; }
+.b2 .slider .knob { position:absolute; top:50%; left:78%; transform:translate(-50%,-50%); width:28px; height:28px; border-radius:50%; background:#fff; box-shadow:0 3px 10px rgba(0,0,0,.5); }
+.b2 .slider-ends { display:flex; justify-content:space-between; font-size:11px; color:#c99bb0; padding:0 2px; }
+.b2 .tagrow { display:flex; flex-wrap:wrap; gap:6px; }
+/* ===== Option C: chat ===== */
+.b2 .chat { flex:1; display:flex; flex-direction:column; gap:9px; overflow:hidden; }
+.b2 .bub { max-width:82%; padding:9px 12px; border-radius:16px; font-size:13.5px; }
+.b2 .bub.bot { background:#3b2a37; border-bottom-left-radius:5px; align-self:flex-start; }
+.b2 .bub.me { background:#5a2e40; border:1.5px solid #ff7fa2; border-bottom-right-radius:5px; align-self:flex-end; color:#ffd3e0; }
+.b2 .bub.me.photo { padding:5px; }
+.b2 .bub .ph-img { width:150px; height:100px; border-radius:12px; background:linear-gradient(135deg,#c4788f,#5a4a7c); display:grid; place-items:center; font-size:26px; }
+.b2 .quick { display:flex; flex-wrap:wrap; gap:6px; justify-content:flex-end; }
+.b2 .hearts { font-size:22px; letter-spacing:3px; }
+.b2 .chatbar { display:flex; gap:8px; align-items:center; }
+.b2 .chatbar .input { flex:1; }
+.b2 .chatbar .cam { width:40px; height:40px; border-radius:50%; background:#ff7fa2; color:#fff; display:grid; place-items:center; font-size:18px; flex:0 0 auto; }
+.b2 .sumcard { background:#2f2029; border:1.5px solid #54394c; border-radius:14px; padding:10px; margin-top:6px; }
+.b2 .sumcard .simg { height:74px; border-radius:10px; background:linear-gradient(135deg,#c4788f,#5a4a7c); margin-bottom:8px; }
+.b2 .sumline { display:flex; justify-content:space-between; font-size:12.5px; padding:2px 0; }
+.b2 .sumline span:first-child { color:#c99bb0; }
+/* ===== Option D: scrapbook ===== */
+.b2 .canvas { flex:1; border-radius:18px; position:relative; overflow:hidden;
+    background:repeating-linear-gradient(0deg,#2f2029 0 26px,#342431 26px 27px); border:2px solid #54394c; }
+.b2 .canvas.filled { background:linear-gradient(150deg,#c4788f 0%,#6d5087 55%,#33305c 100%); border:none; }
+.b2 .canvas .dropmsg { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; color:#c99bb0; text-align:center; }
+.b2 .stk { position:absolute; padding:5px 11px; border-radius:11px; font-weight:800; font-size:13px; box-shadow:0 4px 10px rgba(0,0,0,.35); }
+.b2 .stk.cat { background:#d9f2e6; color:#3e7d62; transform:rotate(-5deg); }
+.b2 .stk.price { background:#fff3d1; color:#8a6d3b; transform:rotate(4deg); }
+.b2 .stk.vibe { background:#fff; font-size:22px; padding:4px 9px; transform:rotate(-8deg); border-radius:50%; }
+.b2 .stk.stamp { background:transparent; border:3px solid #ffd3e0; color:#ffd3e0; border-radius:8px; transform:rotate(-12deg); font:800 15px/1 sans-serif; padding:7px 10px; letter-spacing:.08em; text-transform:uppercase; opacity:.92; }
+.b2 .stk.date { background:rgba(0,0,0,.4); color:#fff; font-weight:600; font-size:11.5px; transform:none; border-radius:8px; }
+.b2 .caption-cursive { position:absolute; left:14px; right:14px; bottom:12px; font:600 19px "Segoe Script",cursive; color:#fff; text-shadow:0 2px 6px rgba(0,0,0,.6); }
+.b2 .tray { display:flex; gap:8px; overflow:hidden; padding:2px; }
+.b2 .tray .tstk { flex:0 0 auto; border-radius:12px; padding:7px 12px; font-weight:800; font-size:13px; }
+.b2 .tray-lbl { font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.1em; color:#c99bb0; margin:2px 0 4px; }
+
+
+/* ================= batch 3 (options 8–11, from log-form-options_v3.html) ================= */
+.b3 * { box-sizing: border-box; }
+.b3 h1 { font: 700 26px var(--cursive); color: var(--accent); margin: 0 0 6px; }
+.b3 .intro { color: var(--muted); font-size: 13px; max-width: 760px; line-height: 1.6; margin-bottom: 8px; }
+.b3 .opt { margin-top: 44px; }
+.b3 .opt-title { font: 700 20px var(--cursive); color: var(--accent); margin: 0 0 4px; }
+.b3 .opt-note { font-size: 13px; color: #9a7f8e; max-width: 760px; line-height: 1.6; margin: 0 0 16px; }
+.b3 .opt-note b { color: var(--muted); }
+.b3 .row { display: flex; gap: 26px; flex-wrap: wrap; align-items: flex-start; }
+.b3 .frame { width: 390px; flex: none; }
+.b3 .view-label { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .12em; margin: 0 4px 8px; }
+.b3 .phone {
+  background: radial-gradient(120% 60% at 50% 0%, var(--bg-soft), var(--bg));
+  border-radius: 28px; padding: 16px; border: 1px solid #000; min-height: 700px;
+  position: relative; overflow: hidden; display: flex; flex-direction: column;
+}
+.b3 .muted { color: var(--muted); }
+.b3 .cursive { font-family: var(--cursive); }
+/* shared bits */
+.b3 .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.b3 .topbar .x { width: 34px; height: 34px; border-radius: 50%; background: var(--card); display: grid; place-items: center; color: var(--muted); font-size: 15px; }
+.b3 .sheet-title { font: 700 24px var(--cursive); color: var(--accent); transform: rotate(-2deg); }
+.b3 .savebtn {
+  margin-top: auto; border: none; border-radius: 999px; padding: 14px; width: 100%;
+  background: var(--accent); color: #fff; font-size: 16px; font-weight: 800; box-shadow: var(--shadow);
+}
+.b3 .g1 { background: linear-gradient(130deg, #7a4a63, #4a3444); }
+.b3 .g2 { background: linear-gradient(130deg, #46618a, #2e3a54); }
+.b3 .g3 { background: linear-gradient(130deg, #5a7a52, #37432e); }
+/* ============ OPTION 1 — POLAROID ============ */
+.b3 .polaroid {
+  background: #fdf6ee; border-radius: 6px; padding: 12px 12px 10px; box-shadow: var(--shadow);
+  transform: rotate(-1.2deg); position: relative; z-index: 1;
+}
+.b3 .polaroid.behind {
+  position: absolute; inset: 0; transform: rotate(2.4deg) translate(6px, -4px); z-index: 0;
+}
+.b3 .pol-wrap { position: relative; margin: 2px 6px 18px; }
+.b3 .pshot { height: 240px; border-radius: 3px; display: grid; place-items: center; position: relative; overflow: hidden; }
+.b3 .pshot.empty {
+  background: #efe4d8; border: 2px dashed #cbb59f; color: #8d735c; text-align: center;
+}
+.b3 .pshot.empty .big { font-size: 44px; }
+.b3 .pshot.empty .hint { font-size: 15px; font-weight: 700; margin-top: 4px; }
+.b3 .pshot.empty .srcs { font-size: 12px; margin-top: 6px; color: #a98f76; }
+.b3 .pshot .emoji { font-size: 64px; }
+.b3 .count-badge {
+  position: absolute; right: 10px; bottom: 10px; background: rgba(0,0,0,.55); color: #fff;
+  border-radius: 999px; padding: 3px 10px; font-size: 13px; font-weight: 800;
+}
+.b3 .pol-caption {
+  margin-top: 10px; font: 400 19px var(--cursive); color: #5a4636; padding: 2px 4px;
+  border-bottom: 1.5px dashed #cbb59f;
+}
+.b3 .pol-caption.ghost { color: #b9a288; }
+.b3 .qrow { display: flex; gap: 8px; margin-top: 16px; align-items: center; }
+.b3 .pillbtn {
+  background: var(--card); border-radius: 999px; padding: 9px 13px; font-size: 14px; font-weight: 600;
+  color: var(--text); white-space: nowrap; flex: none;
+}
+.b3 .cat-scroll { display: flex; gap: 6px; overflow: hidden; flex: 1; min-width: 0; align-items: center; }
+.b3 .cat-dot {
+  width: 40px; height: 40px; flex: none; border-radius: 50%; background: var(--card);
+  display: grid; place-items: center; font-size: 19px;
+}
+.b3 .cat-dot.on { background: var(--accent); box-shadow: 0 0 0 3px rgba(255,127,162,.35); }
+.b3 .cat-fade { width: 22px; height: 40px; flex: none; margin-left: -26px; background: linear-gradient(90deg, transparent, var(--bg)); position: relative; }
+.b3 .blocklabel { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); margin: 18px 4px 8px; }
+.b3 .hearts { display: flex; gap: 10px; justify-content: center; font-size: 34px; }
+.b3 .hearts .on { color: var(--accent); }
+.b3 .hearts .off { color: var(--line); }
+.b3 .hearts-hint { text-align: center; font-size: 13px; color: var(--muted); margin-top: 6px; }
+.b3 .hearts-hint b { color: var(--accent-2); }
+.b3 .seg4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.b3 .seg4 button {
+  border: 1.5px solid var(--line); background: var(--card); color: var(--text); border-radius: 12px;
+  padding: 10px 0; font-size: 14px; font-weight: 700;
+}
+.b3 .seg4 .on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.b3 .vibe-row { display: flex; gap: 8px; align-items: center; }
+.b3 .vibe-input {
+  flex: 1; background: var(--card); border-radius: 12px; padding: 11px 14px; font-size: 15px;
+  color: var(--text); font-family: var(--cursive);
+}
+.b3 .vibe-input.ghost { color: var(--muted); }
+.b3 .vibe-sugs { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.b3 .vibe-sug { font-size: 12px; color: var(--muted); background: var(--card); border-radius: 999px; padding: 4px 11px; font-family: var(--cursive); }
+.b3 .addnote { font-size: 13px; color: var(--accent-2); font-weight: 700; margin: 14px 4px; }
+/* ============ OPTION 2 — WIZARD ============ */
+.b3 .dots { display: flex; gap: 6px; justify-content: center; margin-bottom: 8px; }
+.b3 .dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--line); }
+.b3 .dots .on { background: var(--accent); width: 22px; border-radius: 99px; }
+.b3 .wiz-skip { position: absolute; top: 18px; right: 20px; font-size: 13px; color: var(--muted); font-weight: 700; }
+.b3 .wiz-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; text-align: center; }
+.b3 .snap-circle {
+  width: 170px; height: 170px; border-radius: 50%; border: 3px dashed var(--accent);
+  display: grid; place-items: center; font-size: 60px; background: var(--card);
+  box-shadow: 0 0 0 14px rgba(255,127,162,.08), 0 0 0 28px rgba(255,127,162,.04);
+}
+.b3 .wiz-h { font: 700 22px var(--cursive); color: var(--accent); }
+.b3 .wiz-sub { font-size: 13px; color: var(--muted); max-width: 240px; }
+.b3 .src-btns { display: flex; flex-direction: column; gap: 8px; width: 230px; }
+.b3 .src-btns button {
+  border: 1.5px solid var(--line); background: var(--card); color: var(--text); border-radius: 999px;
+  padding: 11px; font-size: 14px; font-weight: 700;
+}
+.b3 .photo-bg { position: absolute; inset: 0; }
+.b3 .photo-bg::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(20,8,16,.55), rgba(20,8,16,.82)); }
+.b3 .wiz-over { position: relative; z-index: 1; display: flex; flex-direction: column; flex: 1; }
+.b3 .glass {
+  background: rgba(30,14,25,.62); backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,.1);
+  border-radius: var(--radius); padding: 14px; margin-bottom: 12px;
+}
+.b3 .glabel { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; color: var(--accent-2); margin-bottom: 8px; }
+.b3 .ginput { font-size: 17px; color: var(--text); }
+.b3 .ginput.ghost { color: rgba(245,230,238,.45); }
+.b3 .chipline { display: flex; gap: 7px; flex-wrap: wrap; }
+.b3 .wchip {
+  border: 1.5px solid rgba(255,255,255,.18); background: transparent; color: var(--text);
+  border-radius: 999px; padding: 7px 14px; font-size: 13.5px; font-weight: 700;
+}
+.b3 .wchip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.b3 .carousel { display: flex; align-items: center; justify-content: center; gap: 14px; }
+.b3 .carousel .side { font-size: 24px; opacity: .35; }
+.b3 .carousel .mid { text-align: center; }
+.b3 .carousel .mid .e { font-size: 46px; }
+.b3 .carousel .mid .l { font-size: 14px; font-weight: 800; margin-top: 2px; }
+.b3 .carousel .arr { color: var(--muted); font-size: 20px; }
+.b3 .verdict-track { position: relative; height: 6px; background: rgba(255,255,255,.15); border-radius: 99px; margin: 26px 10px 8px; }
+.b3 .verdict-track .fill { position: absolute; left: 0; top: 0; bottom: 0; width: 75%; background: var(--accent); border-radius: 99px; }
+.b3 .verdict-track .thumb {
+  position: absolute; left: 75%; top: 50%; transform: translate(-50%,-50%); width: 40px; height: 40px;
+  background: var(--card); border: 3px solid var(--accent); border-radius: 50%;
+  display: grid; place-items: center; font-size: 20px; box-shadow: var(--shadow);
+}
+.b3 .verdict-ends { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--muted); margin: 14px 4px 0; }
+.b3 .verdict-word { text-align: center; font: 700 17px var(--cursive); color: var(--accent-2); margin-top: 12px; }
+.b3 .react-row { display: flex; gap: 8px; align-items: center; }
+.b3 .react {
+  width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,.08);
+  display: grid; place-items: center; font-size: 21px; border: 1.5px solid transparent;
+}
+.b3 .react.on { background: rgba(255,127,162,.22); border-color: var(--accent); }
+.b3 .react.plus { color: var(--muted); font-size: 22px; border: 1.5px dashed rgba(255,255,255,.25); background: transparent; }
+.b3 .wiz-nav { display: flex; gap: 10px; margin-top: auto; }
+.b3 .wiz-nav .back { flex: none; width: 52px; border-radius: 999px; border: 1.5px solid var(--line); background: transparent; color: var(--muted); font-size: 18px; }
+.b3 .wiz-nav .next { flex: 1; border: none; border-radius: 999px; padding: 14px; background: var(--accent); color: #fff; font-size: 16px; font-weight: 800; }
+/* ============ OPTION 3 — CHAT ============ */
+.b3 .chat { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+.b3 .bub { max-width: 78%; border-radius: 16px; padding: 10px 14px; font-size: 14.5px; line-height: 1.45; }
+.b3 .bub.bot { background: var(--card); border-bottom-left-radius: 4px; align-self: flex-start; }
+.b3 .bub.me { background: var(--accent); color: #fff; border-bottom-right-radius: 4px; align-self: flex-end; font-weight: 600; }
+.b3 .attach-bub {
+  align-self: flex-start; width: 78%; border: 2px dashed var(--line); border-radius: 16px;
+  padding: 18px; text-align: center; color: var(--muted); font-size: 14px;
+}
+.b3 .attach-bub .e { font-size: 30px; }
+.b3 .photo-msg { align-self: flex-end; display: flex; gap: 4px; }
+.b3 .photo-msg .ph { width: 92px; height: 92px; border-radius: 12px; display: grid; place-items: center; font-size: 34px; }
+.b3 .qreplies { display: flex; gap: 7px; flex-wrap: wrap; align-self: flex-start; margin-left: 6px; }
+.b3 .qreply {
+  border: 1.5px solid var(--accent); color: var(--accent-2); background: transparent;
+  border-radius: 999px; padding: 7px 14px; font-size: 13.5px; font-weight: 700;
+}
+.b3 .faces { display: flex; gap: 9px; align-self: flex-start; margin-left: 6px; }
+.b3 .face { width: 46px; height: 46px; border-radius: 50%; background: var(--card); display: grid; place-items: center; font-size: 23px; border: 2px solid transparent; }
+.b3 .face.on { border-color: var(--accent); background: rgba(255,127,162,.18); }
+.b3 .chat-input { display: flex; gap: 8px; margin-top: 12px; }
+.b3 .chat-input .f { flex: 1; background: var(--card); border-radius: 999px; padding: 11px 16px; font-size: 14px; color: var(--muted); }
+.b3 .chat-input .snd { width: 42px; height: 42px; flex: none; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-size: 16px; }
+.b3 .sum-card {
+  align-self: stretch; background: var(--card); border-left: 4px solid var(--accent);
+  border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow);
+}
+.b3 .sum-card h4 { margin: 0 0 2px; font-size: 16px; }
+.b3 .sum-card .l { font-size: 13px; color: var(--muted); }
+.b3 .sum-tags { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.b3 .sum-tag { font-size: 12px; font-weight: 700; background: var(--card-2); border-radius: 999px; padding: 4px 10px; }
+.b3 .sum-edit { font-size: 12px; color: var(--accent-2); font-weight: 700; margin-top: 10px; }
+.b3 .done-row { display: flex; gap: 8px; margin-top: 4px; }
+.b3 .done-row button { flex: 1; border-radius: 999px; padding: 11px; font-size: 14px; font-weight: 800; border: none; }
+.b3 .done-row .ghostb { background: transparent; border: 1.5px solid var(--line); color: var(--muted); }
+.b3 .done-row .mainb { background: var(--accent); color: #fff; }
+/* ============ OPTION 4 — SCRAPBOOK ============ */
+.b3 .paper {
+  background: #f6edc8; background-image: repeating-linear-gradient(0deg, transparent, transparent 26px, rgba(90,70,54,.07) 27px);
+  border-radius: 8px; flex: 1; position: relative; padding: 26px 18px; color: #6b5a3e;
+  box-shadow: var(--shadow); display: flex; flex-direction: column; overflow: hidden;
+}
+.b3 .washi { position: absolute; width: 90px; height: 26px; background: rgba(255,127,162,.65); transform: rotate(-40deg); }
+.b3 .washi.tl { top: 6px; left: -22px; }
+.b3 .washi.tr { top: 6px; right: -22px; transform: rotate(40deg); }
+.b3 .tape-slot {
+  flex: 1; border: 2.5px dashed #c9b283; border-radius: 8px; display: grid; place-items: center;
+  text-align: center; margin: 8px 0;
+}
+.b3 .tape-slot .e { font-size: 48px; }
+.b3 .tape-slot .t { font: 700 20px var(--cursive); margin-top: 6px; }
+.b3 .tape-slot .s { font-size: 12.5px; color: #a08a5f; margin-top: 4px; }
+.b3 .scrap-photo { position: absolute; inset: 0; }
+.b3 .scrap-photo .fill { position: absolute; inset: 0; display: grid; place-items: center; font-size: 90px; }
+.b3 .tape-strip {
+  position: absolute; background: rgba(253,246,238,.92); padding: 6px 16px; box-shadow: 0 3px 8px rgba(0,0,0,.3);
+  font-family: var(--cursive); color: #5a4636;
+}
+.b3 .tape-strip.top { top: 14px; left: 50%; transform: translateX(-50%) rotate(-2deg); font-size: 13.5px; }
+.b3 .tape-strip.cap { bottom: 84px; left: 18px; transform: rotate(-1.5deg); font-size: 19px; max-width: 78%; }
+.b3 .sticker { position: absolute; box-shadow: 0 4px 10px rgba(0,0,0,.35); border-radius: 14px; }
+.b3 .sticker.cat {
+  top: 60px; right: 16px; transform: rotate(7deg); background: #fff; padding: 8px 12px; text-align: center;
+  border-radius: 50%; width: 64px; height: 64px; display: grid; place-items: center; font-size: 30px;
+  border: 3px solid var(--accent);
+}
+.b3 .sticker.hearts-badge {
+  top: 150px; right: 24px; transform: rotate(-5deg); background: var(--accent); color: #fff;
+  padding: 7px 13px; font-size: 15px; font-weight: 800; border-radius: 999px;
+}
+.b3 .sticker.price {
+  top: 64px; left: 18px; transform: rotate(-9deg); background: var(--warn); color: #4a3a12;
+  padding: 8px 14px 8px 20px; font-size: 17px; font-weight: 900;
+  clip-path: polygon(12px 0, 100% 0, 100% 100%, 12px 100%, 0 50%);
+}
+.b3 .sticker.emo { background: transparent; box-shadow: none; font-size: 34px; filter: drop-shadow(0 3px 5px rgba(0,0,0,.4)); }
+.b3 .tray {
+  position: relative; z-index: 2; margin-top: auto; background: rgba(26,14,22,.92); backdrop-filter: blur(4px);
+  border-radius: var(--radius); padding: 12px; border: 1px solid var(--line);
+}
+.b3 .tray.dim { opacity: .45; }
+.b3 .tray-label { font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); margin: 8px 2px 5px; }
+.b3 .tray-label:first-child { margin-top: 0; }
+.b3 .tray-row { display: flex; gap: 7px; align-items: center; overflow: hidden; }
+.b3 .tr-heart { font-size: 22px; color: var(--line); }
+.b3 .tr-heart.on { color: var(--accent); }
+.b3 .tr-tag { font-size: 13px; font-weight: 800; background: var(--card); border-radius: 8px; padding: 6px 11px; color: var(--text); }
+.b3 .tr-tag.on { background: var(--warn); color: #4a3a12; }
+.b3 .tr-emo { width: 36px; height: 36px; border-radius: 10px; background: var(--card); display: grid; place-items: center; font-size: 18px; }
+.b3 .tr-emo.on { background: rgba(255,127,162,.25); box-shadow: inset 0 0 0 1.5px var(--accent); }
+.b3 .scrap-save { margin-top: 12px; position: relative; z-index: 2; }
+
+
+</style>
+</head>
+<body>
+
+<h1 class="main">Log form redesign — all 11 options</h1>
+<p class="main-intro">All three mock rounds combined, numbered consecutively: Options 1–3 from the first round, 4–7 from the second, 8–11 from the third. Every concept kills the enjoyment/would-repeat double question, replaces or removes the fixed mood list, makes cost categorical (or drops it), and fits without scrolling.</p>
+
+<div class="b1">
+
+
+<h2 class="batch-h">Concepts 1–3 <span>(first round — “three redesign concepts”)</span></h2>
+<p class="intro">All three: kill the enjoyment/would-repeat overlap (one verdict control), replace the fixed mood list, make cost categorical or gone, and fit on one screen. Each takes a different philosophy about what logging a date should feel like.</p>
+
+<!-- ================= OPTION 1 ================= -->
+<h2 class="option-title">Option 1 — “Snap”: one screen, expand if you care</h2>
+<p class="option-blurb">
+  <b>Philosophy: a date log is a 15-second chore — optimize for speed.</b>
+  Everything essential fits without scrolling: title + date on one line, categories as a swipeable emoji strip,
+  one 4-button <b>verdict</b> (merges enjoyment + would-repeat), cost as Free/$/$$/$$$ pills.
+  Mood chips are gone — if you want to say more, “Add more” reveals a free-text <b>vibe</b> field, location and notes.
+  Most saves never open it.
+</p>
+<div class="frames">
+  <div class="frame">
+    <p class="frame-label">Default view (everything most logs need)</p>
+    <div class="phone">
+      <h3 class="sheet-title">New page!</h3>
+      <div class="snap-row">
+        <input class="txt" placeholder="What did you do?"/>
+        <div class="date-mini">Jul 17</div>
+      </div>
+      <p class="lbl">Category</p>
+      <div class="cat-fade"><div class="cat-scroll">
+        <div class="cat-dot on">🍽️</div><div class="cat-dot">🌳</div><div class="cat-dot">🎬</div>
+        <div class="cat-dot">✈️</div><div class="cat-dot">🎨</div><div class="cat-dot">🏠</div>
+        <div class="cat-dot">🍸</div><div class="cat-dot">🏛️</div>
+      </div></div>
+      <p class="lbl">How was it?</p>
+      <div class="verdict">
+        <button><span class="vemoji">😕</span>Skip it</button>
+        <button><span class="vemoji">🙂</span>Nice</button>
+        <button class="on"><span class="vemoji">😍</span>Loved it</button>
+        <button><span class="vemoji">🏆</span>All-timer</button>
+      </div>
+      <p class="lbl">Cost</p>
+      <div class="pills">
+        <button>Free</button><button class="on">$</button><button>$$</button><button>$$$</button>
+      </div>
+      <p class="lbl">Photos</p>
+      <div class="photo-mini-row">
+        <div class="photo-mini">🌅</div>
+        <div class="photo-mini add">＋</div>
+      </div>
+      <button class="more-link">＋ Add note, place or vibe</button>
+      <button class="btn-save">Save date ♥</button>
+    </div>
+    <p class="frame-note">One tap answers “how was it” — 😕 maps to no-repeat/low enjoyment, 🏆 to all-time favorite. No stars, no effort, no mood grid.</p>
+  </div>
+  <div class="frame">
+    <p class="frame-label">With “Add more” expanded (optional)</p>
+    <div class="phone">
+      <h3 class="sheet-title">New page!</h3>
+      <div class="snap-row">
+        <input class="txt" value="Sunset picnic"/>
+        <div class="date-mini">Jul 17</div>
+      </div>
+      <p class="lbl">How was it?</p>
+      <div class="verdict">
+        <button><span class="vemoji">😕</span>Skip it</button>
+        <button><span class="vemoji">🙂</span>Nice</button>
+        <button class="on"><span class="vemoji">😍</span>Loved it</button>
+        <button><span class="vemoji">🏆</span>All-timer</button>
+      </div>
+      <div class="more-area">
+        <p class="lbl">Vibe — your own words</p>
+        <input class="txt" placeholder="cozy, giggly, golden hour…" value="golden hour, lazy"/>
+        <p class="lbl">Where</p>
+        <input class="txt" placeholder="optional" value="HaYarkon park"/>
+        <p class="lbl">Notes</p>
+        <textarea class="txt area" placeholder="What made it good (or not)?"></textarea>
+      </div>
+      <button class="btn-save" style="margin-top:16px">Save date ♥</button>
+    </div>
+    <p class="frame-note">Vibe replaces the 8 fixed mood chips: type anything, past vibes become autocomplete suggestions. (Category/cost/photos collapsed here just to show the expanded area.)</p>
+  </div>
+</div>
+
+<!-- ================= OPTION 2 ================= -->
+<h2 class="option-title">Option 2 — “Three questions”: a full-screen wizard</h2>
+<p class="option-blurb">
+  <b>Philosophy: never show two questions at once — zero scrolling by design.</b>
+  Three big-touch-target steps. The star of the show is the <b>do-again meter</b> in step 2: a single
+  drag-thumb slider from “Never again” to “Tomorrow, please” that replaces enjoyment, would-repeat AND effort with
+  one gut-feel gesture. No mood field at all — the meter plus a photo says enough. Every step past the first is skippable.
+</p>
+<div class="frames">
+  <div class="frame">
+    <p class="frame-label">Step 1 of 3</p>
+    <div class="phone">
+      <div class="wiz-progress"><i class="done"></i><i></i><i></i></div>
+      <p class="wiz-q">What did you do?</p>
+      <input class="txt" placeholder="e.g. Sunset hike at the cliffs"/>
+      <p class="lbl" style="margin-top:18px">Pick a category</p>
+      <div class="cat-grid">
+        <div class="cat-cell"><span>🍽️</span>Dining</div>
+        <div class="cat-cell on"><span>🌳</span>Outdoors</div>
+        <div class="cat-cell"><span>🎬</span>Movie</div>
+        <div class="cat-cell"><span>✈️</span>Travel</div>
+        <div class="cat-cell"><span>🎨</span>Creative</div>
+        <div class="cat-cell"><span>🏠</span>At home</div>
+        <div class="cat-cell"><span>🍸</span>Nightlife</div>
+        <div class="cat-cell"><span>🏛️</span>Culture</div>
+        <div class="cat-cell"><span>🏃</span>Active</div>
+        <div class="cat-cell"><span>🧘</span>Wellness</div>
+        <div class="cat-cell"><span>💝</span>Special</div>
+      </div>
+      <p class="lbl" style="margin-top:18px">When</p>
+      <input class="txt" value="Today · Jul 17" style="text-align:center"/>
+      <div class="wiz-nav"><button class="next">Next →</button></div>
+    </div>
+  </div>
+  <div class="frame">
+    <p class="frame-label">Step 2 of 3 — the do-again meter</p>
+    <div class="phone">
+      <div class="wiz-progress"><i class="done"></i><i class="done"></i><i></i></div>
+      <p class="wiz-q">Would you do it again?<small>drag the face — trust your gut</small></p>
+      <div class="meter-wrap">
+        <div class="meter-track"><div class="meter-thumb">🤩</div></div>
+        <div class="meter-labels">
+          <span>Tomorrow, please</span>
+          <span class="cur">◂ Absolutely</span>
+          <span>It was fine</span>
+          <span>Probably not</span>
+          <span>Never again</span>
+        </div>
+      </div>
+      <p class="lbl" style="margin-top:20px">What did it cost?</p>
+      <div class="big-pills">
+        <button>Free</button><button class="on">$</button><button>$$</button><button>$$$</button>
+      </div>
+      <div class="wiz-nav"><button class="back">← Back</button><button class="next">Next →</button></div>
+    </div>
+    <p class="frame-note">The thumb face changes as you drag: 😖 → 😐 → 🙂 → 😍 → 🤩. Position maps internally to enjoyment + wouldRepeat, so analytics and the suggestion engine keep working unchanged.</p>
+  </div>
+  <div class="frame">
+    <p class="frame-label">Step 3 of 3</p>
+    <div class="phone">
+      <div class="wiz-progress"><i class="done"></i><i class="done"></i><i class="done"></i></div>
+      <p class="wiz-q">Keep a memory?<small>photos & a note — or just save</small></p>
+      <div class="photo-hero"><div><span>📷</span>Tap to add photos<br/>camera · gallery · Google Photos</div></div>
+      <p class="lbl" style="margin-top:16px">A line to remember it by</p>
+      <textarea class="txt area" placeholder="The waiter sang. We died laughing."></textarea>
+      <p class="skip-note">Everything on this step is optional</p>
+      <div class="wiz-nav"><button class="back">← Back</button><button class="next">Save date ♥</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= OPTION 3 ================= -->
+<h2 class="option-title">Option 3 — “Postcard”: you're not filling a form, you're making the memory</h2>
+<p class="option-blurb">
+  <b>Philosophy: the form IS the artifact.</b> You edit the postcard the way it will appear in History —
+  photo on the front, handwritten title, a postmark for the date, ink <b>stamps</b> for the verdict
+  (replaces enjoyment + would-repeat), and <b>your own tags</b> instead of the fixed mood list (type anything;
+  past tags are suggested). Cost, effort and location are simply gone — the note line covers them when they matter.
+  The fewest fields of the three.
+</p>
+<div class="frames">
+  <div class="frame">
+    <p class="frame-label">Blank postcard (new date)</p>
+    <div class="phone" style="justify-content:center">
+      <div class="postcard">
+        <div class="pc-photo"><span><span class="big">📷</span>add a photo for the front</span></div>
+        <div class="pc-body">
+          <input class="pc-title" placeholder="What did you do?"/>
+          <div class="pc-meta">
+            <span>🍽️ Dining ▾</span>
+            <div class="postmark">JUL<br/>17<br/>2026</div>
+          </div>
+          <div class="stamp-row">
+            <button class="stamp love">Do again ♥</button>
+            <button class="stamp nice">It was fun</button>
+            <button class="stamp once">Once was enough</button>
+          </div>
+          <div class="tag-line">
+            <input class="tag-input" placeholder="+ add a tag"/>
+          </div>
+          <button class="pc-save">Mail it to the album ✉</button>
+        </div>
+      </div>
+      <p class="flip-hint">tap the card to flip → write a note on the back</p>
+    </div>
+  </div>
+  <div class="frame">
+    <p class="frame-label">Filled in · stamp pressed · tags typed</p>
+    <div class="phone" style="justify-content:center">
+      <div class="postcard">
+        <div class="pc-photo" style="font-size:44px">🌅</div>
+        <div class="pc-body">
+          <input class="pc-title" value="Sunset picnic at the park"/>
+          <div class="pc-meta">
+            <span>🌳 Outdoors ▾</span>
+            <div class="postmark">JUL<br/>17<br/>2026</div>
+          </div>
+          <div class="stamp-row">
+            <button class="stamp love on">Do again ♥</button>
+            <button class="stamp nice">It was fun</button>
+            <button class="stamp once">Once was enough</button>
+          </div>
+          <div class="tag-line">
+            <span class="tag">golden hour <span class="x">✕</span></span>
+            <span class="tag">cheap &amp; perfect <span class="x">✕</span></span>
+            <input class="tag-input" placeholder="+ tag"/>
+          </div>
+          <div class="tag-suggest">
+            <button>lazy sunday</button><button>giggly</button><button>cozy</button>
+          </div>
+          <button class="pc-save">Mail it to the album ✉</button>
+        </div>
+      </div>
+      <p class="flip-hint">suggested tags = your most-used past tags</p>
+    </div>
+  </div>
+  <div class="frame">
+    <p class="frame-label">Back of the card (flipped) — the note</p>
+    <div class="phone" style="justify-content:center">
+      <div class="postcard">
+        <div class="pc-body" style="padding-top:20px">
+          <div class="pc-meta" style="margin:0 0 6px">
+            <span style="font:800 11px sans-serif;letter-spacing:.1em;color:#b3a48f">THE BACK OF THE CARD</span>
+            <div class="postmark">JUL<br/>17<br/>2026</div>
+          </div>
+          <textarea class="pc-note" placeholder="Dear future us —&#10;write what you want to remember…">Dear future us — the hummus place was closed so we grabbed bread and cheese and it was better. ₪40 total.</textarea>
+          <button class="pc-save" style="margin-top:20px">Mail it to the album ✉</button>
+        </div>
+      </div>
+      <p class="flip-hint">no cost / location / effort fields — the note holds them when they matter</p>
+    </div>
+  </div>
+</div>
+
+
+</div>
+
+<div class="b2">
+
+
+<h2 class="batch-h">Concepts 4–7 <span>(second round — “four directions”, photo-first)</span></h2>
+<div class="fixes">
+  <b>Your four complaints, and where each concept lands:</b><br/>
+  ① too long / too much scrolling · ② moods never fit · ③ numeric cost is awkward · ④ enjoyment ≈ would-repeat (double question)
+</div>
+
+<!-- ================= OPTION 4 ================= -->
+<section class="opt" id="a">
+  <span class="crumb">Option 4</span>
+  <h2>Polaroid card — everything on one screen</h2>
+  <p class="what">The whole form is one screen, zero scrolling. The photo is a tilted polaroid at the top and the title is
+  handwritten <i>on</i> it as the caption. Below: one row of categories, one verdict row, one cost row. Notes, location
+  and extra photos hide behind a fold.</p>
+  <table class="solve">
+    <tr><td>① scrolling</td><td>everything fits one screen; extras collapsed behind "add note…"</td></tr>
+    <tr><td>② mood</td><td><b>removed entirely</b> — the verdict face carries the feeling</td></tr>
+    <tr><td>③ cost</td><td>segmented Free / $ / $$ / $$$</td></tr>
+    <tr><td>④ double question</td><td>one 4-face <b>verdict</b>: Again! / Good / Meh / Nope (maps to enjoyment 5/4/3/1 + repeat yes/maybe/no)</td></tr>
+  </table>
+  <div class="row-frames">
+    <figure>
+      <div class="phone">
+        <div class="ph-head"><span class="ph-title">New page!</span><span class="ph-x">✕</span></div>
+        <div class="ph-body">
+          <div class="polaroid">
+            <div class="well"><div><div class="big">📷</div><div style="font-size:13px;font-weight:700">Tap to add tonight's photo</div><div style="font-size:11px">camera · gallery · Google Photos</div></div></div>
+            <div class="cap muted" style="opacity:.55">write a caption…</div>
+          </div>
+          <div class="mini-thumbs"><span class="add">＋</span></div>
+          <div>
+            <p class="lbl">What kind of date?</p>
+            <div class="scrollchips"><span class="chip on">🍽️ Dining</span><span class="chip">🌳 Outdoors</span><span class="chip">🎬 Movie</span><span class="chip">✈️ Travel</span><span class="chip">🎨 Crea…</span></div>
+          </div>
+          <div>
+            <p class="lbl">Verdict</p>
+            <div class="verdict">
+              <button class="on"><span class="f">😍</span><span>Again!</span></button>
+              <button><span class="f">🙂</span><span>Good</span></button>
+              <button><span class="f">😐</span><span>Meh</span></button>
+              <button><span class="f">😬</span><span>Nope</span></button>
+            </div>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <div style="flex:1"><p class="lbl">Cost</p><div class="seg"><button>Free</button><button class="on">$</button><button>$$</button><button>$$$</button></div></div>
+            <div style="flex:0 0 108px"><p class="lbl">When</p><div class="input" style="text-align:center">Jul 17</div></div>
+          </div>
+          <div class="fold">＋ add a note or location</div>
+          <div style="flex:1"></div>
+          <div class="btn">Save date ♥</div>
+        </div>
+      </div>
+      <figcaption>Empty state — the polaroid invites the photo first; caption written on the polaroid replaces the title field</figcaption>
+    </figure>
+    <figure>
+      <div class="phone">
+        <div class="ph-head"><span class="ph-title">New page!</span><span class="ph-x">✕</span></div>
+        <div class="ph-body">
+          <div class="polaroid">
+            <div class="well filled"><div class="big" style="opacity:.85">🌅</div></div>
+            <div class="cap">Sunset hike at the cliffs</div>
+          </div>
+          <div class="mini-thumbs"><span></span><span></span><span class="add">＋</span></div>
+          <div>
+            <p class="lbl">What kind of date?</p>
+            <div class="scrollchips"><span class="chip">🍽️ Dining</span><span class="chip on">🌳 Outdoors</span><span class="chip">🎬 Movie</span><span class="chip">✈️ Travel</span><span class="chip">🎨 Crea…</span></div>
+          </div>
+          <div>
+            <p class="lbl">Verdict</p>
+            <div class="verdict">
+              <button class="on"><span class="f">😍</span><span>Again!</span></button>
+              <button><span class="f">🙂</span><span>Good</span></button>
+              <button><span class="f">😐</span><span>Meh</span></button>
+              <button><span class="f">😬</span><span>Nope</span></button>
+            </div>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <div style="flex:1"><p class="lbl">Cost</p><div class="seg"><button class="on">Free</button><button>$</button><button>$$</button><button>$$$</button></div></div>
+            <div style="flex:0 0 108px"><p class="lbl">When</p><div class="input" style="text-align:center">Jul 17</div></div>
+          </div>
+          <div class="fold" style="color:#c99bb0">📝 "Perfect golden hour, brought snacks" · 📍 Rosh Hanikra ✕</div>
+          <div style="flex:1"></div>
+          <div class="btn">Save date ♥</div>
+        </div>
+      </div>
+      <figcaption>Filled state — extra photos as mini-thumbs under the polaroid; note added inline via the fold</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ================= OPTION 5 ================= -->
+<section class="opt" id="b">
+  <span class="crumb">Option 5</span>
+  <h2>Three-step story — photo gets a full screen</h2>
+  <p class="what">A quick wizard: each step is tiny, so nothing ever scrolls. Step 1 is <b>only</b> the photo — a near
+  full-screen well. Step 2 is the facts. Step 3 is the feelings, with a single 0–10 dial and <b>free-typed vibe words</b>
+  instead of a fixed mood list (your own past words come back as suggestions, so the vocabulary grows to fit you).</p>
+  <table class="solve">
+    <tr><td>① scrolling</td><td>three screens, each fits without scrolling; 2 taps + typing total</td></tr>
+    <tr><td>② mood</td><td><b>freeform vibe words</b> you type ("cozy", "rainy", "tipsy") — old picks become suggestion chips</td></tr>
+    <tr><td>③ cost</td><td><b>removed entirely</b></td></tr>
+    <tr><td>④ double question</td><td>one 0–10 dial "How was it?" — 8+ implies "again", ≤4 implies "nope"</td></tr>
+  </table>
+  <div class="row-frames">
+    <figure>
+      <div class="phone">
+        <div class="ph-head"><span class="ph-title">New page!</span><span class="ph-x">✕</span></div>
+        <div class="ph-body">
+          <div class="stepdots"><i class="on"></i><i></i><i></i></div>
+          <div class="bigwell">
+            <div class="cambtn">📷</div>
+            <div style="font-weight:800; font-size:16px;">Start with the photo</div>
+            <div class="muted" style="font-size:12.5px;">camera · gallery · Google Photos<br/>(or skip — but where's the fun)</div>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center; justify-content:space-between;">
+            <span class="chip">📅 Today, Jul 17</span>
+            <span class="fold">skip →</span>
+          </div>
+          <div class="btn" style="opacity:.45">Next</div>
+        </div>
+      </div>
+      <figcaption>Step 1 of 3 — the photo IS the screen; date defaults to today as a small chip</figcaption>
+    </figure>
+    <figure>
+      <div class="phone">
+        <div class="ph-head"><span class="ph-title">New page!</span><span class="ph-x">✕</span></div>
+        <div class="ph-body">
+          <div class="stepdots"><i class="on"></i><i class="on"></i><i></i></div>
+          <div class="bigwell filled" style="flex:0 0 120px;"><div style="font:600 17px 'Segoe Script',cursive; text-shadow:0 2px 6px rgba(0,0,0,.6);">🌅</div></div>
+          <div><p class="lbl">What did you do?</p><div class="input">Sunset hike at the cliffs</div></div>
+          <div>
+            <p class="lbl">Kind of date</p>
+            <div class="catgrid">
+              <button><span class="e">🍽️</span><span>Dining</span></button>
+              <button class="on"><span class="e">🌳</span><span>Outdoors</span></button>
+              <button><span class="e">🎬</span><span>Movie</span></button>
+              <button><span class="e">✈️</span><span>Travel</span></button>
+              <button><span class="e">🏠</span><span>At home</span></button>
+              <button><span class="e">💝</span><span>More…</span></button>
+            </div>
+          </div>
+          <div><p class="lbl">Where <span style="text-transform:none;font-weight:600">(optional)</span></p><div class="input ghost-text">📍 add location</div></div>
+          <div style="flex:1"></div>
+          <div style="display:flex; gap:8px;"><div class="btn ghost" style="flex:1">Back</div><div class="btn" style="flex:2">Next</div></div>
+        </div>
+      </div>
+      <figcaption>Step 2 of 3 — the facts; your photo stays visible as the header, anchoring the flow</figcaption>
+    </figure>
+    <figure>
+      <div class="phone">
+        <div class="ph-head"><span class="ph-title">New page!</span><span class="ph-x">✕</span></div>
+        <div class="ph-body">
+          <div class="stepdots"><i class="on"></i><i class="on"></i><i class="on"></i></div>
+          <div class="bigwell filled" style="flex:0 0 90px;"></div>
+          <div>
+            <p class="lbl">How was it?</p>
+            <div class="slider-face">🤩</div>
+            <div class="slider"><div class="knob"></div></div>
+            <div class="slider-ends"><span>never again</span><b style="color:#ffd3e0">8 — take me back</b><span>perfect</span></div>
+          </div>
+          <div>
+            <p class="lbl">Vibe — in your own words</p>
+            <div class="input ghost-text">type a word… e.g. cozy, tipsy, rainy</div>
+            <div class="tagrow" style="margin-top:7px;">
+              <span class="chip on">golden hour ✕</span><span class="chip on">sweaty ✕</span>
+              <span class="chip" style="opacity:.7">chill</span><span class="chip" style="opacity:.7">spontaneous</span><span class="chip" style="opacity:.7">romantic</span>
+            </div>
+          </div>
+          <div><p class="lbl">A memory to keep <span style="text-transform:none;font-weight:600">(optional)</span></p><div class="input ghost-text" style="height:52px;">what made it good (or not)?</div></div>
+          <div style="flex:1"></div>
+          <div style="display:flex; gap:8px;"><div class="btn ghost" style="flex:1">Back</div><div class="btn" style="flex:2">Save date ♥</div></div>
+        </div>
+      </div>
+      <figcaption>Step 3 of 3 — one dial replaces enjoyment+repeat; typed vibe words replace the fixed mood list; dimmed chips = your past words as suggestions</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ================= OPTION 6 ================= -->
+<section class="opt" id="c">
+  <span class="crumb">Option 6</span>
+  <h2>Chat check-in — the app interviews you</h2>
+  <p class="what">Logging feels like texting a friend after the date. The app opens by asking for the photo, then asks one
+  tiny question at a time with tap-to-answer chips — you never see a form, and there is nothing to scroll because there is
+  only ever <b>one</b> question on screen. Ends with a summary card you confirm.</p>
+  <table class="solve">
+    <tr><td>① scrolling</td><td>no form at all — one question at a time, most answered with one tap</td></tr>
+    <tr><td>② mood</td><td>"one word for tonight?" — a single free-typed word, no list to not-fit</td></tr>
+    <tr><td>③ cost</td><td>asked as a chip question: Free / $ / $$ / $$$ (tap "skip" and it never asks again)</td></tr>
+    <tr><td>④ double question</td><td>hearts 1–5, one question; 4–5 hearts auto-marks "do it again", 1–2 marks "nope"</td></tr>
+  </table>
+  <div class="row-frames">
+    <figure>
+      <div class="phone">
+        <div class="ph-head"><span class="ph-title">Tonight ♥</span><span class="ph-x">✕</span></div>
+        <div class="ph-body">
+          <div class="chat">
+            <div class="bub bot">Heyy 👋 how was tonight? Photo first! 📸</div>
+            <div class="bub me photo"><div class="ph-img">🌅</div></div>
+            <div class="bub bot">Gorgeous!! What were you two up to?</div>
+            <div class="bub me">Sunset hike at the cliffs</div>
+            <div class="bub bot">Sounds like an <b>outdoors</b> one — right?</div>
+            <div class="quick"><span class="chip on">🌳 Yes, outdoors</span><span class="chip">pick another…</span></div>
+            <div class="bub bot">Rate it in hearts 💕</div>
+            <div class="quick"><span class="chip hearts">♥♥♥♥♡</span></div>
+          </div>
+          <div class="chatbar"><div class="cam">📷</div><div class="input ghost-text" style="border-radius:999px;">type an answer…</div></div>
+        </div>
+      </div>
+      <figcaption>Mid-conversation — photo is literally the first message; category is guessed from the title, one tap to confirm</figcaption>
+    </figure>
+    <figure>
+      <div class="phone">
+        <div class="ph-head"><span class="ph-title">Tonight ♥</span><span class="ph-x">✕</span></div>
+        <div class="ph-body">
+          <div class="chat">
+            <div class="bub bot">One word for tonight? ✨</div>
+            <div class="bub me">golden</div>
+            <div class="bub bot">Damage? 💸</div>
+            <div class="quick"><span class="chip on">Free</span><span class="chip">$</span><span class="chip">$$</span><span class="chip">$$$</span><span class="chip" style="opacity:.6">skip</span></div>
+            <div class="bub bot" style="max-width:92%;">Logged! Here's your page 📖
+              <div class="sumcard">
+                <div class="simg"></div>
+                <div class="sumline"><span>Date</span><b>Sunset hike at the cliffs</b></div>
+                <div class="sumline"><span>When</span><b>Today · 🌳 Outdoors</b></div>
+                <div class="sumline"><span>Verdict</span><b>♥♥♥♥♡ · will do again</b></div>
+                <div class="sumline"><span>Word</span><b>"golden" · Free</b></div>
+              </div>
+            </div>
+            <div class="quick"><span class="chip on">Perfect, save ♥</span><span class="chip">fix something</span></div>
+          </div>
+          <div class="chatbar"><div class="cam">📷</div><div class="input ghost-text" style="border-radius:999px;">add a note…</div></div>
+        </div>
+      </div>
+      <figcaption>End of chat — summary bubble to confirm; typing in the bar at any point adds a note</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ================= OPTION 7 ================= -->
+<section class="opt" id="d">
+  <span class="crumb">Option 7</span>
+  <h2>Scrapbook page — decorate the photo itself</h2>
+  <p class="what">The photo becomes the page, and <b>every field is a sticker you slap onto it</b>. Category sticker,
+  price-tag sticker, a vibe sticker that is <i>any emoji from the full keyboard</i> (no fixed list), and a wax-stamp verdict.
+  The title is handwritten across the photo. What you build here is literally what the History gallery shows later.</p>
+  <table class="solve">
+    <tr><td>① scrolling</td><td>zero — the photo is the whole screen, the sticker tray sits at the bottom</td></tr>
+    <tr><td>② mood</td><td>vibe sticker = <b>any emoji on your keyboard</b> — infinite vocabulary, no list</td></tr>
+    <tr><td>③ cost</td><td>a price-tag sticker: FREE / $ / $$ / $$$ (skip it = no cost logged)</td></tr>
+    <tr><td>④ double question</td><td>one stamp: <b>KEEPER</b> / NICE / ONE-OFF — pressed like a wax seal onto the corner</td></tr>
+  </table>
+  <div class="row-frames">
+    <figure>
+      <div class="phone">
+        <div class="ph-head"><span class="ph-title">New page!</span><span class="ph-x">✕</span></div>
+        <div class="ph-body">
+          <div class="canvas">
+            <div class="dropmsg">
+              <div style="font-size:40px;">🖼️</div>
+              <div style="font-weight:800; font-size:16px;">This page is empty</div>
+              <div style="font-size:12.5px;">Add tonight's photo to start decorating<br/>camera · gallery · Google Photos</div>
+              <div class="btn" style="padding:9px 22px; margin-top:4px;">Add photo 📷</div>
+            </div>
+          </div>
+          <div>
+            <div class="tray-lbl">Sticker tray — drag onto the page</div>
+            <div class="tray">
+              <span class="tstk" style="background:#d9f2e6;color:#3e7d62;">🌳 Outdoors ▾</span>
+              <span class="tstk" style="background:#fff3d1;color:#8a6d3b;">🏷️ $$ ▾</span>
+              <span class="tstk" style="background:#fff;color:#333;">😍 any emoji</span>
+              <span class="tstk" style="border:2px solid #ffd3e0;color:#ffd3e0;background:transparent;">KEEPER ▾</span>
+            </div>
+          </div>
+          <div class="btn" style="opacity:.45">Save page ♥</div>
+        </div>
+      </div>
+      <figcaption>Empty page — the tray shows the four sticker types; each ▾ opens its tiny picker</figcaption>
+    </figure>
+    <figure>
+      <div class="phone">
+        <div class="ph-head"><span class="ph-title">New page!</span><span class="ph-x">✕</span></div>
+        <div class="ph-body">
+          <div class="canvas filled">
+            <span class="stk date" style="top:12px; left:12px;">📅 Jul 17</span>
+            <span class="stk cat" style="top:34px; right:14px;">🌳 Outdoors</span>
+            <span class="stk vibe" style="top:96px; left:20px;">🫠</span>
+            <span class="stk price" style="top:150px; right:26px;">🏷️ FREE</span>
+            <span class="stk stamp" style="bottom:64px; right:18px;">Keeper</span>
+            <div class="caption-cursive">Sunset hike at the cliffs</div>
+          </div>
+          <div>
+            <div class="tray-lbl">Tap the page to reposition · long-press to remove</div>
+            <div class="tray">
+              <span class="tstk" style="background:#fff;color:#333;">＋ 📷 more</span>
+              <span class="tstk" style="background:#3b2a37;color:#c99bb0;border:1.5px solid #54394c;">📝 note</span>
+              <span class="tstk" style="background:#3b2a37;color:#c99bb0;border:1.5px solid #54394c;">📍 place</span>
+            </div>
+          </div>
+          <div class="btn">Save page ♥</div>
+        </div>
+      </div>
+      <figcaption>Decorated page — 🫠 is the vibe (any emoji); the tilted "KEEPER" stamp is the whole enjoyment+repeat answer; this exact composition becomes the gallery card</figcaption>
+    </figure>
+  </div>
+</section>
+
+
+</div>
+
+<div class="b3">
+
+
+<h2 class="batch-h">Concepts 8–11 <span>(third round — “4 redesign options”)</span></h2>
+<p class="intro">
+  All four fix the same complaints, each in its own way: <b>photos come first</b> and anchor the whole flow ·
+  <b>mood list is gone</b> (replaced by a free word, free emoji, or nothing) · <b>cost is categorical</b> (Free / $ / $$ / $$$) ·
+  <b>enjoyment + "again?" merged into one question</b> · fields cut down so nothing scrolls (effort, location, notes are dropped or demoted everywhere).
+</p>
+
+<!-- ================= OPTION 8 ================= -->
+<section class="opt">
+  <h2 class="opt-title">Option 8 — The Polaroid</h2>
+  <p class="opt-note">
+    One screen, zero scrolling. The photo IS the form: a polaroid you fill, with the caption handwritten on its bottom edge (that's the title).
+    Below it just four quick controls. <b>Rating:</b> 1–5 hearts with a verdict word (1 = "never again", 5 = "new favorite") — one tap answers both old questions.
+    <b>Mood →</b> "one word for the vibe": free text, with your own past words as suggestions, so the vocabulary grows with you instead of a fixed list.
+  </p>
+  <div class="row">
+    <div class="frame">
+      <p class="view-label">View 1 · Empty</p>
+      <div class="phone">
+        <div class="topbar"><span class="sheet-title">New page!</span><span class="x">✕</span></div>
+        <div class="polaroid">
+          <div class="pshot empty">
+            <div>
+              <div class="big">📸</div>
+              <div class="hint">Tap to add photos</div>
+              <div class="srcs">Camera · Gallery · Google Photos</div>
+            </div>
+          </div>
+          <div class="pol-caption ghost">write a caption…</div>
+        </div>
+        <div class="qrow">
+          <span class="pillbtn">📅 Today</span>
+          <div class="cat-scroll">
+            <span class="cat-dot on">🍽️</span><span class="cat-dot">🌳</span><span class="cat-dot">🎬</span>
+            <span class="cat-dot">✈️</span><span class="cat-dot">🎨</span><span class="cat-dot">🏠</span><span class="cat-dot">🍸</span>
+          </div>
+          <div class="cat-fade"></div>
+        </div>
+        <div class="blocklabel">How was it?</div>
+        <div class="hearts"><span class="off">♥</span><span class="off">♥</span><span class="off">♥</span><span class="off">♥</span><span class="off">♥</span></div>
+        <div class="hearts-hint">tap a heart — 1 = never again · 5 = new favorite</div>
+        <div class="blocklabel">Cost</div>
+        <div class="seg4"><button>Free</button><button>$</button><button>$$</button><button>$$$</button></div>
+        <div class="blocklabel">One word for the vibe</div>
+        <div class="vibe-row"><div class="vibe-input ghost">magical? chaotic? cozy?</div></div>
+        <div class="vibe-sugs"><span class="vibe-sug">cozy</span><span class="vibe-sug">spontaneous</span><span class="vibe-sug">giggly</span><span class="vibe-sug">romantic</span></div>
+        <button class="savebtn">Save date ♥</button>
+      </div>
+    </div>
+    <div class="frame">
+      <p class="view-label">View 2 · Filled</p>
+      <div class="phone">
+        <div class="topbar"><span class="sheet-title">New page!</span><span class="x">✕</span></div>
+        <div class="pol-wrap">
+          <div class="polaroid behind"></div>
+          <div class="polaroid">
+            <div class="pshot g3"><span class="emoji">🌄</span><span class="count-badge">+2</span></div>
+            <div class="pol-caption">Sunset hike at the cliffs</div>
+          </div>
+        </div>
+        <div class="qrow">
+          <span class="pillbtn">📅 Jul 16</span>
+          <div class="cat-scroll">
+            <span class="cat-dot">🍽️</span><span class="cat-dot on">🌳</span><span class="cat-dot">🎬</span>
+            <span class="cat-dot">✈️</span><span class="cat-dot">🎨</span><span class="cat-dot">🏠</span><span class="cat-dot">🍸</span>
+          </div>
+          <div class="cat-fade"></div>
+        </div>
+        <div class="blocklabel">How was it?</div>
+        <div class="hearts"><span class="on">♥</span><span class="on">♥</span><span class="on">♥</span><span class="on">♥</span><span class="off">♥</span></div>
+        <div class="hearts-hint"><b>So good — we'd do it again</b></div>
+        <div class="blocklabel">Cost</div>
+        <div class="seg4"><button class="on">Free</button><button>$</button><button>$$</button><button>$$$</button></div>
+        <div class="blocklabel">One word for the vibe</div>
+        <div class="vibe-row"><div class="vibe-input">breathless</div></div>
+        <div class="addnote">+ add a note</div>
+        <button class="savebtn">Save date ♥</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= OPTION 9 ================= -->
+<section class="opt">
+  <h2 class="opt-title">Option 9 — The Wizard</h2>
+  <p class="opt-note">
+    Three full-screen steps, so each screen is tiny — no scrolling ever. Step 1 is <b>only</b> the photo. From step 2 on, your photo becomes the
+    background of the whole form, so the process literally surrounds it. <b>Rating:</b> a single "again-o-meter" slider from 😵 never again to 😍 again ASAP.
+    <b>Mood →</b> react with any emoji from the full keyboard, like reacting to a message — no fixed list to not-fit.
+  </p>
+  <div class="row">
+    <div class="frame">
+      <p class="view-label">Step 1 · Photo first</p>
+      <div class="phone">
+        <span class="wiz-skip">Skip →</span>
+        <div class="dots"><i class="on"></i><i></i><i></i></div>
+        <div class="wiz-center">
+          <div class="snap-circle">📷</div>
+          <div>
+            <div class="wiz-h">Start with a photo</div>
+            <div class="wiz-sub">It becomes the backdrop for the rest — pics or it didn't happen</div>
+          </div>
+          <div class="src-btns">
+            <button>📷 &nbsp;Camera</button>
+            <button>🖼️ &nbsp;Gallery</button>
+            <button>📸 &nbsp;Google Photos</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="frame">
+      <p class="view-label">Step 2 · The facts (photo behind)</p>
+      <div class="phone">
+        <div class="photo-bg g3"><div style="position:absolute;inset:0;display:grid;place-items:center;font-size:110px">🌄</div></div>
+        <div class="wiz-over">
+          <div class="dots"><i class="on"></i><i class="on"></i><i></i></div>
+          <div style="flex:1"></div>
+          <div class="glass">
+            <div class="glabel">What did you do?</div>
+            <div class="ginput">Sunset hike at the cliffs</div>
+          </div>
+          <div class="glass">
+            <div class="glabel">When</div>
+            <div class="chipline"><span class="wchip on">Today</span><span class="wchip">Yesterday</span><span class="wchip">📅 Pick</span></div>
+          </div>
+          <div class="glass">
+            <div class="glabel">Category — swipe</div>
+            <div class="carousel">
+              <span class="arr">‹</span><span class="side">🎬</span>
+              <div class="mid"><div class="e">🌳</div><div class="l">Outdoors</div></div>
+              <span class="side">✈️</span><span class="arr">›</span>
+            </div>
+          </div>
+          <div class="wiz-nav"><button class="back">‹</button><button class="next">Next</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="frame">
+      <p class="view-label">Step 3 · The verdict</p>
+      <div class="phone">
+        <div class="photo-bg g3"><div style="position:absolute;inset:0;display:grid;place-items:center;font-size:110px">🌄</div></div>
+        <div class="wiz-over">
+          <div class="dots"><i class="on"></i><i class="on"></i><i class="on"></i></div>
+          <div style="flex:1"></div>
+          <div class="glass">
+            <div class="glabel">The again-o-meter</div>
+            <div class="verdict-track"><div class="fill"></div><div class="thumb">😍</div></div>
+            <div class="verdict-ends"><span>😵 never again</span><span>again ASAP 😍</span></div>
+            <div class="verdict-word">"drop everything, we're going back"</div>
+          </div>
+          <div class="glass">
+            <div class="glabel">React to it</div>
+            <div class="react-row">
+              <span class="react on">✨</span><span class="react on">🥾</span><span class="react">😂</span>
+              <span class="react">🍕</span><span class="react plus">＋</span>
+              <span class="muted" style="font-size:12px;margin-left:4px">any emoji</span>
+            </div>
+          </div>
+          <div class="glass">
+            <div class="glabel">Cost</div>
+            <div class="chipline"><span class="wchip on">Free</span><span class="wchip">$</span><span class="wchip">$$</span><span class="wchip">$$$</span></div>
+          </div>
+          <div class="wiz-nav"><button class="back">‹</button><button class="next">Save date ♥</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= OPTION 10 ================= -->
+<section class="opt">
+  <h2 class="opt-title">Option 10 — The Chat</h2>
+  <p class="opt-note">
+    Logging as a conversation — the app asks, you tap quick replies. Feels like texting a friend about the date, not filling a form.
+    Opens by demanding the photo ("pics or it didn't happen"). <b>Rating:</b> one face — 😴 to 😍 — answers how it was AND whether you'd repeat.
+    <b>Mood is gone entirely:</b> the free-text "anything to remember?" carries the vibe. Category is auto-guessed from your answer, one tap to fix.
+    Every question skippable.
+  </p>
+  <div class="row">
+    <div class="frame">
+      <p class="view-label">View 1 · Mid-conversation</p>
+      <div class="phone">
+        <div class="topbar"><span class="sheet-title">New page!</span><span class="x">✕</span></div>
+        <div class="chat">
+          <div class="bub bot">New date! 🎉 Pics or it didn't happen —</div>
+          <div class="attach-bub"><div class="e">📸</div>Tap to attach photos<br><span style="font-size:12px">Camera · Gallery · Google Photos</span></div>
+          <div class="photo-msg"><span class="ph g3">🌄</span><span class="ph g1">🥾</span></div>
+          <div class="bub bot">Look at you two!! 🥾 What was the date?</div>
+          <div class="bub me">Sunset hike at the cliffs</div>
+          <div class="bub bot">When was it?</div>
+          <div class="qreplies"><button class="qreply">Today</button><button class="qreply">Yesterday</button><button class="qreply">📅 Pick a date</button></div>
+        </div>
+        <div class="chat-input"><div class="f">Type an answer…</div><div class="snd">➤</div></div>
+      </div>
+    </div>
+    <div class="frame">
+      <p class="view-label">View 2 · Wrapping up</p>
+      <div class="phone">
+        <div class="topbar"><span class="sheet-title">New page!</span><span class="x">✕</span></div>
+        <div class="chat">
+          <div class="bub bot">How did it land?</div>
+          <div class="faces"><span class="face">😴</span><span class="face">🙂</span><span class="face">😊</span><span class="face">🤩</span><span class="face on">😍</span></div>
+          <div class="bub me">😍 New favorite</div>
+          <div class="bub bot">Damage to the wallet? 💸</div>
+          <div class="bub me">Free</div>
+          <div class="bub bot">Anything to remember? <span class="muted">(or skip)</span></div>
+          <div class="bub me">She raced me up the last hill and won</div>
+          <div class="sum-card">
+            <h4>Saved! ♥ Sunset hike at the cliffs</h4>
+            <div class="l">Today · filed under 🌳 Outdoors — tap to change</div>
+            <div class="sum-tags"><span class="sum-tag">😍 new favorite</span><span class="sum-tag">Free</span><span class="sum-tag">📷 2 photos</span></div>
+            <div class="sum-edit">✎ Edit details</div>
+          </div>
+          <div class="done-row"><button class="ghostb">Log another</button><button class="mainb">Done ♥</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= OPTION 11 ================= -->
+<section class="opt">
+  <h2 class="opt-title">Option 11 — The Scrapbook</h2>
+  <p class="opt-note">
+    The photo fills the page and you decorate it with stickers — nothing looks like a form field. Caption + date are handwritten tape strips;
+    <b>rating</b> is a hearts sticker (1–5, wording doubles as the repeat verdict); <b>cost</b> is a price-tag sticker; category is a badge sticker.
+    <b>Mood →</b> slap any emoji stickers on the photo. The tray at the bottom is the whole "form"; everything lands on the photo itself.
+  </p>
+  <div class="row">
+    <div class="frame">
+      <p class="view-label">View 1 · Empty page</p>
+      <div class="phone">
+        <div class="topbar"><span class="sheet-title">New page!</span><span class="x">✕</span></div>
+        <div class="paper">
+          <div class="washi tl"></div><div class="washi tr"></div>
+          <div class="tape-slot">
+            <div>
+              <div class="e">📷</div>
+              <div class="t">Tape a photo here</div>
+              <div class="s">Camera · Gallery · Google Photos</div>
+            </div>
+          </div>
+        </div>
+        <div class="tray dim" style="margin-top:12px">
+          <div class="tray-label">Sticker tray — add a photo to start decorating</div>
+          <div class="tray-row">
+            <span class="tr-heart">♥</span><span class="tr-heart">♥</span><span class="tr-heart">♥</span><span class="tr-heart">♥</span><span class="tr-heart">♥</span>
+            <span class="tr-tag">Free</span><span class="tr-tag">$</span><span class="tr-tag">$$</span>
+            <span class="tr-emo">🌳</span><span class="tr-emo">✨</span><span class="tr-emo">＋</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="frame">
+      <p class="view-label">View 2 · Decorated</p>
+      <div class="phone">
+        <div class="scrap-photo g3"><div class="fill">🌄</div></div>
+        <div class="wiz-over">
+          <div class="topbar" style="position:relative;z-index:2"><span class="sheet-title" style="text-shadow:0 2px 6px rgba(0,0,0,.5)">New page!</span><span class="x">✕</span></div>
+          <div style="position:relative;flex:1">
+            <div class="tape-strip top">Jul 16 · the cliffs</div>
+            <div class="sticker price">Free</div>
+            <div class="sticker cat">🌳</div>
+            <div class="sticker hearts-badge">♥♥♥♥♥ new favorite!</div>
+            <div class="sticker emo" style="top:210px;left:30px;transform:rotate(-12deg)">✨</div>
+            <div class="sticker emo" style="top:250px;right:60px;transform:rotate(9deg)">🥾</div>
+            <div class="tape-strip cap">she raced me up the last hill…</div>
+          </div>
+          <div class="tray">
+            <div class="tray-label">Rating</div>
+            <div class="tray-row"><span class="tr-heart on">♥</span><span class="tr-heart on">♥</span><span class="tr-heart on">♥</span><span class="tr-heart on">♥</span><span class="tr-heart on">♥</span><span class="muted" style="font-size:12px;margin-left:6px">new favorite!</span></div>
+            <div class="tray-label">Price tag</div>
+            <div class="tray-row"><span class="tr-tag on">Free</span><span class="tr-tag">$</span><span class="tr-tag">$$</span><span class="tr-tag">$$$</span></div>
+            <div class="tray-label">Category · Emoji stickers</div>
+            <div class="tray-row">
+              <span class="tr-emo on">🌳</span><span class="tr-emo">🍽️</span><span class="tr-emo">🎬</span><span class="tr-emo">🏠</span>
+              <span style="width:1px;height:24px;background:var(--line);flex:none"></span>
+              <span class="tr-emo on">✨</span><span class="tr-emo on">🥾</span><span class="tr-emo">😂</span><span class="tr-emo">＋</span>
+            </div>
+          </div>
+          <button class="savebtn scrap-save">Stick it in the book ♥</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+</div>
+
+</body>
+</html>
