@@ -1,7 +1,7 @@
 // Service worker: cache the app shell so the app opens & runs fully offline.
 // User data lives in IndexedDB (not here), so bumping CACHE only refreshes code/assets.
 
-const CACHE = "us-date-tracker-v36";
+const CACHE = "us-date-tracker-v37";
 const SHELL = [
   "./",
   "./index.html",
@@ -40,7 +40,12 @@ self.addEventListener("install", e => {
 
 self.addEventListener("activate", e => {
   e.waitUntil(
-    caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+    // Cache Storage is origin-wide, and the beta deploy (a "beta-"-prefixed CACHE
+    // under /beta/) shares this origin — only clean up our own cache family.
+    caches.keys().then(keys => Promise.all(
+      keys.filter(k => k.startsWith(CACHE.slice(0, CACHE.lastIndexOf("v"))) && k !== CACHE)
+          .map(k => caches.delete(k))
+    ))
       .then(() => self.clients.claim())
   );
 });

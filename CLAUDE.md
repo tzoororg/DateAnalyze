@@ -46,7 +46,7 @@ node test/sync.mjs                # two-phone sync; needs the server AND the emu
 
 ## Finishing a task (required)
 
-When a change is complete and verified, **commit and push without being asked**, in the same turn. The push is what deploys to GitHub Pages, and the phone only picks up the update if the SW `CACHE` version changed — so before committing, confirm the version bump happened (via the hook or by hand). Never end a task with unpushed app changes unless the user said to hold off.
+When a change is complete and verified, **commit and push without being asked**, in the same turn. Day-to-day work is committed and pushed on the **`dev` branch** — a GitHub Actions workflow (`.github/workflows/deploy.yml`) deploys `dev` to the **beta app** at `/beta/` and `master` to the production app at the site root. Releasing = merging `dev` into `master` and pushing, **only when the user asks for a release**. The phone only picks up an update if the SW `CACHE` version changed — so before committing, confirm the version bump happened (via the hook or by hand). Never end a task with unpushed app changes unless the user said to hold off.
 
 ## Architecture
 
