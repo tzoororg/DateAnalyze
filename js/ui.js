@@ -540,7 +540,7 @@ async function removeEntry(id) {
   show(currentTab);
 }
 
-// Renders the 3 most recent dates into #date-list (used by the Home tab).
+// Renders the 5 most recent dates into #date-list (used by the Home tab).
 async function renderList() {
   const host = viewEl().querySelector("#date-list");
   if (!host) return;
@@ -548,7 +548,7 @@ async function renderList() {
     host.innerHTML = `<div class="empty"><div class="big">📭</div>No dates yet — tap ＋ to log your first one, or add demo data from the ⋯ menu.</div>`;
     return;
   }
-  const sorted = [...dates].sort((a, b) => entryTimeMs(b) - entryTimeMs(a)).slice(0, 3);
+  const sorted = [...dates].sort((a, b) => entryTimeMs(b) - entryTimeMs(a)).slice(0, 5);
   host.innerHTML = sorted.map(e => {
     // one hearts sticker: my rating, else partner's, else the legacy enjoyment score
     const { lines } = resolveRatings(e);
