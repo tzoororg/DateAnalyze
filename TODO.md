@@ -5,7 +5,7 @@
   - New feature: partner rating
   - New feature: comments?
   - Link from home to album?
-- [high] Discuss demo mode for developing features
+- [x] Discuss demo mode for developing features
 - [x] Discuss testing procedure during development — done: three-layer suite in test/ (see CLAUDE.md Testing)
 - [med] Discuss Heroku connection
 - [med] Advance roadmap items
