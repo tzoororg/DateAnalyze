@@ -14,3 +14,4 @@
   - Image storage?
   - Security?
 - [low] Advance hardening for production plan
+- Discuss plan usage estimations
