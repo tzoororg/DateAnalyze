@@ -2,7 +2,7 @@
 // sync. Mirrors db.js's data interface so store.js can swap backends
 // transparently. Date/text data and photos both sync via Firestore — photos ride
 // as base64 docs (no Cloud Storage on the free Spark plan). See the photo section
-// below and SYNC_PLAN.md for the full design.
+// below and plans/done/SYNC_PLAN.md for the full design.
 
 import { firebaseConfig } from "./firebase-config.js";
 import * as local from "./db.js";
@@ -73,8 +73,26 @@ export async function signIn() {
     return { uid: user.uid, email: null, displayName: "Emulator user" };
   }
   const provider = new s.GoogleAuthProvider();
-  const { user } = await s.signInWithPopup(s.auth, provider);
-  return { uid: user.uid, email: user.email, displayName: user.displayName };
+  try {
+    const { user } = await s.signInWithPopup(s.auth, provider);
+    return { uid: user.uid, email: user.email, displayName: user.displayName };
+  } catch (err) {
+    // Installed iOS PWAs can't reliably use popups (the popup opens detached and
+    // its result never returns). Fall back to a full-page redirect; the page
+    // navigates away here and completeRedirectSignIn() finishes it on next load.
+    localStorage.setItem("pendingRedirectSignIn", "1");
+    await s.signInWithRedirect(s.auth, provider);
+    return new Promise(() => {}); // never resolves — the page is navigating away
+  }
+}
+
+// Called at boot when a redirect sign-in is pending. Returns the signed-in user
+// (populating auth.currentUser) or null if there was no pending redirect.
+export async function completeRedirectSignIn() {
+  const s = await ensureFirebase();
+  const result = await s.getRedirectResult(s.auth);
+  const user = result?.user;
+  return user ? { uid: user.uid, email: user.email, displayName: user.displayName } : null;
 }
 
 export async function signOut() {

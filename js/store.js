@@ -50,6 +50,15 @@ export async function signIn() {
   return cloud.signIn();
 }
 
+// Completes an iOS redirect sign-in on the next page load. No-op (and no cloud
+// download) unless signIn() actually fell back to a redirect on this device.
+export async function completeRedirectSignIn() {
+  if (localStorage.getItem("pendingRedirectSignIn") !== "1") return null;
+  localStorage.removeItem("pendingRedirectSignIn");
+  await loadCloud();
+  return cloud.completeRedirectSignIn();
+}
+
 export async function createSpace(uploadExisting) {
   await loadCloud();
   const localDates = uploadExisting ? await local.getAllDates() : [];

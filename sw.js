@@ -28,6 +28,7 @@ const SHELL = [
   "./manifest.webmanifest",
   "./icons/icon.svg",
   "./icons/icon-maskable.svg",
+  "./icons/icon-180.png",
 ];
 
 self.addEventListener("message", e => {
