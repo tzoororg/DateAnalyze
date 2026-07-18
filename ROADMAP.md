@@ -290,6 +290,15 @@ popup (unreliable in installed iOS PWAs), and a real-device verification pass
 2. **#7 Date Night mode** — attacks the core friction of the whole category.
 3. **#11 time capsule** — trivial; slot in anywhere.
 
+## Release triage backlog
+
+- **medium** — Album control stack is bloated (~300px of sort/view/search/filter chrome before the first date); collapse to two rows with inline chips. Found in v2.1.0.
+- **medium** — Cost display inconsistent across views (Home "Free" vs Album "▣0" vs Ideas "~▣180"; shekel glyph renders as a box at small sizes); use one coarse Free/$/$$/$$$ badge everywhere. Found in v2.1.0.
+- **low** — Ideas "Max budget" free-text numeric input → replace with Free/$/$$/$$$ segmented pill. Found in v2.1.0.
+- **medium** — FAB overlaps the bottom home card's hearts sticker; add bottom scroll clearance or shift the sticker. Found in v2.1.0.
+- **low** — Ideas card action buttons wrap to two lines; make compact one-line actions ("♡ Wishlist" / "Log →"). Found in v2.1.0.
+- **low** — Wrapped card "BEST MONTH" shows a specific date ("Jun 26") instead of a month. Found in v2.1.0.
+
 ## Explicitly NOT doing
 
 - **Booking / restaurant marketplace** (Cupla, Fever, OpenTable) — needs
