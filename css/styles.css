@@ -342,6 +342,7 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); bo
 /* History search & view toggle */
 .h-search { margin: 10px 0 4px; }
 .hist-view-toggle { display: flex; gap: 4px; flex: none; }
+.seg-row { display: flex; gap: 4px; margin-bottom: 10px; }
 .seg {
   padding: 8px 12px; border-radius: 12px; border: 1px solid var(--line);
   background: var(--card-2); color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;

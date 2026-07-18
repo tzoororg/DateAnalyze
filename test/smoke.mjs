@@ -62,6 +62,17 @@ try {
   t = await shotTab("insights", 2800);
   const svgs = await t.evaluate(`document.querySelectorAll("#view svg").length`);
   check("insights renders SVG charts", svgs >= 4, `got ${svgs}`);
+  const wrapped = await t.evaluate(`[
+    !!document.querySelector("#wrap-share:not([disabled])"),
+    document.querySelectorAll("[data-wrap-period]").length]`);
+  check("insights shows the Wrapped card with a share button and period toggle",
+    wrapped[0] === true && wrapped[1] === 2, `share=${wrapped[0]} toggles=${wrapped[1]}`);
+
+  // 5b. Wrapped period toggle re-renders the card
+  await t.evaluate(`document.querySelector('[data-wrap-period="all"]').click()`);
+  await sleep(300);
+  const allTimeOn = await t.evaluate(`document.querySelector('[data-wrap-period="all"]').classList.contains("on")`);
+  check("Wrapped 'All time' toggle activates on click", allTimeOn === true);
 
   // 6. suggestions
   t = await shotTab("suggest", 1700);

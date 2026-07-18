@@ -10,7 +10,7 @@ import {
 } from "../js/model.js";
 import * as analytics from "../js/analytics.js";
 import { suggest } from "../js/suggest.js";
-import { barChart, trendChart, scatterChart, balanceDonut } from "../js/charts.js";
+import { barChart, trendChart, scatterChart, balanceDonut, wrappedCard } from "../js/charts.js";
 import { SAMPLE_DATES } from "../js/sample.js";
 
 // ---- fixture: sample dataset + edge cases ----
@@ -190,4 +190,22 @@ test("chart functions return SVG strings for data and empty input", () => {
   ]) {
     assert.ok(typeof svg === "string" && svg.trimStart().startsWith("<svg"), svg.slice(0, 60));
   }
+});
+
+test("wrappedCard renders stat strings for a fixture, and a graceful empty state", () => {
+  const stats = {
+    periodLabel: "ALL TIME", count: 12, avgEnjoyment: 4.3, totalCostFmt: "₪2,046",
+    favCategory: { emoji: "🌳", label: "Outdoors", count: 7 },
+    mostRepeated: { emoji: "🍜", title: "Ramen night", avgEnjoyment: 4.8 },
+    bestMonth: { label: "May '26", count: 5 },
+    vibes: ["silly", "romantic", "chill"],
+  };
+  const svg = wrappedCard(stats);
+  assert.ok(svg.startsWith("<svg"));
+  for (const needle of ["12", "4.3", "₪2,046", "Outdoors", "Ramen night", "May '26", "silly", "romantic", "chill"])
+    assert.ok(svg.includes(needle), `missing "${needle}"`);
+
+  const empty = wrappedCard({ periodLabel: "2026 SO FAR", count: 0 });
+  assert.ok(empty.startsWith("<svg"));
+  assert.ok(!empty.includes("undefined"));
 });

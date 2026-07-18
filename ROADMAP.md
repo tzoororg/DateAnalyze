@@ -58,6 +58,8 @@ strip proves it pulls people back.
 
 ## 2. Shareable "Wrapped" recap card
 
+**Status.** ✅ Shipped 2026-07-18.
+
 **What.** A generated, shareable image (à la Spotify Wrapped): favorite category,
 most-repeated date, best month, mood breakdown, total dates/spend for a period.
 

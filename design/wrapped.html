@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Us — Wrapped recap card mock</title>
+<style>
+  /* plum theme vars, same as app */
+  :root {
+    --bg:#2a1b26; --bg-soft:#33222e; --card:#3b2a37; --card-2:#4a3444;
+    --line:#54394c; --text:#f5e6ee; --muted:#c99bb0;
+    --accent:#ff7fa2; --accent-2:#ff9fba; --good:#7ed3ab; --warn:#e8c97a;
+    --radius:20px; --shadow:0 8px 24px rgba(0,0,0,.25);
+  }
+  body { margin:0; font:15px/1.5 system-ui,sans-serif; background:#1c1218; color:var(--text); padding:32px 16px 80px; }
+  h1 { text-align:center; font-size:22px; } h1 span { color:var(--accent); }
+  .sub { text-align:center; color:var(--muted); max-width:60ch; margin:0 auto 30px; font-size:13px; }
+  .row { display:flex; gap:40px; justify-content:center; flex-wrap:wrap; align-items:flex-start; }
+  .phone { width:340px; background:radial-gradient(120% 60% at 50% 0%, var(--bg-soft), var(--bg)); border-radius:28px; padding:18px 14px 24px; box-shadow:0 20px 50px rgba(0,0,0,.5); }
+  .caption { text-align:center; color:var(--muted); font-size:12px; margin-top:10px; max-width:340px; }
+  .section-title { font-size:12px; text-transform:uppercase; letter-spacing:.14em; font-weight:800; color:var(--muted); margin:0 4px 10px; }
+  .card { background:var(--card); border-radius:var(--radius); padding:16px; box-shadow:var(--shadow); }
+  .seg-row { display:flex; gap:8px; margin-bottom:12px; }
+  .seg { flex:1; padding:8px 0; text-align:center; border-radius:13px; border:2px solid var(--line); background:var(--card); color:var(--muted); font-size:13px; font-weight:700; }
+  .seg.on { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .btn { display:block; width:100%; border:none; border-radius:16px; padding:13px 0; background:var(--accent); color:#fff; font-size:15px; font-weight:800; margin-top:12px; box-shadow:var(--shadow); }
+
+  /* ---- the Wrapped card itself (this becomes the SVG, 1080×1350 ratio 4:5) ---- */
+  .wrapped {
+    aspect-ratio:4/5; border-radius:18px; overflow:hidden; position:relative;
+    background:
+      radial-gradient(90% 55% at 85% -10%, rgba(255,159,186,.35), transparent 60%),
+      radial-gradient(70% 45% at 5% 110%, rgba(126,211,171,.18), transparent 60%),
+      linear-gradient(150deg, #4a2138 0%, #2a1b26 55%, #1e1420 100%);
+    color:#fff; display:flex; flex-direction:column; text-align:center; padding:26px 18px 18px; box-sizing:border-box;
+  }
+  .w-kicker { font-size:11px; letter-spacing:3px; font-weight:700; color:var(--accent-2); }
+  .w-big { font-size:54px; font-weight:800; line-height:1.05; margin:14px 0 2px; }
+  .w-big small { display:block; font-size:16px; font-weight:600; color:#f5e6ee; opacity:.85; letter-spacing:1px; }
+  .w-line { font-size:14px; color:#f5e6ee; opacity:.9; margin-top:6px; }
+  .w-line b { color:var(--warn); }
+  .w-stats { display:flex; justify-content:space-around; margin:auto 0; padding:14px 0; }
+  .w-stats > div { font-size:11.5px; color:#e9d5e0; width:33%; }
+  .w-stats .emoji { font-size:30px; margin-bottom:4px; }
+  .w-stats b { display:block; font-size:14px; color:#fff; margin-top:2px; }
+  .w-moods { font-size:12.5px; color:#e9d5e0; padding:10px 6px 14px; border-top:1px solid rgba(255,255,255,.12); }
+  .w-moods b { color:#fff; }
+  .w-foot { font-size:11px; letter-spacing:2px; color:var(--accent); font-weight:800; padding-top:10px; border-top:1px solid rgba(255,255,255,.12); }
+</style>
+</head>
+<body>
+
+<h1>Wrapped recap card <span>♥</span></h1>
+<p class="sub">Left: the shareable card itself (rendered as SVG, rasterized to a 1080×1350 PNG — 4:5, the Instagram-friendly ratio). Right: where it lives on the Stats tab — period toggle + Share button. No photos ever included.</p>
+
+<div class="row">
+
+  <div>
+    <div class="phone" style="padding:14px">
+      <div class="wrapped">
+        <div class="w-kicker">US ♥ WRAPPED · 2026 SO FAR</div>
+        <div class="w-big">18<small>dates together</small></div>
+        <div class="w-line"><b>★ 4.3</b> average · ₪2,046 shared</div>
+        <div class="w-stats">
+          <div><div class="emoji">🌳</div>FAVORITE<b>Outdoors</b>7 dates</div>
+          <div><div class="emoji">🍜</div>MOST REPEATED<b>Ramen night</b>★ 4.8</div>
+          <div><div class="emoji">📅</div>BEST MONTH<b>May</b>5 dates</div>
+        </div>
+        <div class="w-moods">our vibe: <b>😂 silly</b> · <b>🥰 romantic</b> · <b>🌿 chill</b></div>
+        <div class="w-foot">MADE WITH US · OUR DATE JOURNAL</div>
+      </div>
+    </div>
+    <p class="caption">The shared image. Kicker adapts to period ("2026 SO FAR" / "ALL TIME"). Bottom line = top 3 moods.</p>
+  </div>
+
+  <div>
+    <div class="phone">
+      <div class="section-title">Your Wrapped ✨</div>
+      <div class="card">
+        <div class="seg-row">
+          <div class="seg on">This year</div>
+          <div class="seg">All time</div>
+        </div>
+        <div class="wrapped" style="border-radius:14px">
+          <div class="w-kicker">US ♥ WRAPPED · 2026 SO FAR</div>
+          <div class="w-big">18<small>dates together</small></div>
+          <div class="w-line"><b>★ 4.3</b> average · ₪2,046 shared</div>
+          <div class="w-stats">
+            <div><div class="emoji">🌳</div>FAVORITE<b>Outdoors</b>7 dates</div>
+            <div><div class="emoji">🍜</div>MOST REPEATED<b>Ramen night</b>★ 4.8</div>
+            <div><div class="emoji">📅</div>BEST MONTH<b>May</b>5 dates</div>
+          </div>
+          <div class="w-moods">our vibe: <b>😂 silly</b> · <b>🥰 romantic</b> · <b>🌿 chill</b></div>
+          <div class="w-foot">MADE WITH US · OUR DATE JOURNAL</div>
+        </div>
+        <button class="btn">Share this card ↗</button>
+      </div>
+    </div>
+    <p class="caption">Top of the Stats tab. Toggle re-renders the card; Share uses the system share sheet (or downloads the PNG on desktop).</p>
+  </div>
+
+</div>
+
+</body>
+</html>

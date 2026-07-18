@@ -57,22 +57,7 @@ const STATES = {
   async suggest() { await tab("suggest"); },
 
   // ---------- roadmap "after" mocks (static DOM injections) ----------
-  async "after-wrapped"() {
-    await tab("insights");
-    $("#view").prepend(html(`
-      <section class="card" style="background:linear-gradient(140deg,var(--accent),var(--card-2));color:#fff;text-align:center;padding:26px 18px">
-        <div style="font-size:13px;letter-spacing:2px;opacity:.85">US · 2026 SO FAR</div>
-        <div style="font-size:44px;font-weight:800;margin:8px 0 2px">18 dates</div>
-        <div style="opacity:.9">4.3★ average · ₪2,046 shared</div>
-        <div style="display:flex;justify-content:space-around;margin:18px 0 6px;font-size:13px">
-          <div><div style="font-size:26px">🌳</div>Favorite<br><b>Outdoors</b></div>
-          <div><div style="font-size:26px">🍜</div>Most repeated<br><b>Ramen night</b></div>
-          <div><div style="font-size:26px">📅</div>Best month<br><b>May</b></div>
-        </div>
-        <button class="btn" style="margin-top:12px;background:#fff;color:var(--accent)">Share this card ↗</button>
-      </section>`));
-    $("#view").prepend(html(`<h3 class="section-title">Your Wrapped ✨</h3>`));
-  },
+  async wrapped() { await tab("insights"); },
 
   async "after-wishlist-suggest"() {
     await tab("suggest");

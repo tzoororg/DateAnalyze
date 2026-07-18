@@ -39,21 +39,9 @@
   "Before" is the real app today; "After" is a mock rendered inside the real app with its real CSS
   (injected by <code>js/dev-shots.js</code>, captured by <code>node design/capture.mjs</code>) — so
   spacing, theme and components are authentic, only the feature content is fake.
-  Shipped items (#1 milestone strip — later removed by choice — and #6 photo import) are not shown,
+  Shipped items (#1 milestone strip — later removed by choice — #2 Wrapped card, and #6 photo import) are not shown,
   and neither is #12 (iOS support) — platform work with no UI to mock, see <a href="../IOS_PLAN.md">IOS_PLAN.md</a>.</p>
 </header>
-
-<section class="point" id="p2">
-  <span class="crumb">Roadmap #2 · Stats tab</span>
-  <h2>Shareable "Wrapped" recap card <span class="badge med">Medium</span></h2>
-  <p class="what">A generated, shareable image: favorite category, most-repeated date, best month, totals — for "all time" and "this year". Rasterized SVG → PNG, shared via the Web Share API (download fallback). No photos by default.</p>
-  <p class="touches">Touches: <code>js/charts.js</code> (new SVG card) · <code>js/ui.js renderInsights()</code> (entry button) · Web Share API</p>
-  <div class="ba">
-    <div class="col before"><h3>Before</h3><figure><img src="shots/insights.png" alt=""/><figcaption>Stats tab today — analytics only, nothing shareable</figcaption></figure></div>
-    <div class="col after"><h3>After</h3><figure><img src="shots/after-wrapped.png" alt=""/><figcaption>Wrapped card at the top of Stats with a Share button</figcaption></figure></div>
-    <div class="note"><b>Why it wins:</b> nobody else has a real logged history to build this from, and shared cards are an organic growth loop.</div>
-  </div>
-</section>
 
 <section class="point" id="p3">
   <span class="crumb">Roadmap #3 · Ideas + Album tabs</span>

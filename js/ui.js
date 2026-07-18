@@ -18,6 +18,7 @@ let editingId = null;
 let currentTab = "home";
 const sug = { explore: 0.5, budget: null, maxEffort: null, category: null, moods: [] };
 const hist = { sort: "date-desc", category: null, moods: [], query: "", view: "list", expanded: null };
+let wrapPeriod = "year";
 let memoryDismissed = false;
 const urlCache = new Map();      // photoId -> objectURL
 
@@ -921,12 +922,91 @@ function wireHistDetail(host) {
 }
 
 // ---------- INSIGHTS tab ----------
+// Most-used vibe words for the "our vibe" line: prefers the free-text `vibe`
+// field, falling back to the legacy `mood` array for pre-v2 entries.
+function topVibeWords(list, n) {
+  const freq = new Map();
+  for (const d of list) {
+    const w = (d.vibe || "").trim().toLowerCase();
+    if (w) freq.set(w, (freq.get(w) || 0) + 1);
+  }
+  if (!freq.size) {
+    for (const d of list) for (const m of (Array.isArray(d.mood) ? d.mood : [])) {
+      const label = (MOOD_OPTIONS.find(o => o.key === m)?.label || m).toLowerCase();
+      freq.set(label, (freq.get(label) || 0) + 1);
+    }
+  }
+  return [...freq.entries()].sort((a, b) => b[1] - a[1]).slice(0, n).map(([w]) => w);
+}
+
+function wrappedStats(period) {
+  const year = new Date().getFullYear();
+  const periodLabel = period === "year" ? `${year} SO FAR` : "ALL TIME";
+  const list = period === "year" ? dates.filter(d => new Date(entryTimeMs(d)).getFullYear() === year) : dates;
+  const s = A.summary(list);
+  if (!s.count) return { periodLabel, count: 0 };
+  const cats = A.byCategory(list);
+  const bestMonth = A.monthlyTrend(list).reduce((a, b) => (b.count > a.count ? b : a));
+  const repeats = A.repeatWorthy(list, list.length);
+  const mostRepeated = repeats.length ? repeats.reduce((a, b) => (b.count > a.count ? b : a)) : null;
+  return {
+    periodLabel,
+    count: s.count,
+    avgEnjoyment: s.avgEnjoyment,
+    totalCostFmt: fmtMoney(s.totalCost),
+    favCategory: cats[0] ? { emoji: cats[0].emoji, label: cats[0].label, count: cats[0].count } : null,
+    mostRepeated: mostRepeated && mostRepeated.count > 1
+      ? { emoji: catEmoji(mostRepeated.category), title: mostRepeated.title, avgEnjoyment: mostRepeated.avgEnjoyment }
+      : null,
+    bestMonth: { label: bestMonth.label, count: bestMonth.count },
+    vibes: topVibeWords(list, 3),
+  };
+}
+
+async function onShareWrapped() {
+  const svgStr = C.wrappedCard(wrappedStats(wrapPeriod));
+  const url = URL.createObjectURL(new Blob([svgStr], { type: "image/svg+xml" }));
+  const img = new Image();
+  await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
+  URL.revokeObjectURL(url);
+
+  const scale = 2;
+  const canvas = document.createElement("canvas");
+  canvas.width = C.WRAPPED_W * scale;
+  canvas.height = C.WRAPPED_H * scale;
+  canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+
+  canvas.toBlob(async blob => {
+    if (!blob) return;
+    const file = new File([blob], "us-wrapped.png", { type: "image/png" });
+    if (navigator.canShare?.({ files: [file] })) {
+      try { await navigator.share({ files: [file] }); } catch { /* user cancelled — share sheet already handled it */ }
+      return;
+    }
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "us-wrapped.png";
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast("Wrapped card downloaded");
+  }, "image/png");
+}
+
+function wireInsights() {
+  viewEl().querySelectorAll("[data-wrap-period]").forEach(b => b.addEventListener("click", () => {
+    wrapPeriod = b.dataset.wrapPeriod;
+    renderInsights();
+  }));
+  bind("wrap-share", "click", onShareWrapped);
+}
+
 function renderInsights() {
   const v = viewEl();
   if (!dates.length) {
     v.innerHTML = emptyState("📊", "No insights yet", "Log a few dates and this fills with charts about what you two love.");
     return;
   }
+  const wStats = wrappedStats(wrapPeriod);
   const s = A.summary(dates);
   const cats = A.byCategory(dates);
   const moods = A.byMood(dates);
@@ -957,6 +1037,16 @@ function renderInsights() {
   })() : "";
 
   v.innerHTML = `
+    <h3 class="section-title" style="margin-top:0">Your Wrapped ✨</h3>
+    <div class="card">
+      <div class="seg-row">
+        <button class="seg ${wrapPeriod === "year" ? "on" : ""}" data-wrap-period="year">This year</button>
+        <button class="seg ${wrapPeriod === "all" ? "on" : ""}" data-wrap-period="all">All time</button>
+      </div>
+      <div class="chart-wrap">${C.wrappedCard(wStats)}</div>
+      <button class="btn" id="wrap-share" style="margin-top:12px" ${wStats.count ? "" : "disabled"}>Share this card ↗</button>
+    </div>
+
     <div class="stat-grid">
       <div class="stat"><div class="num">${s.count}</div><div class="lbl">Dates logged</div></div>
       <div class="stat"><div class="num">${s.avgEnjoyment.toFixed(1)}★</div><div class="lbl">Avg enjoyment</div></div>
@@ -997,6 +1087,7 @@ function renderInsights() {
       <p class="muted small" style="margin:6px 0 0">You've tried ${exp.novelCount} of ${s.totalCategories} categories. The Suggest tab keeps this balanced.</p></div>
     </div>
   `;
+  wireInsights();
 }
 
 // ---------- SUGGEST tab ----------

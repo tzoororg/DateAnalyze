@@ -98,6 +98,70 @@ export function balanceDonut(newCount, repeatCount) {
   </svg>`;
 }
 
+// Shareable "Wrapped" recap card. Fixed brand palette (not CSS vars) — this
+// gets rasterized to a PNG and shared outside the app, so it must look the
+// same regardless of the viewer's or owner's active in-app theme.
+export const WRAPPED_W = 1080, WRAPPED_H = 1350;
+export function wrappedCard(stats) {
+  const W = WRAPPED_W, H = WRAPPED_H;
+  const kicker = `US ♥ WRAPPED · ${stats.periodLabel}`;
+  const bg = `
+    <defs>
+      <linearGradient id="wbg" x1="0" y1="0" x2="0.6" y2="1">
+        <stop offset="0%" stop-color="#4a2138"/><stop offset="55%" stop-color="#2a1b26"/><stop offset="100%" stop-color="#1e1420"/>
+      </linearGradient>
+      <radialGradient id="wglowPink" cx="85%" cy="-5%" r="70%">
+        <stop offset="0%" stop-color="#ff9fba" stop-opacity="0.35"/><stop offset="60%" stop-color="#ff9fba" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="wglowGreen" cx="5%" cy="105%" r="65%">
+        <stop offset="0%" stop-color="#7ed3ab" stop-opacity="0.18"/><stop offset="60%" stop-color="#7ed3ab" stop-opacity="0"/>
+      </radialGradient>
+      <clipPath id="wclip"><rect width="${W}" height="${H}" rx="56"/></clipPath>
+    </defs>
+    <g clip-path="url(#wclip)">
+      <rect width="${W}" height="${H}" fill="url(#wbg)"/>
+      <rect width="${W}" height="${H}" fill="url(#wglowPink)"/>
+      <rect width="${W}" height="${H}" fill="url(#wglowGreen)"/>
+    </g>`;
+  const svgOpen = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg" role="img" font-family="system-ui,-apple-system,'Segoe UI',sans-serif">`;
+
+  if (!stats.count) {
+    return `${svgOpen}${bg}
+      <text x="${W / 2}" y="${H / 2 - 10}" text-anchor="middle" font-size="30" font-weight="700" letter-spacing="5" fill="#ff9fba">${esc(kicker)}</text>
+      <text x="${W / 2}" y="${H / 2 + 50}" text-anchor="middle" font-size="32" fill="#c99bb0">No dates logged yet</text>
+    </svg>`;
+  }
+
+  const cols = [];
+  if (stats.favCategory) cols.push({ emoji: stats.favCategory.emoji, label: "FAVORITE", value: stats.favCategory.label, sub: `${stats.favCategory.count} date${stats.favCategory.count === 1 ? "" : "s"}` });
+  if (stats.mostRepeated) cols.push({ emoji: stats.mostRepeated.emoji, label: "MOST REPEATED", value: stats.mostRepeated.title, sub: `★ ${stats.mostRepeated.avgEnjoyment.toFixed(1)}` });
+  if (stats.bestMonth) cols.push({ emoji: "📅", label: "BEST MONTH", value: stats.bestMonth.label, sub: `${stats.bestMonth.count} date${stats.bestMonth.count === 1 ? "" : "s"}` });
+  const colW = 900 / Math.max(1, cols.length);
+  const colsSvg = cols.map((c, i) => {
+    const cx = 90 + colW * i + colW / 2;
+    return `
+      <text x="${cx}" y="630" text-anchor="middle" font-size="84">${esc(c.emoji)}</text>
+      <text x="${cx}" y="686" text-anchor="middle" font-size="24" font-weight="800" letter-spacing="1.5" fill="#e79fc0">${esc(c.label)}</text>
+      <text x="${cx}" y="732" text-anchor="middle" font-size="34" font-weight="800" fill="#fff">${esc(truncate(c.value, 16))}</text>
+      <text x="${cx}" y="770" text-anchor="middle" font-size="24" fill="#e9d5e0">${esc(c.sub)}</text>`;
+  }).join("");
+
+  const vibeLine = stats.vibes?.length ? `our vibe: ${stats.vibes.join(" · ")}` : "";
+
+  return `${svgOpen}${bg}
+    <text x="${W / 2}" y="170" text-anchor="middle" font-size="30" font-weight="700" letter-spacing="5" fill="#ff9fba">${esc(kicker)}</text>
+    <text x="${W / 2}" y="340" text-anchor="middle" font-size="220" font-weight="800" fill="#fff">${stats.count}</text>
+    <text x="${W / 2}" y="398" text-anchor="middle" font-size="42" font-weight="600" fill="#f5e6ee" opacity="0.85">dates together</text>
+    <text x="${W / 2}" y="466" text-anchor="middle" font-size="38" fill="#f5e6ee" opacity="0.9"><tspan font-weight="800" fill="#e8c97a">★ ${stats.avgEnjoyment.toFixed(1)}</tspan> average · ${esc(stats.totalCostFmt)} shared</text>
+    ${colsSvg}
+    ${vibeLine ? `<line x1="90" y1="900" x2="990" y2="900" stroke="rgba(255,255,255,.12)" stroke-width="2"/>
+    <text x="${W / 2}" y="950" text-anchor="middle" font-size="30" fill="#e9d5e0">${esc(vibeLine)}</text>` : ""}
+    <line x1="90" y1="1230" x2="990" y2="1230" stroke="rgba(255,255,255,.12)" stroke-width="2"/>
+    <text x="${W / 2}" y="1280" text-anchor="middle" font-size="26" font-weight="800" letter-spacing="3" fill="#ff7fa2">MADE WITH US · OUR DATE JOURNAL</text>
+  </svg>`;
+}
+function truncate(s, n) { return s.length > n ? s.slice(0, n - 1) + "…" : s; }
+
 function defsGrad() {
   return `<defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="0">
     <stop offset="0" stop-color="var(--accent)"/><stop offset="1" stop-color="var(--accent-2)"/>
