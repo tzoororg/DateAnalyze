@@ -97,11 +97,11 @@ const STATES = {
   async "after-datenight-active"() {
     await tab("home");
     $("#view").prepend(html(`
-      <section class="card" style="border:2px solid var(--accent);display:flex;align-items:center;gap:12px">
-        <div style="font-size:26px">🌙</div>
-        <div style="flex:1"><b>Date night in progress</b><div class="muted small">1 h 24 m · 3 photos taken</div></div>
-        <button class="btn secondary" style="flex:none">📷</button>
-        <button class="btn" style="flex:none">End</button>
+      <section class="card dn-banner">
+        <div class="dn-icon">🌙</div>
+        <div class="dn-txt"><b>Date night</b><div class="sub">1h 24m · 3 📷</div></div>
+        <button class="icon-btn" title="Take photo">📷</button>
+        <button class="btn end">End</button>
       </section>`));
   },
 
@@ -169,19 +169,14 @@ const STATES = {
 
   async "after-match"() {
     await tab("suggest");
-    const cards = [...document.querySelectorAll("#sug-results .sug-card")];
-    cards.forEach((c, i) => {
-      const btn = c.querySelector("[data-log]");
-      if (i === 0) {
-        c.style.border = "2px solid var(--accent)";
-        c.prepend(html(`<span class="sticker-tag mint">It's a match! You both said yes 💞</span>`));
-      } else if (btn) {
-        btn.replaceWith(html(`<div class="btn-row">
-          <button class="btn secondary">👍 I'm in</button>
-          <button class="btn ghost">👎 Not this one</button>
-        </div><p class="muted small" style="margin:6px 0 0">Your partner can't see your vote until you match.</p>`));
-      }
-    });
+    const card = document.querySelector("#sug-results .sug-card");
+    if (!card) return;
+    card.style.position = "relative";
+    card.prepend(html(`<span class="sticker-tag mint match-toast">It's a match! 💞</span>`));
+    card.querySelector(".sug-actions")?.append(html(`
+      <div class="spacer"></div>
+      <button class="vote-chip on">👍</button>
+      <button class="vote-chip">👎</button>`));
   },
 };
 

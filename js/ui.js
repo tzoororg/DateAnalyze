@@ -329,8 +329,10 @@ function renderLog() {
         <div class="fields">
           <div class="qrow">
             <input id="f-date" type="date" value="${draft.date}"/>
-            <div class="cat-scroll" id="f-category">
-              ${CATEGORIES.map(c => `<button class="cat-dot ${draft.category === c.key ? "on" : ""}" data-cat="${c.key}" title="${c.label}" aria-label="${c.label}">${c.emoji}</button>`).join("")}
+            <div class="cat-fade">
+              <div class="cat-scroll" id="f-category">
+                ${CATEGORIES.map(c => `<button class="cat-dot ${draft.category === c.key ? "on" : ""}" data-cat="${c.key}" title="${c.label}" aria-label="${c.label}">${c.emoji}</button>`).join("")}
+              </div>
             </div>
           </div>
           <div class="blocklabel">Cost</div>
@@ -839,7 +841,7 @@ async function renderHistoryList() {
         <div class="thumb" data-thumb="${e.photos?.[0] || ""}">${catEmoji(e.category)}</div>
         <div class="meta">
           <h4>${escHtml(e.title)}</h4>
-          <div class="sub">${fmtDate(e.date)} · ${catLabel(e.category)}${e.costTier ? " · " + tierLabel(e.costTier) : e.cost != null ? " · " + fmtMoney(e.cost) : ""}</div>
+          <div class="sub">${fmtDate(e.date)} · ${catLabel(e.category)}${e.costTier ? " · " + tierLabel(e.costTier) : e.cost === 0 ? " · Free" : e.cost != null ? " · " + fmtMoney(e.cost) : ""}${isOpen && e.location ? " · 📍 " + escHtml(e.location) : ""}</div>
         </div>
         ${isOpen
           ? `<button class="kebab" data-kebab="${e.id}">⋯</button>`
@@ -876,19 +878,17 @@ function histDetail(e) {
   const rateInput = mineRated ? "" : `
     <div class="rate-line">
       <span class="who me">${escHtml(myInitial())}</span><span class="name">You</span>
-      <span class="big-stars" data-rate="${e.id}">${[1, 2, 3, 4, 5].map(n => `<span class="rk off" data-k="${n}">★</span>`).join("")}</span>
-    </div>
-    <div class="muted small" style="margin-left:30px">tap to rate</div>`;
+      <button class="btn rate-cta" style="width:auto;padding:5px 14px;font-size:13px" data-rate-cta="${e.id}">Rate ★</button>
+      <span class="big-stars hidden" data-rate="${e.id}">${[1, 2, 3, 4, 5].map(n => `<span class="rk off" data-k="${n}">★</span>`).join("")}</span>
+    </div>`;
 
+  // only mood chips + would-repeat flow below the photo; effort/location moved elsewhere
   const chips = [];
-  if (e.vibe) chips.push(`<span class="chip mint">✨ ${escHtml(e.vibe)}</span>`);
   if (Array.isArray(e.mood)) e.mood.forEach((k, i) => {
     const m = MOOD_OPTIONS.find(o => o.key === k);
     if (m) chips.push(`<span class="chip ${i % 2 ? "butter" : "mint"}">${m.emoji} ${escHtml(m.label)}</span>`);
   });
-  if (e.effort) chips.push(`<span class="chip"><span class="dots">${"●".repeat(e.effort)}</span>${"○".repeat(5 - e.effort)} effort</span>`);
   if (e.wouldRepeat) chips.push(`<span class="chip">${e.wouldRepeat === "yes" ? "🔁 would repeat" : e.wouldRepeat === "maybe" ? "🤔 maybe again" : "🚫 not again"}</span>`);
-  if (e.location) chips.push(`<span class="chip loc">📍 ${escHtml(e.location)}</span>`);
 
   const comments = (e.comments || []).map(c => {
     const isMine = c.author === myKey();
@@ -901,11 +901,9 @@ function histDetail(e) {
 
   return `
   <div class="hist-detail">
-    <div class="hist-photos mosaic-slot" data-hist-photos="${(e.photos || []).join(",")}" data-cat="${e.category}"></div>
-    <div class="rate-meta">
-      <div class="rate-col">${rateLines}${rateInput}</div>
-      ${chips.length ? `<div class="meta-col">${chips.join("")}</div>` : ""}
-    </div>
+    <div class="hero-photo"><div class="hist-photos mosaic-slot" data-hist-photos="${(e.photos || []).join(",")}" data-cat="${e.category}"></div></div>
+    ${chips.length ? `<div class="chip-flow">${chips.join("")}</div>` : ""}
+    <div class="rate-meta">${rateLines}${rateInput}</div>
     ${e.notes ? `<p class="notes">${escHtml(e.notes)}</p>` : ""}
     <div class="comments">
       <h5>Notes to each other 💬</h5>
@@ -936,6 +934,14 @@ function wireHistDetail(host) {
     });
     const close = ev2 => { if (!pop.contains(ev2.target) && ev2.target !== btn) { pop.remove(); document.removeEventListener("click", close); } };
     setTimeout(() => document.addEventListener("click", close), 0);
+  }));
+
+  // "Rate ★" pill swaps inline into the 5-star input
+  host.querySelectorAll("[data-rate-cta]").forEach(btn => btn.addEventListener("click", ev => {
+    ev.stopPropagation();
+    const stars = btn.nextElementSibling;
+    btn.classList.add("hidden");
+    stars.classList.remove("hidden");
   }));
 
   // tap-to-rate stars
@@ -981,7 +987,7 @@ function renderWishlist(host, countEl) {
     .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
   if (countEl) countEl.textContent = `${ideas.length} idea${ideas.length !== 1 ? "s" : ""}`;
   if (!ideas.length) {
-    host.innerHTML = `<div class="empty"><div class="big">☆</div>No saved ideas yet — tap “♡ Save to wishlist” on a suggestion in the Suggest tab.</div>`;
+    host.innerHTML = `<div class="empty"><div class="big">☆</div>No saved ideas yet — tap “♡ Save” on a suggestion in the Suggest tab.</div>`;
     return;
   }
   host.innerHTML = `<h3 class="section-title">Want to try (${ideas.length})</h3>` + ideas.map(e => `
@@ -1123,19 +1129,14 @@ function renderInsights() {
     const maxCount = moods[0].count;
     return `
     <h3 class="section-title">Your vibes</h3>
-    <div class="card chart-wrap">${C.barChart(moods.map(m => {
-      const opt = MOOD_OPTIONS.find(o => o.key === m.key);
-      return { label: `${opt?.emoji ?? ""} ${opt?.label ?? m.key}`, value: m.count };
-    }), { max: maxCount, unit: "" })}</div>
     <div class="card tight">${moods.map(m => {
       const opt = MOOD_OPTIONS.find(o => o.key === m.key);
-      const topCat = m.topCategory ? `${catEmoji(m.topCategory)} ${catLabel(m.topCategory)}` : "";
-      return `<div class="entry" style="padding:6px 0">
-        <div style="font-size:22px;width:52px;text-align:center;flex:none">${opt?.emoji ?? "🎭"}</div>
-        <div class="meta">
-          <h4>${opt?.label ?? m.key}</h4>
-          <div class="sub">felt ${m.count}× · avg ${m.avgEnjoyment.toFixed(1)}★${topCat ? ` · mostly ${topCat}` : ""}</div>
-        </div>
+      const topCat = m.topCategory ? catEmoji(m.topCategory) : "";
+      return `<div class="vibe-row">
+        <div class="emo">${opt?.emoji ?? "🎭"}</div>
+        <div class="meta2"><h4>${opt?.label ?? m.key}</h4><div class="sub">avg ${m.avgEnjoyment.toFixed(1)}★${topCat ? ` · ${topCat}` : ""}</div></div>
+        <div class="bar"><div class="track"><div class="fill" style="width:${(m.count / maxCount) * 100}%"></div></div></div>
+        <div class="n">${m.count}</div>
       </div>`;
     }).join("")}</div>`;
   })() : "";
@@ -1164,7 +1165,7 @@ function renderInsights() {
 
     <h3 class="section-title">Trend over time</h3>
     <div class="card chart-wrap">${C.trendChart(trend)}
-      <div class="legend"><span style="color:var(--accent)">avg enjoyment</span><span style="color:var(--card-2)">how many dates</span></div></div>
+      <div class="legend"><span style="color:var(--accent)">avg enjoyment</span><span style="color:var(--muted)">how many dates</span></div></div>
 
     <h3 class="section-title">Enjoyment vs cost</h3>
     <div class="card chart-wrap">${C.scatterChart(A.enjoymentVsCost(d))}
@@ -1275,14 +1276,14 @@ function renderSugCards(results) {
       <p class="sug-reason">${escHtml(r.reason)}</p>
       <div class="sug-meta">
         <span>${catLabel(r.category)}</span>
-        <span>~${fmtMoney(r.estCost)}</span>
-        <span>Effort ${"●".repeat(r.effort)}${"○".repeat(5 - r.effort)}</span>
+        <span>${tierLabel(tierForCost(r.estCost))}</span>
+        <span>effort ${"●".repeat(r.effort)}${"○".repeat(5 - r.effort)}</span>
       </div>
-      <div class="btn-row">
+      <div class="sug-actions">
         ${isSaved
-          ? `<button class="btn ghost" disabled style="opacity:.55">✓ Saved to wishlist</button>`
-          : `<button class="btn ghost" data-save='${payload}'>♡ Save to wishlist</button>`}
-        <button class="btn secondary" data-log='${payload}'>Log this when we do it →</button>
+          ? `<button class="btn ghost" disabled style="opacity:.55">✓ Saved</button>`
+          : `<button class="btn ghost" data-save='${payload}'>♡ Save</button>`}
+        <button class="btn secondary" data-log='${payload}'>＋ Log it</button>
       </div>
     </div>`;
   }).join("");

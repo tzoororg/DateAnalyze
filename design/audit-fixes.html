@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Mock — Design-audit fixes (5 findings)</title>
+<link rel="stylesheet" href="../css/styles.css"/>
+<style>
+  body { padding: 20px 0 60px; }
+  .mockwrap { max-width: 390px; margin: 0 auto; padding: 0 16px; }
+  .mocklabel { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin: 26px 0 8px; }
+
+  /* ---- 1 · date-night banner: one compact row ---- */
+  .dn-banner { border: 2px solid var(--accent); display: flex; align-items: center; gap: 10px; }
+  .dn-banner .dn-icon { font-size: 22px; flex: none; }
+  .dn-banner .dn-txt { flex: 1; min-width: 0; }
+  .dn-banner .dn-txt b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dn-banner .dn-txt .sub { font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .dn-banner .icon-btn {
+    flex: none; width: 40px; height: 40px; border-radius: 50%; border: none;
+    background: var(--card-2); font-size: 17px; display: grid; place-items: center; cursor: pointer;
+  }
+  .dn-banner .btn.end { flex: none; width: auto; padding: 9px 16px; }
+  .sug-actions .btn { width: auto; }
+
+  /* ---- 2 · category strip: scroll affordance ---- */
+  .cat-fade { position: relative; flex: 1; min-width: 0; }
+  .cat-fade::after {
+    content: ""; position: absolute; top: 0; right: 0; bottom: 0; width: 34px;
+    background: linear-gradient(to right, transparent 25%, var(--card)); pointer-events: none;
+  }
+  .row-flex { display: flex; align-items: center; gap: 10px; }
+
+  /* ---- 3 · history detail: photo hero + chip row ---- */
+  .hero-photo { margin: 0 -16px; overflow: hidden; height: 190px; }
+  .hero-photo .ph { width: 100%; height: 100%; display: grid; place-items: center; font-size: 54px;
+    background: linear-gradient(160deg, #f7b267, #f4845f); }
+  .chip-flow { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+  .chip-flow .chip { padding: 3px 9px; border: none; border-radius: 999px; font-size: 12px;
+    background: var(--card-2); color: var(--text); white-space: nowrap; }
+
+  /* ---- 4 · suggest card: compact actions ---- */
+  .sug-actions { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+  .sug-actions .btn { padding: 8px 14px; font-size: 13px; }
+  .sug-actions .spacer { flex: 1; }
+  .vote-chip { border: none; border-radius: 999px; width: 42px; height: 34px; font-size: 16px;
+    background: var(--card-2); cursor: pointer; }
+  .vote-chip.on { background: var(--accent); }
+  .match-toast { display: inline-block; max-width: 100%; }
+
+  /* ---- 5 · vibes merged list ---- */
+  .vibe-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; }
+  .vibe-row .emo { font-size: 20px; width: 30px; text-align: center; flex: none; }
+  .vibe-row .meta2 { flex: 1; min-width: 0; }
+  .vibe-row .meta2 h4 { margin: 0; font-size: 14px; }
+  .vibe-row .meta2 .sub { font-size: 12px; color: var(--muted); }
+  .vibe-row .bar { flex: none; width: 108px; }
+  .vibe-row .bar .track { height: 8px; border-radius: 99px; background: var(--card-2); overflow: hidden; }
+  .vibe-row .bar .fill { height: 100%; border-radius: 99px; background: var(--accent); }
+  .vibe-row .n { flex: none; width: 24px; text-align: right; font-size: 13px; font-weight: 700; }
+  .legend-fix span { font-size: 12px; margin-right: 12px; }
+</style>
+</head>
+<body>
+<div class="mockwrap">
+
+  <div class="mocklabel">1 · Date night in progress — compact single row</div>
+  <section class="card dn-banner">
+    <div class="dn-icon">🌙</div>
+    <div class="dn-txt"><b>Date night</b><div class="sub">1h 24m · 3 📷</div></div>
+    <button class="icon-btn" title="Take photo">📷</button>
+    <button class="btn end">End</button>
+  </section>
+
+  <div class="mocklabel">2 · Log form category strip — fade cue at clipped edge</div>
+  <section class="card logform">
+    <div class="row-flex">
+      <input type="date" value="2026-07-18" style="flex:none;width:150px"/>
+      <div class="cat-fade">
+        <div class="cat-scroll">
+          <button class="cat-dot on">🍽️</button>
+          <button class="cat-dot">🌳</button>
+          <button class="cat-dot">🎬</button>
+          <button class="cat-dot">🏠</button>
+          <button class="cat-dot">🏆</button>
+          <button class="cat-dot">✈️</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="mocklabel">3 · History detail — photo is the hero, chips in one flow row</div>
+  <section class="card">
+    <div class="entry">
+      <div class="thumb">🧗</div>
+      <div class="meta"><h4>Sunset hike at the cliffs</h4><div class="sub">Jul 16, 2026 · Outdoors · Free · 📍 Coastal trail</div></div>
+      <button class="kebab">⋯</button>
+    </div>
+    <div class="hist-detail">
+      <div class="hero-photo"><div class="ph">🌅</div></div>
+      <div class="chip-flow">
+        <span class="chip mint">💘 Romantic</span>
+        <span class="chip butter">😍 Exciting</span>
+        <span class="chip">🔁 would repeat</span>
+      </div>
+      <div class="rate-meta">
+        <div class="rate-col">
+          <div class="rate-line"><span class="who them">N</span><span class="name">Noa</span><span class="stars">★★★★★</span></div>
+          <div class="rate-line"><span class="who me">Y</span><span class="name">You</span><button class="btn" style="width:auto;padding:5px 14px;font-size:13px">Rate ★</button></div>
+        </div>
+      </div>
+      <p class="notes">Perfect light, brought snacks.</p>
+    </div>
+  </section>
+
+  <div class="mocklabel">4a · Suggest card — compact one-line actions (~30% shorter)</div>
+  <div class="card sug-card exploit">
+    <div class="sug-head">
+      <h3>✈️ Day trip to the coast</h3>
+      <span class="tag exploit">Favorite</span>
+    </div>
+    <p class="sug-reason">You rated this 5.0★ and haven't done it in 2 months — worth a comeback.</p>
+    <div class="sug-meta"><span>Travel</span><span>$$$</span><span>effort ●●●●○</span></div>
+    <div class="sug-actions">
+      <button class="btn ghost">♡ Save</button>
+      <button class="btn secondary">＋ Log it</button>
+    </div>
+  </div>
+
+  <div class="mocklabel">4b · With partner match — vote chips, toast that fits</div>
+  <div class="card sug-card exploit" style="position:relative">
+    <span class="sticker-tag mint match-toast">It's a match! 💞</span>
+    <div class="sug-head">
+      <h3>🥇 Live music gig</h3>
+      <span class="tag exploit">Favorite</span>
+    </div>
+    <p class="sug-reason">You rated this 5.0★ and haven't done it in 3 months — worth a comeback.</p>
+    <div class="sug-meta"><span>Nightlife</span><span>$$</span><span>effort ●●○○○</span></div>
+    <div class="sug-actions">
+      <button class="btn ghost">♡ Save</button>
+      <button class="btn secondary">＋ Log it</button>
+      <div class="spacer"></div>
+      <button class="vote-chip on">👍</button>
+      <button class="vote-chip">👎</button>
+    </div>
+  </div>
+  <p class="mocklabel" style="text-transform:none;letter-spacing:0">Plus: suggestion list gets bottom padding so the FAB never covers the last card's buttons.</p>
+
+  <div class="mocklabel">5 · Your vibes — one merged list (bar chart card deleted)</div>
+  <h3 class="section-title">Your vibes</h3>
+  <section class="card tight">
+    <div class="vibe-row"><div class="emo">😄</div><div class="meta2"><h4>Playful</h4><div class="sub">avg 4.2★ · 🍽️</div></div><div class="bar"><div class="track"><div class="fill" style="width:100%"></div></div></div><div class="n">9</div></div>
+    <div class="vibe-row"><div class="emo">😌</div><div class="meta2"><h4>Chill</h4><div class="sub">avg 3.9★ · 🍽️</div></div><div class="bar"><div class="track"><div class="fill" style="width:78%"></div></div></div><div class="n">7</div></div>
+    <div class="vibe-row"><div class="emo">💘</div><div class="meta2"><h4>Romantic</h4><div class="sub">avg 4.8★ · 🌳</div></div><div class="bar"><div class="track"><div class="fill" style="width:67%"></div></div></div><div class="n">6</div></div>
+    <div class="vibe-row"><div class="emo">🥰</div><div class="meta2"><h4>Heartfelt</h4><div class="sub">avg 4.3★ · 🏛️</div></div><div class="bar"><div class="track"><div class="fill" style="width:44%"></div></div></div><div class="n">4</div></div>
+    <div class="vibe-row"><div class="emo">🤣</div><div class="meta2"><h4>Hilarious</h4><div class="sub">avg 4.5★ · 🤸</div></div><div class="bar"><div class="track"><div class="fill" style="width:44%"></div></div></div><div class="n">4</div></div>
+  </section>
+
+  <div class="mocklabel">5b · Trend legend — second series legible</div>
+  <section class="card legend-fix">
+    <span style="color:var(--accent)">● avg enjoyment</span>
+    <span style="color:var(--muted)">▮ how many dates</span>
+  </section>
+
+</div>
+</body>
+</html>

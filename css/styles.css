@@ -166,8 +166,14 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); bo
 .btn.small { padding: 11px; font-size: 14px; border-radius: 13px; }
 .btn:active { transform: translateY(1px); }
 .btn-row { display: flex; gap: 10px; margin-top: 16px; }
-/* Suggest-card action buttons sit a touch smaller than the full-width primary */
-.sug-card .btn { padding: 11px; font-size: 14px; border-radius: 13px; }
+/* Suggest-card compact action row: auto-width ♡ Save / ＋ Log it (+ vote chips when matched) */
+.sug-actions { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.sug-actions .btn { width: auto; padding: 8px 14px; font-size: 13px; border-radius: 13px; }
+.sug-actions .spacer { flex: 1; }
+.vote-chip { border: none; border-radius: 999px; width: 42px; height: 34px; font-size: 16px; background: var(--card-2); cursor: pointer; }
+.vote-chip.on { background: var(--accent); }
+.match-toast { display: inline-block; max-width: 100%; }
+#sug-results { padding-bottom: 80px; }
 /* Wishlist idea link */
 .url-link { color: var(--accent); font-size: 13px; text-decoration: none; display: inline-block; margin-top: 2px; }
 
@@ -206,6 +212,29 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); bo
 /* Charts */
 .chart-wrap { width: 100%; overflow: hidden; }
 .chart-wrap svg { width: 100%; height: auto; display: block; }
+
+/* ---- Date-night banner: compact single row ---- */
+.dn-banner { border: 2px solid var(--accent); display: flex; align-items: center; gap: 10px; }
+.dn-banner .dn-icon { font-size: 22px; flex: none; }
+.dn-banner .dn-txt { flex: 1; min-width: 0; }
+.dn-banner .dn-txt b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dn-banner .dn-txt .sub { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.dn-banner .icon-btn {
+  flex: none; width: 40px; height: 40px; border-radius: 50%; border: none;
+  background: var(--card-2); font-size: 17px; display: grid; place-items: center; cursor: pointer;
+}
+.dn-banner .btn.end { flex: none; width: auto; padding: 9px 16px; }
+
+/* ---- Insights: merged "Your vibes" list ---- */
+.vibe-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; }
+.vibe-row .emo { font-size: 20px; width: 30px; text-align: center; flex: none; }
+.vibe-row .meta2 { flex: 1; min-width: 0; }
+.vibe-row .meta2 h4 { margin: 0; font-size: 14px; }
+.vibe-row .meta2 .sub { font-size: 12px; color: var(--muted); }
+.vibe-row .bar { flex: none; width: 108px; }
+.vibe-row .bar .track { height: 8px; border-radius: 99px; background: var(--card-2); overflow: hidden; }
+.vibe-row .bar .fill { height: 100%; border-radius: 99px; background: var(--accent); }
+.vibe-row .n { flex: none; width: 24px; text-align: right; font-size: 13px; font-weight: 700; }
 
 /* Suggest */
 .slider-row { display: flex; align-items: center; gap: 12px; margin: 6px 0 2px; }
@@ -306,9 +335,13 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); bo
 .menu-pop div:active { background: var(--line); }
 .menu-pop .danger { color: var(--bad); }
 
-/* ---- ratings (left) + meta chip stack (right) ---- */
-.rate-meta { display: flex; gap: 12px; margin-top: 12px; align-items: flex-start; }
-.rate-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+/* ---- history detail: photo hero + chip flow + ratings ---- */
+.hero-photo { margin: 0 -16px; overflow: hidden; height: 190px; }
+.hero-photo .mosaic, .hero-photo .detail-mosaic, .hero-photo .home-banner, .hero-photo .detail-mosaic.empty { height: 190px; grid-auto-rows: 190px; margin-top: 0; }
+.hero-photo .mosaic .ph:only-child { grid-column: 1 / -1; } /* single photo fills the hero */
+.chip-flow { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+.chip-flow .chip { padding: 3px 9px; border: none; border-radius: 999px; font-size: 12px; background: var(--card-2); color: var(--text); white-space: nowrap; }
+.rate-meta { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
 .rate-line { display: flex; align-items: center; gap: 8px; font-size: 14px; }
 .rate-line .who { width: 22px; height: 22px; font-size: 11px; margin: 0; }
 .rate-line .name { color: var(--muted); font-size: 13px; width: 48px; }
@@ -316,12 +349,9 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); bo
 .big-stars { font-size: 19px; letter-spacing: 3px; cursor: pointer; }
 .big-stars .rk { color: var(--warn); }
 .big-stars .rk.off { color: var(--line); }
-.meta-col { flex: none; display: flex; flex-direction: column; gap: 5px; align-items: flex-end; }
-.meta-col .chip { padding: 3px 9px; border: none; border-radius: 999px; font-size: 12px; color: var(--text); white-space: nowrap; }
 .chip.mint { background: var(--mint-bg); color: var(--mint-fg); }
 .chip.butter { background: var(--butter-bg); color: var(--butter-fg); }
 .chip .dots { color: var(--accent-2); letter-spacing: 1px; }
-.chip.loc { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; }
 .notes { color: var(--muted); font-size: 14px; margin: 12px 0 0; white-space: pre-wrap; }
 
 /* ---- comments ---- */
@@ -396,7 +426,12 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); bo
 .form-grid { display: flex; gap: 12px; align-items: stretch; margin-top: 10px; }
 .form-grid .fields { flex: 1; min-width: 0; }
 .qrow { display: flex; gap: 8px; align-items: center; }
-.qrow input[type=date] { width: 122px; flex: none; padding: 9px 8px; font-size: 13px; border-radius: 999px; }
+.qrow input[type=date] { width: 150px; flex: none; padding: 9px 8px; font-size: 13px; border-radius: 999px; }
+.cat-fade { position: relative; flex: 1; min-width: 0; }
+.cat-fade::after {
+  content: ""; position: absolute; top: 0; right: 0; bottom: 0; width: 34px;
+  background: linear-gradient(to right, transparent 25%, var(--card)); pointer-events: none;
+}
 .cat-scroll { display: flex; gap: 6px; overflow-x: auto; flex: 1; min-width: 0; scrollbar-width: none; padding: 3px 0; }
 .cat-scroll::-webkit-scrollbar { display: none; }
 .cat-dot { width: 40px; height: 40px; flex: none; border-radius: 50%; border: none; background: var(--card-2); display: grid; place-items: center; font-size: 19px; cursor: pointer; }
