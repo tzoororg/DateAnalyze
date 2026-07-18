@@ -28,6 +28,7 @@ export async function seed() {
     title: "Rooftop dinner under the stars", category: "dining", enjoyment: 5,
     mood: ["romantic", "magical"], effort: 3, wouldRepeat: "yes", cost: 280,
     location: "Rooftop 21", notes: "Anniversary — the city lights were unreal.",
+    capsule: "If you're reading this, book the rooftop again.",
   });
 
 }
@@ -155,19 +156,15 @@ const STATES = {
 
   async "after-capsule-log"() {
     click("#fab"); await sleep(300);
-    const notes = $("#f-notes")?.closest("label");
-    if (notes) notes.after(html(`
-      <label class="field"><span>Note to your future selves 💌 <span class="muted" style="font-weight:400;font-size:12px">(resurfaces in one year)</span></span>
-        <textarea placeholder="If you're reading this, book the rooftop again.">If you're reading this, book the rooftop again.</textarea></label>`));
+    click("#f-capsule-toggle"); await sleep(200);
+    const ta = $("#f-capsule");
+    if (ta) { ta.value = "If you're reading this, book the rooftop again."; ta.dispatchEvent(new Event("input", { bubbles: true })); }
   },
 
   async "after-capsule-home"() {
+    // The seeded year-ago entry already carries a capsule note (see seed()); the
+    // memory card renders it for real, no injected DOM needed.
     await tab("home");
-    const mem = $(".memory-card");
-    if (mem) mem.appendChild(html(`
-      <div style="border-left:3px solid var(--accent);padding:8px 12px;margin-top:10px;font-style:italic">
-        💌 From you, one year ago:<br>"If you're reading this, book the rooftop again."
-      </div>`));
   },
 
   async "after-match"() {

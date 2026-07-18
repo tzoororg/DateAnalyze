@@ -45,6 +45,10 @@ test("blankEntry v2 fields: free-text vibe and costTier", () => {
   assert.equal(e.costTier, null);
 });
 
+test("blankEntry has an empty capsule by default (Roadmap #11)", () => {
+  assert.equal(blankEntry().capsule, "");
+});
+
 test("normTitle trims, lowercases, collapses whitespace", () => {
   assert.equal(normTitle("  Mini  GOLF \n"), "mini golf");
   assert.equal(normTitle(null), "");

@@ -41,6 +41,9 @@ try {
     document.querySelectorAll("#date-list .home-card .stk.hearts").length]`);
   check("home widget cards carry sticker metadata", stickers[0] > 0 && stickers[1] === stickers[0] && stickers[2] === stickers[0],
     `cards=${stickers[0]} captions=${stickers[1]} hearts=${stickers[2]}`);
+  check("memory card shows the seeded time-capsule note (Roadmap #11)",
+    (await t.evaluate(`document.querySelector(".capsule-memory .msg")?.textContent || ""`))
+      .includes("book the rooftop again"));
 
   // 3. history list
   t = await shotTab("history-list");
@@ -126,6 +129,23 @@ try {
   await sleep(400);
   const inHist = await t.evaluate(`document.querySelector("#view").innerText.includes("Smoke Test Date")`);
   check("logged date appears in history", inHist);
+
+  // 8a. time-capsule note (Roadmap #11): toggle pill reveals field, text persists
+  t = await shotTab("home");
+  await t.evaluate(`document.querySelector("#fab").click()`);
+  await t.waitFor(`!document.getElementById("logSheet").classList.contains("hidden")`);
+  await t.evaluate(`{
+    const i = document.getElementById("f-title");
+    i.value = "Capsule Test Date"; i.dispatchEvent(new Event("input"));
+    document.getElementById("f-capsule-toggle").click();
+    const c = document.getElementById("f-capsule");
+    c.value = "Smoke capsule note"; c.dispatchEvent(new Event("input"));
+    document.getElementById("f-save").click();
+  }`);
+  await t.waitFor(`document.getElementById("logSheet").classList.contains("hidden")`);
+  const capsuleStored = await t.evaluate(`import("./js/store.js").then(s => s.getAllDates())
+    .then(ds => ds.find(x => x.title === "Capsule Test Date")?.capsule || "")`);
+  check("capsule toggle + textarea persists via store", capsuleStored === "Smoke capsule note", capsuleStored);
 
   // 8b. regression for #11: edit a date, close via the X (not save/cancel),
   // then open the ＋ button — the new-date form must be blank, not the edited entry.

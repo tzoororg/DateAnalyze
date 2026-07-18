@@ -418,6 +418,39 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); bo
 .verdict-word { text-align: center; font: 700 16px var(--cursive); color: var(--accent-2); margin: 10px 4px 0; }
 .addnote-link { display: block; background: none; border: none; font-size: 13px; color: var(--accent-2); font-weight: 700; margin: 10px 0 0; padding: 4px; cursor: pointer; }
 
+/* Time-capsule note (Roadmap #11) */
+.link-row { display: flex; align-items: center; justify-content: space-between; }
+.capsule-toggle {
+  background: var(--butter-bg); border: none; border-radius: 999px;
+  font-size: 12px; color: var(--butter-fg); font-weight: 700;
+  padding: 5px 12px; cursor: pointer;
+}
+.capsule-wrap { margin-top: 14px; }
+.capsule-field {
+  background: var(--card-2); border: 1px dashed var(--butter-fg);
+  border-radius: 13px; padding: 10px 12px 12px;
+}
+.capsule-field textarea {
+  background: transparent; border: none; padding: 6px 2px; min-height: 56px;
+  font: inherit; width: 100%;
+}
+.capsule-field textarea:focus { outline: none; }
+.capsule-head {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; font-weight: 700; color: var(--butter-fg);
+}
+.capsule-head .when { margin-left: auto; font-size: 11px; font-weight: 600; color: var(--muted); }
+.capsule-memory {
+  margin-top: 10px; padding: 10px 12px;
+  background: var(--card-2); border-radius: 13px;
+  border-left: 3px solid var(--butter-fg);
+}
+.capsule-memory .from {
+  font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--butter-fg); margin-bottom: 4px;
+}
+.capsule-memory .msg { font-style: italic; color: var(--text); }
+
 /* Log sheet (full-screen overlay from the ＋ button) */
 .logsheet { position: fixed; inset: 0; z-index: 15; display: flex; flex-direction: column; background: var(--bg); }
 .logsheet.hidden { display: none; }

@@ -263,7 +263,12 @@ function renderHome() {
               <div class="sub">${fmtDate(e.date)} · ${"★".repeat(e.enjoyment)}</div>
             </div>
           </div>
+          ${e.capsule ? `<div class="capsule-memory">
+            <div class="from">💌 From you</div>
+            <div class="msg">${escHtml(e.capsule)}</div>
+          </div>` : ""}
         </div>`;
+        // ponytail: label is always "From you" — date docs carry no author uid; add author names when sync stamps one
       }).join("")}
     </section>` : "";
 
@@ -351,9 +356,19 @@ function renderLog() {
       </div>
       <div class="verdict-word" id="f-verdict"></div>
 
-      <button class="addnote-link" id="f-note-toggle" type="button">+ add a note</button>
+      <div class="link-row">
+        <button class="addnote-link" id="f-note-toggle" type="button">+ add a note</button>
+        <button class="capsule-toggle" id="f-capsule-toggle" type="button">💌 note to next year</button>
+      </div>
       <label class="field ${draft.notes ? "" : "hidden"}" id="f-notes-wrap"><span>Notes / memories</span>
         <textarea id="f-notes" placeholder="What made it good (or not)?">${escHtml(draft.notes)}</textarea></label>
+
+      <div class="capsule-wrap ${draft.capsule ? "" : "hidden"}" id="f-capsule-wrap">
+        <div class="capsule-field">
+          <div class="capsule-head">💌 To future us <span class="when">opens ${fmtDate(capsuleOpenDate(draft.date))}</span></div>
+          <textarea id="f-capsule" placeholder="If you're reading this…">${escHtml(draft.capsule)}</textarea>
+        </div>
+      </div>
 
       <button class="addnote-link" id="f-link-toggle" type="button">+ add a link</button>
       <label class="field ${draft.url ? "" : "hidden"}" id="f-link-wrap"><span>Link <span class="muted" style="font-weight:400">(optional — booking page, Pinterest…)</span></span>
@@ -368,6 +383,13 @@ function renderLog() {
   wireForm();
   paintMeter();
   renderPhotoStrip();
+}
+
+// Date a capsule note opens: entry date + 1 year (ISO string, for fmtDate).
+function capsuleOpenDate(dateStr) {
+  const d = new Date(dateStr);
+  d.setFullYear(d.getFullYear() + 1);
+  return d.toISOString().slice(0, 10);
 }
 
 // Most-used past vibe words for the suggestion chips (defaults for a fresh diary).
@@ -401,6 +423,7 @@ function wireForm() {
   bind("f-vibe", "input", e => draft.vibe = e.target.value);
   bind("f-notes", "input", e => draft.notes = e.target.value);
   bind("f-url", "input", e => draft.url = e.target.value);
+  bind("f-capsule", "input", e => draft.capsule = e.target.value);
 
   // category dots
   v.querySelector("#f-category").addEventListener("click", e => {
@@ -444,6 +467,10 @@ function wireForm() {
   bind("f-link-toggle", "click", () => {
     v.querySelector("#f-link-wrap").classList.toggle("hidden");
     v.querySelector("#f-url").focus();
+  });
+  bind("f-capsule-toggle", "click", () => {
+    v.querySelector("#f-capsule-wrap").classList.remove("hidden");
+    v.querySelector("#f-capsule").focus();
   });
 
   // photo source menu, opened by tapping the polaroid shot
@@ -525,6 +552,7 @@ async function saveDraft() {
   draft.title = draft.title.trim();
   draft.vibe = (draft.vibe || "").trim();
   draft.url = (draft.url || "").trim();
+  draft.capsule = (draft.capsule || "").trim();
   const isNew = !editingId;
   if (isNew) draft.createdAt = Date.now();
   // attribute the form's enjoyment score to me as a per-person rating (see resolveRatings)

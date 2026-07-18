@@ -82,6 +82,7 @@ export function blankEntry() {
     costTier: null,
     location: "",
     notes: "",
+    capsule: "", // optional "note to next year"; opens 1yr after entry date on Home memory card
     photos: [], // array of photo blob ids
   };
 }
