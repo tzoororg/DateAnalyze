@@ -1,5 +1,5 @@
 // Web-push configuration. Fill these in after the console/deploy setup (see
-// PUSH_PLAN.md). Until they're set, push is a silent no-op — the app works exactly
+// plans/done/PUSH_PLAN.md). Until they're set, push is a silent no-op — the app works exactly
 // as before.
 //
 // VAPID_PUBLIC_KEY  Firebase console → Project settings → Cloud Messaging →

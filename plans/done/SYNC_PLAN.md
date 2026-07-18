@@ -9,7 +9,7 @@
 > IndexedDB, so a partner sees that an entry *has* photos but renders nothing for
 > the ones they didn't add. This doc plans closing that gap.
 >
-> **To execute:** Ask Claude Code "implement the photo sync plan from SYNC_PLAN.md".
+> **To execute:** Ask Claude Code "implement the photo sync plan from plans/done/SYNC_PLAN.md".
 
 ## Why photos aren't synced yet
 

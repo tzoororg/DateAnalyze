@@ -1,5 +1,10 @@
 # iOS support plan
 
+> **Status:** Items 1 & 2 shipped (2026-07-18) — `icons/icon-180.png` +
+> `apple-touch-icon` link, and the `signInWithPopup`→`signInWithRedirect`
+> fallback (`js/sync.js` / `js/store.js` / `app.js`). Item 3 (real-iPhone
+> verification) is a manual gate that can't be run from here — still open.
+
 Goal: the app installs and works as a home-screen PWA on iPhone (iOS 16.4+).
 Findings from the 2026-07-15 audit — the CSS/layout side is already iOS-ready
 (`viewport-fit=cover`, `env(safe-area-inset-*)`, `100dvh` all in place), so the

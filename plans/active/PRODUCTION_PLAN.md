@@ -167,7 +167,7 @@ Design (all WebCrypto, no dependencies, fits the no-build-step constraint):
       a web-reachable deletion path/instructions URL for the Play form.
 - [ ] Play data-safety form / Apple privacy nutrition labels (answers fall out of 3.3).
 - [ ] Packaging: Android = TWA via Bubblewrap + `assetlinks.json` on the Pages domain;
-      iOS = per IOS_PLAN.md. Verify Google sign-in, FCM push, camera/photo access, and the
+      iOS = per ../done/IOS_PLAN.md. Verify Google sign-in, FCM push, camera/photo access, and the
       Google Photos picker inside each wrapper — webview behavior differs from Chrome.
 - [ ] Support contact + terms of service page (short).
 - [ ] Test push permission prompts in wrappers (Android 13+ runtime notification permission).

@@ -278,7 +278,8 @@ emotional payoff.
 CSS/safe-area/viewport already iOS-ready. Remaining: a PNG `apple-touch-icon`
 (iOS ignores the current SVG), a `signInWithRedirect` fallback for the Firebase
 popup (unreliable in installed iOS PWAs), and a real-device verification pass
-(push, IndexedDB persistence, sign-in). Full plan: [IOS_PLAN.md](IOS_PLAN.md).
+(push, IndexedDB persistence, sign-in). Full plan: [plans/done/IOS_PLAN.md](plans/done/IOS_PLAN.md)
+(icon + auth fallback shipped 2026-07-18; on-device verification still open).
 
 **Effort.** Small (icon + auth fallback) + one on-device test session.
 **Risk.** iOS PWA quirks can't be emulated — the device pass is the real gate.
