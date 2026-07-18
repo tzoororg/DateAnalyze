@@ -5,7 +5,12 @@
       "Bash(gh *)",
       "Bash(curl)",
       "Bash(firebase)",
-      "Bash(netstat)"
+      "Bash(netstat)",
+      "Bash(node --test test/*)",
+      "Bash(node test/*)",
+      "Bash(node design/capture.mjs *)",
+      "Bash(python -m http.server *)",
+      "Bash(firebase emulators:start *)"
     ]
   },
   "enableAllProjectMcpServers": true
