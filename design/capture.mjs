@@ -1,7 +1,9 @@
 // Captures a screenshot of every app view (and roadmap "after" mocks) via
 // Chrome DevTools Protocol + the ?shot= dev hook (js/dev-shots.js), which sets
 // document.title to "SHOT-READY:<state>" when the view has settled.
-// Usage: node design/capture.mjs [baseUrl]   (default http://127.0.0.1:8163)
+// Usage: node design/capture.mjs [baseUrl] [shotName...]
+//   baseUrl defaults to http://127.0.0.1:8163; with shot names, captures only
+//   those (cheap iteration on the views under discussion) instead of all.
 // The CDP client lives in test/cdp.mjs (shared with the smoke/sync tests).
 import { writeFileSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -22,10 +24,20 @@ const SHOTS = {
   "after-capsule-log": 2200, "after-capsule-home": 1100, "after-match": 1750,
 };
 
+const only = process.argv.slice(3);
+const unknown = only.filter((n) => !(n in SHOTS));
+if (unknown.length) {
+  console.error("unknown shot(s):", unknown.join(", "), "\nknown:", Object.keys(SHOTS).join(", "));
+  process.exit(1);
+}
+const shots = only.length
+  ? Object.fromEntries(only.map((n) => [n, SHOTS[n]]))
+  : SHOTS;
+
 mkdirSync(OUT, { recursive: true });
 const cdp = await launchChrome({ port: 9223, profileName: "cdp-shot-profile" });
 try {
-  for (const [name, height] of Object.entries(SHOTS)) {
+  for (const [name, height] of Object.entries(shots)) {
     const tab = await openTab(cdp, `${BASE}/index.html?shot=${name}`, { height });
     await tab.waitFor(`document.title.startsWith("SHOT-READY:")`, { timeout: 20000 });
     await sleep(400); // let images/fonts paint

@@ -27,6 +27,12 @@ Every new feature or UI/UX modification starts as a static HTML mock **before** 
 
 Skip the mock only for pure logic/bugfix changes with no visible UI impact.
 
+For designing a **new component or view** (not a tweak to an existing one), use the `design-duel` skill (`.claude/skills/design-duel/SKILL.md`) — it wraps steps 1–3 with an adversarial design-critic loop.
+
+**Screenshot discipline during design iteration:** capture only the views under discussion — `node design/capture.mjs <baseUrl> <shot> [<shot>...]` captures just the named shots instead of all of them. Share at most 2–3 screenshots per iteration round; full catalog re-captures are only for step 4.
+
+**Model routing:** plans and design decisions happen on the session's default model; once a plan/mock is approved, hand the mechanical implementation to a **Sonnet subagent** (Agent tool, `model: "sonnet"`) with the plan as its prompt, then review its diff. This is the main token-cost lever — don't burn the large model on typing out an already-decided change.
+
 **Service worker caching caveat:** During development, the SW caches aggressively. After changing files, either unregister the SW in DevTools → Application → Service Workers, or bump the `CACHE` version string in `sw.js`. When adding a new file, also add it to the `SHELL` array in `sw.js`.
 
 **Versioning (semver):** the `CACHE` string in `sw.js` is `us-date-tracker-vMAJOR.MINOR.PATCH`. **Do NOT bump it on day-to-day dev commits** — the deploy workflow stamps the dev commit SHA into the beta app's SW cache name, so every beta deploy busts the cache automatically. The version is bumped by hand exactly once per release, as part of preparing the merge to master, covering everything since the last release: **major** = big redesign or a data-model change, **minor** = new feature, **patch** = bugfix/tweak. The pre-commit hook in `hooks/pre-commit` (enable once per clone with `git config core.hooksPath hooks`) is a safety net on master only — it bumps PATCH if app shell files are committed there without a hand bump (note: a fast-forward merge creates no commit, so the hook won't fire — bump on dev before merging).
