@@ -77,6 +77,26 @@ try {
   const allTimeOn = await t.evaluate(`document.querySelector('[data-wrap-period="all"]').classList.contains("on")`);
   check("Wrapped 'All time' toggle activates on click", allTimeOn === true);
 
+  // 5c. swipe gestures: view-container swipe advances tabs; wrap-card swipe
+  // flips the "This year"/"All time" seg button and doesn't also change tabs.
+  const swipe = (sel, dx) => t.evaluate(`{
+    const el = document.querySelector(${JSON.stringify(sel)});
+    const ts = new Event("touchstart"); ts.touches = [{ clientX: 200, clientY: 200 }];
+    el.dispatchEvent(ts);
+    const te = new Event("touchend"); te.changedTouches = [{ clientX: 200 + (${dx}), clientY: 205 }];
+    el.dispatchEvent(te);
+  }`);
+  await swipe(".wrap-card", -80);
+  await sleep(300);
+  check("wrap-card swipe flips to All time",
+    await t.evaluate(`document.querySelector('[data-wrap-period="all"]').classList.contains("on")`));
+  check("wrap-card swipe doesn't also change the active tab",
+    await t.evaluate(`document.querySelector('.tab[data-tab="insights"]').getAttribute("aria-selected") === "true"`));
+  await swipe("#view", -80);
+  await sleep(300);
+  check("view-container swipe advances to the next tab",
+    await t.evaluate(`document.querySelector('.tab[data-tab="suggest"]').getAttribute("aria-selected") === "true"`));
+
   // 6. suggestions
   t = await shotTab("suggest", 1700);
   const cards = await t.evaluate(`document.querySelectorAll(".sug-card").length`);

@@ -35,6 +35,12 @@ export async function init() {
   show(location.hash === "#history" ? "history" : "home");
   db.subscribe(onRemoteChange);
   push.refreshToken();
+  const TABS = ["home", "history", "insights", "suggest"];
+  let swipeTarget = null;
+  viewEl().addEventListener("touchstart", e => { swipeTarget = e.target; }, { passive: true, capture: true });
+  attachSwipe(viewEl(),
+    () => { if (swipeTarget?.closest(".wrap-card")) return; show(TABS[Math.min(TABS.length - 1, TABS.indexOf(currentTab) + 1)]); },
+    () => { if (swipeTarget?.closest(".wrap-card")) return; show(TABS[Math.max(0, TABS.indexOf(currentTab) - 1)]); });
 }
 
 async function onRemoteChange() {
@@ -43,6 +49,26 @@ async function onRemoteChange() {
 }
 
 async function reload() { dates = await db.getAllDates(); }
+
+// Swipe-left → onLeft(), swipe-right → onRight(). Ignores mostly-vertical drags
+// and gestures that start inside a horizontally scrollable element.
+function attachSwipe(el, onLeft, onRight) {
+  let sx = null, sy = null;
+  el.addEventListener("touchstart", e => {
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY;
+    // don't hijack elements that scroll sideways themselves
+    for (let n = e.target; n && n !== el; n = n.parentElement)
+      if (n.scrollWidth > n.clientWidth + 5) { sx = null; return; }
+  }, { passive: true });
+  el.addEventListener("touchend", e => {
+    if (sx == null) return;
+    const dx = e.changedTouches[0].clientX - sx;
+    const dy = e.changedTouches[0].clientY - sy;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5)
+      (dx < 0 ? onLeft : onRight)();
+    sx = null;
+  }, { passive: true });
+}
 
 // ---------- tab + chrome wiring ----------
 const THEME_COLORS = { pink: "#e8577e", plum: "#2a1b26", navy: "#0d1220" };
@@ -1101,12 +1127,17 @@ async function onShareWrapped() {
   }, "image/png");
 }
 
+function setWrapPeriod(period) {
+  wrapPeriod = period;
+  renderInsights();
+}
+
 function wireInsights() {
-  viewEl().querySelectorAll("[data-wrap-period]").forEach(b => b.addEventListener("click", () => {
-    wrapPeriod = b.dataset.wrapPeriod;
-    renderInsights();
-  }));
+  viewEl().querySelectorAll("[data-wrap-period]").forEach(b =>
+    b.addEventListener("click", () => setWrapPeriod(b.dataset.wrapPeriod)));
   bind("wrap-share", "click", onShareWrapped);
+  const wrapCard = viewEl().querySelector(".wrap-card");
+  if (wrapCard) attachSwipe(wrapCard, () => setWrapPeriod("all"), () => setWrapPeriod("year"));
 }
 
 function renderInsights() {
@@ -1143,7 +1174,7 @@ function renderInsights() {
 
   v.innerHTML = `
     <h3 class="section-title" style="margin-top:0">Your Wrapped ✨</h3>
-    <div class="card">
+    <div class="card wrap-card">
       <div class="seg-row">
         <button class="seg ${wrapPeriod === "year" ? "on" : ""}" data-wrap-period="year">This year</button>
         <button class="seg ${wrapPeriod === "all" ? "on" : ""}" data-wrap-period="all">All time</button>
@@ -1681,14 +1712,7 @@ function openLightbox(items, startIndex = 0, opts = {}) {
   });
   box.addEventListener("click", close);   // tap backdrop to dismiss
   document.addEventListener("keydown", onKey);
-  let sx = null;
-  box.addEventListener("touchstart", e => { sx = e.touches[0].clientX; }, { passive: true });
-  box.addEventListener("touchend", e => {
-    if (sx == null || !multi) return;
-    const dx = e.changedTouches[0].clientX - sx;
-    if (Math.abs(dx) > 45) goUser(dx < 0 ? 1 : -1);
-    sx = null;
-  }, { passive: true });
+  if (multi) attachSwipe(box, () => goUser(1), () => goUser(-1));
   document.body.appendChild(box);
   show();
   arm();
