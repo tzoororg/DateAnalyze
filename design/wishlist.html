@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Us — Wishlist mock</title>
+<style>
+  :root {
+    --bg:#2a1b26; --bg-soft:#33222e; --card:#3b2a37; --card-2:#4a3444;
+    --line:#54394c; --text:#f5e6ee; --muted:#c99bb0;
+    --accent:#ff7fa2; --good:#7ed3ab; --warn:#eec97a;
+    --mint-bg:#1e3d34; --mint-fg:#7ed3ab; --butter-bg:#3d3520; --butter-fg:#e8c97a;
+    --cursive:"Segoe Script","Comic Sans MS",cursive;
+    --radius:18px; --shadow:0 6px 16px rgba(0,0,0,.35);
+  }
+  body { margin:0; font:15px/1.5 system-ui,sans-serif; background:#1c1218; color:var(--text); padding:32px 16px 80px; }
+  h1 { text-align:center; font-size:22px; } h1 span { color:var(--accent); }
+  .sub { text-align:center; color:var(--muted); max-width:64ch; margin:0 auto 30px; font-size:13px; }
+  .row { display:flex; gap:40px; justify-content:center; flex-wrap:wrap; align-items:flex-start; }
+  .phone { width:340px; background:radial-gradient(120% 60% at 50% 0%, var(--bg-soft), var(--bg)); border-radius:28px; padding:18px 14px 24px; box-shadow:0 20px 50px rgba(0,0,0,.5); }
+  .caption { text-align:center; color:var(--muted); font-size:12px; margin-top:10px; max-width:340px; }
+  .section-title { font-size:12px; text-transform:uppercase; letter-spacing:.14em; font-weight:800; color:var(--muted); margin:0 4px 10px; }
+
+  .card { background:var(--card); border:none; border-radius:var(--radius); padding:16px; box-shadow:var(--shadow); margin-bottom:14px; position:relative; }
+  .card.tight { padding:12px 14px; }
+
+  .sug-card { border-left:4px solid var(--accent); }
+  .sug-card.exploit { border-left-color:var(--good); }
+  .sug-head { display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+  .sug-head h3 { margin:0; font-size:18px; }
+  .tag { font:700 12px var(--cursive); padding:3px 10px; border-radius:10px; white-space:nowrap; display:inline-block; }
+  .tag.explore { background:var(--butter-bg); color:var(--butter-fg); transform:rotate(2deg); }
+  .tag.exploit { background:var(--mint-bg); color:var(--mint-fg); transform:rotate(-2deg); }
+  .sug-reason { color:var(--muted); font-size:14px; margin:8px 0 12px; }
+  .sug-meta { display:flex; gap:14px; font-size:13px; color:var(--muted); margin-bottom:12px; flex-wrap:wrap; }
+  .sticker-tag { position:absolute; top:-9px; right:12px; padding:3px 10px; border-radius:10px; font:700 12px var(--cursive); transform:rotate(3deg); box-shadow:0 3px 8px rgba(0,0,0,.15); background:var(--butter-bg); color:var(--butter-fg); }
+
+  .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:15px; border-radius:16px; border:none; cursor:pointer; font-size:16px; font-weight:800; color:#fff; background:var(--accent); box-shadow:0 6px 14px rgba(232,87,126,.3); box-sizing:border-box; }
+  .btn.ghost { background:transparent; color:var(--muted); border:1px solid var(--line); box-shadow:none; }
+  .btn.small { padding:11px; font-size:14px; margin-top:10px; }
+  .btn-row { display:flex; gap:10px; margin-top:10px; }
+
+  .seg-row { display:flex; gap:4px; margin-bottom:10px; }
+  .seg { padding:8px 12px; border-radius:12px; border:1px solid var(--line); background:var(--card-2); color:var(--muted); font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; }
+  .seg.on { background:var(--accent); color:#fff; border-color:var(--accent); }
+
+  .entry { display:flex; gap:12px; align-items:center; }
+  .entry .thumb { width:52px; height:52px; border-radius:14px; background:var(--card-2); display:grid; place-items:center; font-size:22px; flex:none; }
+  .entry .meta { flex:1; min-width:0; }
+  .entry .meta h4 { margin:0 0 2px; font-size:15px; }
+  .entry .meta .sub { color:var(--muted); font-size:13px; }
+  .entry .meta .url-link { color:var(--accent); font-size:13px; text-decoration:none; display:inline-block; margin-top:2px; }
+
+  label.field { display:block; margin:14px 0 0; }
+  label.field > span { display:block; font-size:13px; color:var(--muted); font-weight:600; margin-bottom:6px; }
+  input[type=text], input[type=url] { width:100%; box-sizing:border-box; background:var(--card-2); color:var(--text); border:1px solid var(--line); border-radius:13px; padding:12px 14px; font-size:16px; }
+</style>
+</head>
+<body>
+
+<h1>Wishlist <span>♡</span></h1>
+<p class="sub">Save a Suggest idea for later, browse saved ideas in a new Album segment, and log the real date from a saved idea when it happens. Optional URL field doubles as feedback <a href="https://github.com/tzoororg/DateAnalyze/issues/4" style="color:var(--muted)">#4</a>.</p>
+
+<div class="row">
+
+  <div>
+    <div class="phone">
+      <div class="section-title">Ideas tab</div>
+      <div class="card sug-card exploit">
+        <div class="sug-head">
+          <h3>🛶 Kayak rental at the lake</h3>
+          <span class="tag exploit">Favorite</span>
+        </div>
+        <p class="sug-reason">You haven't tried Outdoors in a while — worth a return.</p>
+        <div class="sug-meta"><span>Outdoors</span><span>~₪150</span><span>Effort ●●○○○</span></div>
+        <div class="btn-row">
+          <button class="btn ghost">♡ Save to wishlist</button>
+          <button class="btn">Log this when we do it →</button>
+        </div>
+      </div>
+
+      <div class="card sug-card">
+        <span class="sticker-tag">saved ♡</span>
+        <div class="sug-head">
+          <h3>🎨 Pottery painting café</h3>
+          <span class="tag explore">New</span>
+        </div>
+        <p class="sug-reason">You haven't tried Creative in 40 days.</p>
+        <div class="sug-meta"><span>Creative</span><span>~₪120</span><span>Effort ●○○○○</span></div>
+        <div class="btn-row">
+          <button class="btn ghost" disabled style="opacity:.55">✓ Saved to wishlist</button>
+          <button class="btn">Log this when we do it →</button>
+        </div>
+      </div>
+    </div>
+    <p class="caption">Every card gets a "♡ Save to wishlist" button. Already-saved cards (matched by title) show a "saved ♡" sticker and a disabled state instead.</p>
+  </div>
+
+  <div>
+    <div class="phone">
+      <div class="section-title">Album tab</div>
+      <div class="seg-row">
+        <button class="seg">List</button>
+        <button class="seg">Gallery</button>
+        <button class="seg on">☆ Wishlist</button>
+      </div>
+      <div class="section-title" style="margin-top:4px">Want to try (3)</div>
+
+      <div class="card tight">
+        <div class="entry">
+          <div class="thumb">🛶</div>
+          <div class="meta">
+            <h4>Kayak rental at the lake</h4>
+            <div class="sub">Outdoors · ~₪150 · effort ●●○○○</div>
+            <a class="url-link" href="#">🔗 lakeside-kayaks.com</a>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn small">We did it! Log it →</button>
+          <button class="btn ghost small">Remove</button>
+        </div>
+      </div>
+
+      <div class="card tight">
+        <div class="entry">
+          <div class="thumb">🎨</div>
+          <div class="meta">
+            <h4>Pottery painting café</h4>
+            <div class="sub">Creative · ~₪120 · effort ●○○○○</div>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn small">We did it! Log it →</button>
+          <button class="btn ghost small">Remove</button>
+        </div>
+      </div>
+
+      <div class="card tight">
+        <div class="entry">
+          <div class="thumb">🌃</div>
+          <div class="meta">
+            <h4>Night market food crawl</h4>
+            <div class="sub">Nightlife · ~₪200 · effort ●●○○○</div>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn small">We did it! Log it →</button>
+          <button class="btn ghost small">Remove</button>
+        </div>
+      </div>
+    </div>
+    <p class="caption">New "☆ Wishlist" segment alongside List/Gallery. Cards show an optional link; "We did it! Log it →" opens the log sheet pre-filled from the idea (same id, keeps the url); Remove deletes it.</p>
+  </div>
+
+  <div>
+    <div class="phone" style="padding-bottom:30px">
+      <div class="section-title">Log form (and idea card)</div>
+      <div class="card tight">
+        <label class="field" style="margin-top:0"><span>Title</span>
+          <input type="text" value="Kayak rental at the lake"/></label>
+        <label class="field"><span>Link <span style="font-weight:400">(optional — restaurant, Pinterest, booking page…)</span></span>
+          <input type="url" placeholder="https://…" value="https://lakeside-kayaks.com"/></label>
+      </div>
+    </div>
+    <p class="caption">A secondary, optional "Link" field in the log form (collapsed under the title). Set once on the idea, carried through to the logged date, editable any time.</p>
+  </div>
+
+</div>
+
+</body>
+</html>
