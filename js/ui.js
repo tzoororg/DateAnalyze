@@ -4,6 +4,7 @@ import * as db from "./store.js";
 import {
   CATEGORIES, MOOD_OPTIONS, COST_TIERS, METER, catLabel, catEmoji,
   blankEntry, fmtMoney, fmtDate, entryTimeMs, tierLabel, tierForCost, repeatForEnjoyment,
+  normTitle, todayISO,
 } from "./model.js";
 import * as A from "./analytics.js";
 import * as C from "./charts.js";
@@ -13,6 +14,10 @@ import * as push from "./push.js";
 const viewEl = () => document.getElementById("view");
 const formEl = () => document.getElementById("logSheetBody");
 let dates = [];
+// Wishlist ideas (status:"idea") live in the same `dates` array so History can show
+// them, but every analytics/suggest/memory consumer reads done() to exclude them.
+// Legacy entries have no status → treated as done.
+const done = () => dates.filter(e => e.status !== "idea");
 let draft = blankEntry();        // the entry currently being composed/edited
 let editingId = null;
 let currentTab = "home";
@@ -240,8 +245,8 @@ function show(tab) {
 // ---------- HOME tab ----------
 function renderHome() {
   const v = viewEl();
-  const top = suggest(dates, { explore: 0.5 })[0];
-  const memories = !memoryDismissed ? A.onThisDay(dates) : [];
+  const top = suggest(done(), { explore: 0.5 })[0];
+  const memories = !memoryDismissed ? A.onThisDay(done()) : [];
   const memoryCard = memories.length ? `
     <section class="card memory-card">
       <div class="memory-header">
@@ -350,6 +355,10 @@ function renderLog() {
       <label class="field ${draft.notes ? "" : "hidden"}" id="f-notes-wrap"><span>Notes / memories</span>
         <textarea id="f-notes" placeholder="What made it good (or not)?">${escHtml(draft.notes)}</textarea></label>
 
+      <button class="addnote-link" id="f-link-toggle" type="button">+ add a link</button>
+      <label class="field ${draft.url ? "" : "hidden"}" id="f-link-wrap"><span>Link <span class="muted" style="font-weight:400">(optional — booking page, Pinterest…)</span></span>
+        <input id="f-url" type="url" inputmode="url" placeholder="https://…" value="${escAttr(draft.url || "")}"/></label>
+
       <div class="btn-row">
         ${isEdit ? `<button class="btn ghost" id="f-cancel">Cancel</button>` : ""}
         <button class="btn" id="f-save">${isEdit ? "Save changes" : "Save date ♥"}</button>
@@ -364,7 +373,7 @@ function renderLog() {
 // Most-used past vibe words for the suggestion chips (defaults for a fresh diary).
 function pastVibes() {
   const freq = new Map();
-  for (const d of dates) {
+  for (const d of done()) {
     const w = (d.vibe || "").trim().toLowerCase();
     if (w) freq.set(w, (freq.get(w) || 0) + 1);
   }
@@ -391,6 +400,7 @@ function wireForm() {
   bind("f-date", "change", e => draft.date = e.target.value);
   bind("f-vibe", "input", e => draft.vibe = e.target.value);
   bind("f-notes", "input", e => draft.notes = e.target.value);
+  bind("f-url", "input", e => draft.url = e.target.value);
 
   // category dots
   v.querySelector("#f-category").addEventListener("click", e => {
@@ -430,6 +440,10 @@ function wireForm() {
   bind("f-note-toggle", "click", () => {
     v.querySelector("#f-notes-wrap").classList.toggle("hidden");
     v.querySelector("#f-notes").focus();
+  });
+  bind("f-link-toggle", "click", () => {
+    v.querySelector("#f-link-wrap").classList.toggle("hidden");
+    v.querySelector("#f-url").focus();
   });
 
   // photo source menu, opened by tapping the polaroid shot
@@ -510,6 +524,7 @@ async function saveDraft() {
   if (!draft.title.trim()) { toast("Write a caption first"); return; }
   draft.title = draft.title.trim();
   draft.vibe = (draft.vibe || "").trim();
+  draft.url = (draft.url || "").trim();
   const isNew = !editingId;
   if (isNew) draft.createdAt = Date.now();
   // attribute the form's enjoyment score to me as a per-person rating (see resolveRatings)
@@ -545,11 +560,12 @@ async function removeEntry(id) {
 async function renderList() {
   const host = viewEl().querySelector("#date-list");
   if (!host) return;
-  if (!dates.length) {
+  const logged = done();
+  if (!logged.length) {
     host.innerHTML = `<div class="empty"><div class="big">📭</div>No dates yet — tap ＋ to log your first one, or add demo data from the ⋯ menu.</div>`;
     return;
   }
-  const sorted = [...dates].sort((a, b) => entryTimeMs(b) - entryTimeMs(a)).slice(0, 5);
+  const sorted = [...logged].sort((a, b) => entryTimeMs(b) - entryTimeMs(a)).slice(0, 5);
   host.innerHTML = sorted.map(e => {
     // one hearts sticker: my rating, else partner's, else the legacy enjoyment score
     const { lines } = resolveRatings(e);
@@ -634,6 +650,7 @@ function renderHistory() {
         <div class="hist-view-toggle">
           <button class="seg ${hist.view === "list" ? "on" : ""}" data-view="list">☰ List</button>
           <button class="seg ${hist.view === "gallery" ? "on" : ""}" data-view="gallery">⊞ Gallery</button>
+          <button class="seg ${hist.view === "wishlist" ? "on" : ""}" data-view="wishlist">☆ Wishlist</button>
         </div>
         <button class="seg slideshow-btn" id="h-slideshow" title="Play a slideshow of your highlights">▶ Slideshow</button>
       </div>
@@ -719,7 +736,7 @@ function wireHistory() {
 }
 
 function sortedHistory() {
-  let list = [...dates];
+  let list = done();  // wishlist ideas render only in the dedicated wishlist view
   if (hist.category) list = list.filter(e => e.category === hist.category);
   if (hist.moods.length) list = list.filter(e => Array.isArray(e.mood) && hist.moods.some(k => e.mood.includes(k)));
   if (hist.query) {
@@ -748,6 +765,11 @@ async function renderHistoryList() {
   if (!host) return;
   const list = sortedHistory();
   const countEl = viewEl().querySelector("#h-count");
+
+  if (hist.view === "wishlist") {
+    renderWishlist(host, countEl);
+    return;
+  }
 
   if (hist.view === "gallery") {
     const photoEntries = list.flatMap(e => (e.photos || []).map(pid => ({ pid, e })));
@@ -921,6 +943,59 @@ function wireHistDetail(host) {
   });
 }
 
+// ---------- Wishlist (saved Suggest ideas) ----------
+function prettyUrl(u) {
+  return (u || "").replace(/^https?:\/\//, "").replace(/\/+$/, "");
+}
+
+function renderWishlist(host, countEl) {
+  const ideas = dates.filter(e => e.status === "idea")
+    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  if (countEl) countEl.textContent = `${ideas.length} idea${ideas.length !== 1 ? "s" : ""}`;
+  if (!ideas.length) {
+    host.innerHTML = `<div class="empty"><div class="big">☆</div>No saved ideas yet — tap “♡ Save to wishlist” on a suggestion in the Suggest tab.</div>`;
+    return;
+  }
+  host.innerHTML = `<h3 class="section-title">Want to try (${ideas.length})</h3>` + ideas.map(e => `
+    <div class="card tight">
+      <div class="entry">
+        <div class="thumb">${catEmoji(e.category)}</div>
+        <div class="meta">
+          <h4>${escHtml(e.title)}</h4>
+          <div class="sub">${catLabel(e.category)}${e.cost != null ? " · ~" + fmtMoney(e.cost) : ""}${e.effort ? " · effort " + "●".repeat(e.effort) + "○".repeat(5 - e.effort) : ""}</div>
+          ${e.url ? `<a class="url-link" href="${escAttr(e.url)}" target="_blank" rel="noopener">🔗 ${escHtml(prettyUrl(e.url))}</a>` : ""}
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn small" data-didit="${e.id}">We did it! Log it →</button>
+        <button class="btn ghost small" data-rmidea="${e.id}">Remove</button>
+      </div>
+    </div>`).join("");
+  host.querySelectorAll("[data-didit]").forEach(b => b.addEventListener("click", () => logIdea(b.dataset.didit)));
+  host.querySelectorAll("[data-rmidea]").forEach(b => b.addEventListener("click", () => removeIdea(b.dataset.rmidea)));
+}
+
+// Turn a wishlist idea into a real logged date: same doc (keeps id + url), status
+// flips to done on save. editingId set so saveDraft updates in place — no duplicate.
+async function logIdea(id) {
+  const idea = await db.getDate(id);
+  if (!idea) return;
+  draft = structuredClone(idea);
+  draft.status = "done";
+  draft.date = todayISO();
+  editingId = id;
+  openLogSheet();
+  toast("Fill in how it went, then save ♥");
+}
+
+async function removeIdea(id) {
+  if (!confirm("Remove this idea from your wishlist?")) return;
+  await db.deleteDate(id);
+  await reload();
+  toast("Removed");
+  show("history");
+}
+
 // ---------- INSIGHTS tab ----------
 // Most-used vibe words for the "our vibe" line: prefers the free-text `vibe`
 // field, falling back to the legacy `mood` array for pre-v2 entries.
@@ -942,7 +1017,7 @@ function topVibeWords(list, n) {
 function wrappedStats(period) {
   const year = new Date().getFullYear();
   const periodLabel = period === "year" ? `${year} SO FAR` : "ALL TIME";
-  const list = period === "year" ? dates.filter(d => new Date(entryTimeMs(d)).getFullYear() === year) : dates;
+  const list = period === "year" ? done().filter(d => new Date(entryTimeMs(d)).getFullYear() === year) : done();
   const s = A.summary(list);
   if (!s.count) return { periodLabel, count: 0 };
   const cats = A.byCategory(list);
@@ -1002,18 +1077,19 @@ function wireInsights() {
 
 function renderInsights() {
   const v = viewEl();
-  if (!dates.length) {
+  const d = done();  // exclude wishlist ideas from every analytic below
+  if (!d.length) {
     v.innerHTML = emptyState("📊", "No insights yet", "Log a few dates and this fills with charts about what you two love.");
     return;
   }
   const wStats = wrappedStats(wrapPeriod);
-  const s = A.summary(dates);
-  const cats = A.byCategory(dates);
-  const moods = A.byMood(dates);
-  const trend = A.monthlyTrend(dates);
-  const vfm = A.valueForMoney(dates, 5);
-  const rep = A.repeatWorthy(dates, 5);
-  const exp = A.explorationStats(dates);
+  const s = A.summary(d);
+  const cats = A.byCategory(d);
+  const moods = A.byMood(d);
+  const trend = A.monthlyTrend(d);
+  const vfm = A.valueForMoney(d, 5);
+  const rep = A.repeatWorthy(d, 5);
+  const exp = A.explorationStats(d);
 
   const moodSection = moods.length ? (() => {
     const maxCount = moods[0].count;
@@ -1063,7 +1139,7 @@ function renderInsights() {
       <div class="legend"><span style="color:var(--accent)">avg enjoyment</span><span style="color:var(--card-2)">how many dates</span></div></div>
 
     <h3 class="section-title">Enjoyment vs cost</h3>
-    <div class="card chart-wrap">${C.scatterChart(A.enjoymentVsCost(dates))}
+    <div class="card chart-wrap">${C.scatterChart(A.enjoymentVsCost(d))}
       <p class="muted small" style="margin:8px 2px 0">Top-left = cheap & wonderful.</p></div>
 
     <h3 class="section-title">Best value for money</h3>
@@ -1093,7 +1169,7 @@ function renderInsights() {
 // ---------- SUGGEST tab ----------
 function renderSuggest() {
   const v = viewEl();
-  const results = suggest(dates, { ...sug, jitter: false });
+  const results = suggest(done(), { ...sug, jitter: false });
 
   v.innerHTML = `
     <section class="card">
@@ -1156,8 +1232,13 @@ function renderSuggest() {
 
 function renderSugCards(results) {
   if (!results.length) return emptyState("✨", "No ideas match", "Loosen your filters a little.");
-  return results.map(r => `
+  const saved = new Set(dates.filter(e => e.status === "idea").map(e => normTitle(e.title)));
+  return results.map(r => {
+    const payload = escAttr(JSON.stringify({ title: r.title, category: r.category, cost: r.estCost ?? null, effort: r.effort }));
+    const isSaved = saved.has(normTitle(r.title));
+    return `
     <div class="card sug-card ${r.kind}">
+      ${isSaved ? `<span class="sticker-tag butter">saved ♡</span>` : ""}
       <div class="sug-head">
         <h3>${catEmoji(r.category)} ${escHtml(r.title)}</h3>
         <span class="tag ${r.kind}">${r.kind === "explore" ? "New" : "Favorite"}</span>
@@ -1169,8 +1250,14 @@ function renderSugCards(results) {
         <span>~${fmtMoney(r.estCost)}</span>
         <span>Effort ${"●".repeat(r.effort)}${"○".repeat(5 - r.effort)}</span>
       </div>
-      <button class="btn secondary" data-log='${escAttr(JSON.stringify({ title: r.title, category: r.category, cost: r.estCost ?? null, effort: r.effort }))}'>Log this when we do it →</button>
-    </div>`).join("");
+      <div class="btn-row">
+        ${isSaved
+          ? `<button class="btn ghost" disabled style="opacity:.55">✓ Saved to wishlist</button>`
+          : `<button class="btn ghost" data-save='${payload}'>♡ Save to wishlist</button>`}
+        <button class="btn secondary" data-log='${payload}'>Log this when we do it →</button>
+      </div>
+    </div>`;
+  }).join("");
 }
 
 async function loadSugPhotos() {
@@ -1188,7 +1275,7 @@ async function loadSugPhotos() {
 function wireSuggest() {
   const v = viewEl();
   const rerun = (jitter = false) => {
-    v.querySelector("#sug-results").innerHTML = renderSugCards(suggest(dates, { ...sug, jitter }));
+    v.querySelector("#sug-results").innerHTML = renderSugCards(suggest(done(), { ...sug, jitter }));
     wireLogButtons();
     loadSugPhotos();
   };
@@ -1253,13 +1340,24 @@ function wireSuggest() {
 }
 
 function wireLogButtons() {
-  viewEl().querySelectorAll("[data-log]").forEach(b => b.addEventListener("click", () => {
+  const v = viewEl();
+  v.querySelectorAll("[data-log]").forEach(b => b.addEventListener("click", () => {
     const seed = JSON.parse(b.dataset.log);
     draft = blankEntry();
     Object.assign(draft, { title: seed.title, category: seed.category, cost: seed.cost, effort: seed.effort || 3 });
     editingId = null;
     openLogSheet();
     toast("Pre-filled — save it after your date");
+  }));
+  v.querySelectorAll("[data-save]").forEach(b => b.addEventListener("click", async () => {
+    const seed = JSON.parse(b.dataset.save);
+    const idea = blankEntry();
+    Object.assign(idea, { title: seed.title, category: seed.category, cost: seed.cost, effort: seed.effort || 3, status: "idea" });
+    await db.putDate(idea);
+    await reload();
+    toast("Saved to wishlist ♡");
+    const host = v.querySelector("#sug-results");
+    if (host) { host.innerHTML = renderSugCards(suggest(done(), { ...sug, jitter: false })); wireLogButtons(); loadSugPhotos(); }
   }));
 }
 
@@ -1571,7 +1669,7 @@ function openLightbox(items, startIndex = 0, opts = {}) {
 // Tapping a slide jumps to that date. Same data path a native lockscreen carousel
 // would consume (A.highlightReel) — see the note there.
 async function startSlideshow() {
-  const reel = A.highlightReel(dates);
+  const reel = A.highlightReel(done());
   if (!reel.length) { toast("No photos yet — log a date with a photo first."); return; }
   const items = [];
   for (const r of reel) {
@@ -1603,7 +1701,7 @@ function maybeScreensaver() {
   if (document.visibilityState !== "visible") return;
   if (!document.hasFocus()) return;   // another app/picker is in front — don't count it as idle
   if (document.querySelector(".lightbox")) return;
-  if (!dates.some(d => Array.isArray(d.photos) && d.photos.length)) return;
+  if (!done().some(d => Array.isArray(d.photos) && d.photos.length)) return;
   startSlideshow();
 }
 function wireIdle() {

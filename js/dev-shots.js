@@ -59,37 +59,23 @@ const STATES = {
   // ---------- roadmap "after" mocks (static DOM injections) ----------
   async wrapped() { await tab("insights"); },
 
-  async "after-wishlist-suggest"() {
+  // Real wishlist states: actually save an idea, then show the saved suggestion
+  // card / the Wishlist history segment the live app renders.
+  async ensureIdea() {
+    if ((await db.getAllDates()).some(e => e.status === "idea")) return;
     await tab("suggest");
-    document.querySelectorAll("#sug-results [data-log]").forEach(b => {
-      b.parentElement.insertBefore(html(`<button class="btn ghost" style="margin-bottom:8px">♡ Save to wishlist</button>`), b);
-    });
-    const first = $("#sug-results .sug-card");
-    if (first) first.prepend(html(`<span class="sticker-tag butter">saved ♡</span>`));
+    $("#sug-results [data-save]")?.click();
+    await sleep(500);
   },
-
-  async "after-wishlist-history"() {
+  async "wishlist-suggest"() {
+    await STATES.ensureIdea();
+    await tab("suggest");
+  },
+  async "wishlist-history"() {
+    await STATES.ensureIdea();
     await tab("history");
-    $(".hist-view-toggle")?.appendChild(html(`<button class="seg on">☆ Wishlist</button>`));
-    $("#hist-list").innerHTML = "";
-    $("#hist-list").append(
-      html(`<h3 class="section-title">Want to try (3)</h3>`),
-      html(`<div class="card tight"><div class="entry">
-        <div class="thumb">🛶</div>
-        <div class="meta"><h4>Kayak rental at the lake</h4><div class="sub">saved from Ideas · ~₪150 · effort ●●○○○</div></div>
-      </div><div class="btn-row" style="margin-top:10px">
-        <button class="btn">We did it! Log it →</button><button class="btn ghost">Remove</button></div></div>`),
-      html(`<div class="card tight"><div class="entry">
-        <div class="thumb">🎨</div>
-        <div class="meta"><h4>Pottery painting café</h4><div class="sub">saved from Ideas · ~₪120 · effort ●○○○○</div></div>
-      </div><div class="btn-row" style="margin-top:10px">
-        <button class="btn">We did it! Log it →</button><button class="btn ghost">Remove</button></div></div>`),
-      html(`<div class="card tight"><div class="entry">
-        <div class="thumb">🌃</div>
-        <div class="meta"><h4>Night market food crawl</h4><div class="sub">saved from Ideas · ~₪200 · effort ●●○○○</div></div>
-      </div><div class="btn-row" style="margin-top:10px">
-        <button class="btn">We did it! Log it →</button><button class="btn ghost">Remove</button></div></div>`),
-    );
+    $('.hist-view-toggle [data-view="wishlist"]')?.click();
+    await sleep(400);
   },
 
   async "after-reminders"() {

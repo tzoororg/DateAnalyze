@@ -213,6 +213,41 @@ try {
   const bubble = await t.evaluate(`[...document.querySelectorAll(".cmt .bubble")].some(b => b.textContent.includes("smoke comment"))`);
   check("adding a comment renders a bubble", bubble === true);
 
+  // 9e. Wishlist (roadmap #3): save a suggestion, see it in the wishlist segment,
+  // and "Log it" opens a pre-filled sheet.
+  t = await shotTab("suggest", 1700);
+  await t.evaluate(`document.querySelector("#sug-results [data-save]").click()`);
+  await sleep(400);
+  check("saving a suggestion shows the saved ♡ sticker",
+    await t.evaluate(`!!document.querySelector("#sug-results .sug-card .sticker-tag")`));
+  const ideaCount = await t.evaluate(`import("./js/store.js").then(s => s.getAllDates())
+    .then(ds => ds.filter(e => e.status === "idea").length)`);
+  check("saved idea persists with status=idea", ideaCount >= 1, `got ${ideaCount}`);
+  await t.evaluate(`document.querySelector('.tab[data-tab="history"]').click()`);
+  await sleep(300);
+  await t.evaluate(`document.querySelector('.hist-view-toggle [data-view="wishlist"]').click()`);
+  await sleep(300);
+  check("wishlist segment lists the saved idea",
+    await t.evaluate(`document.querySelectorAll("#hist-list [data-didit]").length`) >= 1);
+  check("wishlist ideas are excluded from the normal history list",
+    await t.evaluate(`(async () => {
+      document.querySelector('.hist-view-toggle [data-view="list"]').click();
+      await new Promise(r => setTimeout(r, 300));
+      const s = await import("./js/store.js");
+      const all = await s.getAllDates();
+      const doneCount = all.filter(e => e.status !== "idea").length;
+      const ideaCount = all.filter(e => e.status === "idea").length;
+      const rows = document.querySelectorAll("#hist-list .hist-entry").length;
+      return ideaCount >= 1 && rows === doneCount;   // list shows only done dates
+    })()`) === true);
+  await t.evaluate(`document.querySelector('.hist-view-toggle [data-view="wishlist"]').click()`);
+  await sleep(200);
+  await t.evaluate(`document.querySelector("#hist-list [data-didit]").click()`);
+  await t.waitFor(`!document.getElementById("logSheet").classList.contains("hidden")`);
+  check("'Log it' opens a pre-filled log sheet",
+    (await t.evaluate(`document.getElementById("f-title").value`)).length > 0);
+  await t.evaluate(`document.getElementById("logCloseBtn").click()`);
+
   // 10. no console errors anywhere
   for (const { state, tab } of tabs) {
     check(`no console errors [${state}]`, tab.errors.length === 0, tab.errors.slice(0, 2).join(" | "));

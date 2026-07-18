@@ -163,8 +163,13 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); bo
 }
 .btn.secondary { background: var(--card-2); color: var(--text); border: 1px solid var(--line); box-shadow: none; }
 .btn.ghost { background: transparent; color: var(--muted); border: 1px solid var(--line); box-shadow: none; }
+.btn.small { padding: 11px; font-size: 14px; border-radius: 13px; }
 .btn:active { transform: translateY(1px); }
 .btn-row { display: flex; gap: 10px; margin-top: 16px; }
+/* Suggest-card action buttons sit a touch smaller than the full-width primary */
+.sug-card .btn { padding: 11px; font-size: 14px; border-radius: 13px; }
+/* Wishlist idea link */
+.url-link { color: var(--accent); font-size: 13px; text-decoration: none; display: inline-block; margin-top: 2px; }
 
 /* Cost currency */
 .cost-row { display: flex; gap: 6px; }

@@ -69,7 +69,9 @@ export function blankEntry() {
     id: crypto.randomUUID(),
     date: todayISO(),
     createdAt: Date.now(),
+    status: "done",  // "idea" = a wishlist item (no ratings yet); legacy/missing = done
     title: "",
+    url: "",         // optional link (booking page, Pinterest…); doubles as feedback #4
     category: "dining",
     enjoyment: 4,
     mood: [],

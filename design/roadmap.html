@@ -39,26 +39,9 @@
   "Before" is the real app today; "After" is a mock rendered inside the real app with its real CSS
   (injected by <code>js/dev-shots.js</code>, captured by <code>node design/capture.mjs</code>) — so
   spacing, theme and components are authentic, only the feature content is fake.
-  Shipped items (#1 milestone strip — later removed by choice — #2 Wrapped card, and #6 photo import) are not shown,
+  Shipped items (#1 milestone strip — later removed by choice — #2 Wrapped card, #3 Wishlist, and #6 photo import) are not shown,
   and neither is #12 (iOS support) — platform work with no UI to mock, see <a href="../IOS_PLAN.md">IOS_PLAN.md</a>.</p>
 </header>
-
-<section class="point" id="p3">
-  <span class="crumb">Roadmap #3 · Ideas + Album tabs</span>
-  <h2>Wishlist — close the Suggest → Log loop <span class="badge med">Medium</span></h2>
-  <p class="what">Save a suggestion as "want to try"; saved ideas live in a wishlist and pre-fill the log form when the date actually happens. Schema: <code>status: "idea" | "done"</code> plus optional <code>url</code> on entries; analytics must exclude non-done entries (the real work).</p>
-  <p class="touches">Touches: <code>js/model.js</code> (status + url fields) · <code>js/analytics.js</code>/<code>js/suggest.js</code> (done-only filter) · <code>js/ui.js</code> Ideas cards + Album view</p>
-  <p class="note"><b>Priority:</b> Important × Not urgent — closes a dead-end in Suggest and matches user feedback (<a href="https://github.com/tzoororg/DateAnalyze/issues/4">issue #4</a>: "save an idea for a future date, maybe with url link"), but ships after #1/#2. The URL field is the one new detail from that issue — a link to a restaurant/Pinterest page, shown on the wishlist card.</p>
-  <div class="ba">
-    <div class="col before"><h3>Before</h3><figure><img src="shots/suggest.png" alt=""/><figcaption>Ideas today — a card can only be logged, not kept</figcaption></figure></div>
-    <div class="col after"><h3>After</h3><figure><img src="shots/after-wishlist-suggest.png" alt=""/><figcaption>"♡ Save to wishlist" on every card; saved sticker on kept ones</figcaption></figure></div>
-  </div>
-  <div class="ba">
-    <div class="col before"><h3>Before</h3><figure><img src="shots/history-list.png" alt=""/><figcaption>Album today — only past (done) dates</figcaption></figure></div>
-    <div class="col after"><h3>After</h3><figure><img src="shots/after-wishlist-history.png" alt=""/><figcaption>New "☆ Wishlist" view in Album; "We did it! Log it →" pre-fills the form</figcaption></figure></div>
-    <div class="note"><b>Why it wins:</b> the app becomes prospective, not only retrospective — a reason to open it between dates.</div>
-  </div>
-</section>
 
 <section class="point" id="p5">
   <span class="crumb">Roadmap #5 · Ideas tab</span>

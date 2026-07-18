@@ -91,6 +91,8 @@ single card for "all time" + "this year".
 
 ## 3. Wishlist — close the Suggest → Log loop
 
+**Status.** ✅ Shipped 2026-07-18.
+
 **What.** Let a Suggest result be saved as "want to try." Saved ideas live in a
 lightweight list; picking one pre-fills the Log form when you actually do the date.
 

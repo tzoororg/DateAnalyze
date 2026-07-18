@@ -209,3 +209,26 @@ test("wrappedCard renders stat strings for a fixture, and a graceful empty state
   assert.ok(empty.startsWith("<svg"));
   assert.ok(!empty.includes("undefined"));
 });
+
+// ================= wishlist (status:"idea") =================
+
+// Guards the ui.js choke point: every analytics/suggest consumer reads done()
+// (e => e.status !== "idea"). A saved idea must never skew stats or be treated
+// as a past favorite. Sample entries have no status → counted as done.
+test("wishlist ideas are excluded from analytics and suggestions", () => {
+  const idea = { ...blankEntry(), status: "idea", title: "Zorbing on a hillside", category: "active", enjoyment: 5, cost: 900 };
+  const mixed = [...dates, idea];
+  const excludeIdeas = arr => arr.filter(e => e.status !== "idea");
+
+  assert.equal(excludeIdeas(mixed).length, dates.length);
+  assert.ok(!excludeIdeas(mixed).some(e => e.status === "idea"));
+
+  // analytics over the filtered mix match the done-only set exactly (idea's 5★ / ₪900 vanish)
+  assert.equal(analytics.summary(excludeIdeas(mixed)).count, analytics.summary(dates).count);
+  assert.equal(analytics.summary(excludeIdeas(mixed)).totalCost, analytics.summary(dates).totalCost);
+  assert.deepEqual(analytics.byCategory(excludeIdeas(mixed)), analytics.byCategory(dates));
+
+  // the idea (unlogged) never surfaces as a suggestion when ideas are excluded
+  const results = suggest(excludeIdeas(mixed), { explore: 0 });
+  assert.ok(!results.some(r => normTitle(r.title) === normTitle(idea.title)));
+});
