@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Mock — Time-capsule notes (Roadmap #11)</title>
+<link rel="stylesheet" href="../css/styles.css"/>
+<style>
+  body { padding: 20px 0 60px; }
+  .mockwrap { max-width: 390px; margin: 0 auto; padding: 0 16px; }
+  .mocklabel { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin: 26px 0 8px; }
+
+  /* ---- proposed: capsule field in the log form ---- */
+  .link-row { display: flex; align-items: center; justify-content: space-between; }
+  .capsule-toggle {
+    background: var(--butter-bg); border: none; border-radius: 999px;
+    font-size: 12px; color: var(--butter-fg); font-weight: 700;
+    padding: 5px 12px; cursor: pointer;
+  }
+  .capsule-wrap { margin-top: 14px; }
+  .capsule-field {
+    background: var(--card-2); border: 1px dashed var(--butter-fg);
+    border-radius: 13px; padding: 10px 12px 12px;
+  }
+  .capsule-field textarea {
+    background: transparent; border: none; padding: 6px 2px; min-height: 56px;
+    font: inherit;
+  }
+  .capsule-field textarea:focus { outline: none; }
+  .capsule-head {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 700; color: var(--butter-fg);
+  }
+  .capsule-head .when { margin-left: auto; font-size: 11px; font-weight: 600; color: var(--muted); }
+
+  /* ---- proposed: capsule inside the memory card ---- */
+  .capsule-memory {
+    margin-top: 10px; padding: 10px 12px;
+    background: var(--card-2); border-radius: 13px;
+    border-left: 3px solid var(--butter-fg);
+  }
+  .capsule-memory .from {
+    font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em;
+    color: var(--butter-fg); margin-bottom: 4px;
+  }
+  .capsule-memory .msg { font-style: italic; color: var(--text); }
+</style>
+</head>
+<body>
+<div class="mockwrap">
+
+  <div class="mocklabel">A · Log form — collapsed (default)</div>
+  <section class="card logform">
+    <div class="link-row">
+      <button class="addnote-link" type="button">+ add a note</button>
+      <button class="capsule-toggle" type="button">💌 note to next year</button>
+    </div>
+    <div class="btn-row"><button class="btn">Save date ♥</button></div>
+  </section>
+
+  <div class="mocklabel">B · Log form — capsule open</div>
+  <section class="card logform">
+    <div class="link-row">
+      <button class="addnote-link" type="button">+ add a note</button>
+    </div>
+    <div class="capsule-wrap">
+      <div class="capsule-field">
+        <div class="capsule-head">💌 To future us <span class="when">opens Jul 18, 2027</span></div>
+        <textarea placeholder="If you're reading this…">If you're reading this, book the rooftop again.</textarea>
+      </div>
+    </div>
+    <div class="btn-row"><button class="btn">Save date ♥</button></div>
+  </section>
+
+  <div class="mocklabel">C · One year later — memory card on Home</div>
+  <section class="card memory-card">
+    <div class="memory-header">
+      <span class="memory-title">On this day ✨</span>
+      <button class="memory-dismiss">✕</button>
+    </div>
+    <div class="memory-item">
+      <div class="memory-ago">1 year ago</div>
+      <div class="entry" style="pointer-events:none">
+        <div class="thumb">🌇</div>
+        <div class="meta"><h4>Rooftop sunset drinks</h4>
+          <div class="sub">Jul 18, 2026 · ★★★★★</div>
+        </div>
+      </div>
+      <div class="capsule-memory">
+        <div class="from">💌 From you</div>
+        <div class="msg">If you're reading this, book the rooftop again.</div>
+      </div>
+    </div>
+  </section>
+
+  <p class="mocklabel" style="text-transform:none;letter-spacing:0">Schema: additive optional <code>capsule: string</code> on the date entry (js/model.js); absent = no capsule, no backfill. In cloud mode the label shows the author's name ("From Yuval") instead of "From you".</p>
+
+</div>
+<!-- duel round 1 (REVISE):
+  1 merge stacked link rows -> accepted: capsule toggle inline right of "+ add a note"
+  2 no cursive in live input -> accepted: plain font while composing, cursive only on replay
+  3 cut microcopy -> accepted: right-aligned "🕰 Jul 18, 2027" badge in the field header
+  4 "from you, one year ago" redundant + author-blind -> accepted: "From you" / author name in cloud mode
+  5 name the migration -> accepted: additive optional `capsule` field noted in mock
+-->
+<!-- duel round 2 (REVISE):
+  1 "two affordances for one feature" -> refused: "+ add a note" is the existing shipped notes toggle, a separate feature
+  2 "stale header above open capsule" -> refused: same misread; notes toggle stays functional
+  3 drop quote marks, check legibility -> accepted: quotes removed; surface change (see 4) fixes contrast
+  4 olive palette drift -> accepted: capsule surfaces now card-2 (plum) with butter-fg dashed/left border
+  5 typeface split B vs C -> half-accepted: textarea fixed from monospace to body font; cursive replay kept per round 1's own "cursive only on replay" ruling
+-->
+<!-- duel round 3 (REVISE, cap reached):
+  1 toggle reads as sibling text link -> partial: restyled as butter sticker-pill (icon-only refused, new feature needs a name)
+  2 cursive replay fails legibility -> accepted (flagged 2 rounds running): body font italic, whimsy kept in icon + gold border
+  3 drop "1 YEAR AGO" -> refused: shipped memory-card scaffolding, varies per memory item
+  4 date chip looks tappable -> accepted: passive muted "opens Jul 18, 2027" caption
+  5 yellow needs per-theme token -> already satisfied: --butter-fg is themed (dark gold on light theme)
+-->
+</body>
+</html>
