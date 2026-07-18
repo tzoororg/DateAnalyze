@@ -34,7 +34,7 @@ Spawn ONE `general-purpose` agent (`run_in_background: false`). Its prompt must 
 
 ### Design pass (taste-critic)
 
-After the validator returns, spawn the `taste-critic` agent (`.claude/agents/taste-critic.md`, `run_in_background: false`) with the validator's screenshot paths and one sentence: "shipped-app views for release validation, light + dark". Convert each of its change requests into a reject (`category: design`) and merge into the validator's list for triage.
+After the validator returns, capture the FULL view catalog — including interaction states (log sheet, partner match, active date night, etc.) that the validator's resting-tab screenshots miss — with `node design/capture.mjs http://localhost:8000` (writes to `design/shots/`; the validator's server is still running). Then spawn the `taste-critic` agent (`.claude/agents/taste-critic.md`, `run_in_background: false`) with all `design/shots/*.png` paths plus the validator's dark-mode screenshots, and one sentence: "shipped-app views for release validation". Convert each of its change requests into a reject (`category: design`) and merge into the validator's list for triage. Afterwards `git checkout -- design/shots` unless the catalog shots are meant to change this release.
 
 ## Phase 3 — Triage (main session)
 
