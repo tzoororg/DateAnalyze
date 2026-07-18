@@ -23,7 +23,7 @@ Spawn ONE `general-purpose` agent (`run_in_background: false`). Its prompt must 
 >
 > For every item in the release notes: exercise it in the UI. Verify each bug fix no longer reproduces and each feature works, including obvious adjacent flows it could have broken (log a date, browse history, open insights, get suggestions).
 >
-> Design pass: capture screenshots of each main view (Log, History, Insights, Suggest) in light AND dark mode (resize_window colorScheme) and judge them **as a set**: does it read as one coherent, deliberately designed app with a distinct personality, or generic defaults? Note anything inconsistent (spacing, colors, typography, mismatched components).
+> Design pass: capture screenshots of each main view (Log, History, Insights, Suggest) in light AND dark mode (resize_window colorScheme), save them to the scratchpad, and list the file paths in your report. Do NOT judge the design yourself — a separate critic does that.
 >
 > Return ONLY a list of rejects in this exact format (empty list = pass):
 > - id: R1, R2, …
@@ -31,6 +31,10 @@ Spawn ONE `general-purpose` agent (`run_in_background: false`). Its prompt must 
 > - severity guess: high | medium | low
 > - repro steps / description (design items: which views and what feels off)
 > Do not suggest code fixes. Do not pass items that "mostly work".
+
+### Design pass (taste-critic)
+
+After the validator returns, spawn the `taste-critic` agent (`.claude/agents/taste-critic.md`, `run_in_background: false`) with the validator's screenshot paths and one sentence: "shipped-app views for release validation, light + dark". Convert each of its change requests into a reject (`category: design`) and merge into the validator's list for triage.
 
 ## Phase 3 — Triage (main session)
 
