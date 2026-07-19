@@ -243,3 +243,48 @@ test("wishlist ideas are excluded from analytics and suggestions", () => {
   const results = suggest(excludeIdeas(mixed), { explore: 0 });
   assert.ok(!results.some(r => normTitle(r.title) === normTitle(idea.title)));
 });
+
+// ================= crypto (E2EE) =================
+import { genKey, exportKeyB64, importKeyB64, encryptJSON, decryptJSON, encryptBlob, decryptBlob } from "../js/crypto.js";
+
+test("crypto: JSON round-trip", async () => {
+  const key = await genKey();
+  const obj = { title: "Mini golf ⛳", enjoyment: 5, mood: ["fun"], cost: 42.5, nested: { a: [1, 2] } };
+  const enc = await encryptJSON(key, obj);
+  assert.equal(typeof enc, "string");
+  assert.ok(!enc.includes("Mini golf"));
+  assert.deepEqual(await decryptJSON(key, enc), obj);
+});
+
+test("crypto: blob round-trip", async () => {
+  const key = await genKey();
+  const bytes = new Uint8Array(1000).map((_, i) => i % 251);
+  const blob = new Blob([bytes], { type: "image/jpeg" });
+  const enc = await encryptBlob(key, blob);
+  assert.notEqual(enc.size, 0);
+  const dec = await decryptBlob(key, enc, "image/jpeg");
+  assert.equal(dec.type, "image/jpeg");
+  assert.deepEqual(new Uint8Array(await dec.arrayBuffer()), bytes);
+});
+
+test("crypto: tampered ciphertext throws", async () => {
+  const key = await genKey();
+  const enc = await encryptJSON(key, { secret: true });
+  const tampered = enc.slice(0, -2) + (enc.endsWith("AA") ? "BB" : "AA");
+  await assert.rejects(() => decryptJSON(key, tampered));
+});
+
+test("crypto: wrong key throws", async () => {
+  const enc = await encryptJSON(await genKey(), { secret: true });
+  const otherKey = await genKey();
+  await assert.rejects(() => decryptJSON(otherKey, enc));
+});
+
+test("crypto: key export/import round-trip (base64url, no padding)", async () => {
+  const key = await genKey();
+  const b64 = await exportKeyB64(key);
+  assert.match(b64, /^[A-Za-z0-9_-]{43}$/); // 32 bytes -> 43 base64url chars, no padding
+  const key2 = await importKeyB64(b64);
+  const enc = await encryptJSON(key, { hello: "world" });
+  assert.deepEqual(await decryptJSON(key2, enc), { hello: "world" });
+});

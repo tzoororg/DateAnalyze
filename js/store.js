@@ -109,6 +109,11 @@ export async function getIdToken() { return cloud ? cloud.getIdToken() : null; }
 // Retroactively upload this device's local photos to the shared space (cloud-only).
 export async function backfillPhotos(onProgress) { return mode === "cloud" ? cloud.backfillPhotos(onProgress) : 0; }
 
+// ---- E2EE key management (cloud-only; no-ops in local mode) ----
+export async function getSpaceKeyB64() { return mode === "cloud" ? cloud.getSpaceKeyB64() : null; }
+export async function setSpaceKeyB64(b64) { return mode === "cloud" ? cloud.setSpaceKeyB64(b64) : null; }
+export async function encryptExistingData(onProgress) { return mode === "cloud" ? cloud.encryptExistingData(onProgress) : 0; }
+
 // Settings always stay local — see file header.
 export async function getSetting(key, fallback = null) { return local.getSetting(key, fallback); }
 export async function setSetting(key, value) { return local.setSetting(key, value); }

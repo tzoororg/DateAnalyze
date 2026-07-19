@@ -131,10 +131,10 @@ but has production gaps:
 IndexedDB is evictable under storage pressure ("best-effort" bucket). For a general user
 whose only copy of years of memories is local, browser eviction = total loss.
 
-- [ ] Call `navigator.storage.persist()` at first write; surface the result.
-- [ ] Show storage usage (`navigator.storage.estimate()`) in settings.
-- [ ] Nudge toward the existing JSON export (periodic "you haven't backed up in N months"
-      reminder) or toward enabling sync.
+- [x] Call `navigator.storage.persist()` at first write; surface the result (⋯ menu line).
+- [x] Show storage usage (`navigator.storage.estimate()`) in the ⋯ menu.
+- [x] Nudge toward the existing JSON export (60-day toast, 7-day snooze; `lastExportAt`
+      recorded on export) or toward enabling sync.
 
 ### 3.2 Spark plan cannot serve general users — HIGH (blocker for launch)
 Base64 photos in Firestore: ~900 KB/photo against a **1 GiB total** Firestore quota ≈ ~1,100
@@ -144,8 +144,8 @@ the entire `dates` collection on every app open.
 - [ ] Move to the Blaze plan before public launch; set a billing budget + alert.
 - [ ] Migrate photos to Cloud Storage (upload/download path + `storage.rules` are preserved
       in git history per CLAUDE.md); keep base64 docs as a read-fallback during migration.
-- [ ] **Enable Firestore persistent local cache** (`persistentLocalCache` in the SDK init in
-      sync.js) at the same time as the Blaze migration. `attachSpace` snapshots the whole
+- [x] **Enable Firestore persistent local cache** (`persistentLocalCache` in the SDK init in
+      sync.js) — done ahead of the Blaze migration (works on Spark too). `attachSpace` snapshots the whole
       `dates` collection on every app open; without the cache every doc bills as a read every
       time (~$25–45/mo at 1,000 couples with multi-year histories). With it, only changed
       docs bill — the dominant variable cost drops ~99%. This makes an `updatedAt`-cursor
@@ -163,23 +163,21 @@ ciphertext — this is also the best possible answer on the store data-safety fo
 users have plaintext data is far harder than the migration below.
 
 Design (all WebCrypto, no dependencies, fits the no-build-step constraint):
-- [ ] Key generation: on `createSpace`, generate a random AES-256-GCM key on-device.
-- [ ] Key exchange rides the pairing flow, never touching the server: append the key
-      (base64) to the invite code itself, so the combined code transfers phone-to-phone
-      (spoken/pasted/QR). The server-stored invite doc keeps only the spaceId — zero
-      knowledge of the key. Hide the longer code behind a share-link/QR flow.
-- [ ] Encrypt before Firestore: title, notes, location, mood, and photo bytes. Keep
-      plaintext: id, date, category, enjoyment/effort, wouldRepeat (needed nowhere
-      server-side today, but cheap to encrypt too — default to encrypting everything except
-      id/date; timestamps and doc counts remain visible metadata, disclose that).
-- [ ] Key storage: IndexedDB settings (local-only, never routed to cloud — the existing
-      settings path already guarantees this).
-- [ ] Recovery story: lost key = lost cloud data. The existing JSON export (plaintext,
-      on-device) is the backup; add an "export reminder" nudge (see 3.1) and show the key
-      as a recovery phrase the couple can store.
-- [ ] Migration for existing plaintext spaces: client re-writes every doc encrypted, then
-      deletes plaintext versions (both partners must update first — gate on an app-version
-      field in the space doc).
+- [x] Key generation: on `createSpace`, generate a random AES-256-GCM key on-device
+      (`js/crypto.js`, WebCrypto only).
+- [x] Key exchange rides the pairing flow: combined code `SERVERCODE.keyB64url`; the
+      server invite doc keeps only the 8-char code — zero knowledge of the key.
+      (Share-link/QR presentation of the longer code: still open, cosmetic.)
+- [x] Encrypt before Firestore: date docs are `{id, date, enc}` (everything except id/date
+      inside `enc`); photo bytes encrypted with mime `enc:<orig>`. Rules allow both the
+      encrypted and legacy plaintext shapes during migration. Metadata visible: id, date,
+      timestamps, doc counts — disclose in privacy policy.
+- [x] Key storage: IndexedDB settings (`spaceKey`, local-only, never routed to cloud).
+- [x] Recovery story: ⋯ menu "Show encryption key" / "Enter encryption key"; JSON export
+      stays plaintext as the backup; 3.1 nudge covers the reminder.
+- [x] Migration for existing plaintext spaces: ⋯ menu "Encrypt cloud data" — idempotent
+      re-write of plaintext dates + photos (no version gate; coordinate the one existing
+      couple manually — old clients still read/write the legacy shape meanwhile).
 - [ ] Privacy policy then states: content is end-to-end encrypted; operators can see only
       entry counts, timestamps, and space membership. Console access still restricted to
       one 2FA-protected account.

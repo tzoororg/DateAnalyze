@@ -6,6 +6,7 @@
 
 import { firebaseConfig } from "./firebase-config.js";
 import * as local from "./db.js";
+import * as e2ee from "./crypto.js";
 
 const SDK_VERSION = "12.15.0";
 const CDN = `https://www.gstatic.com/firebasejs/${SDK_VERSION}`;
@@ -21,6 +22,8 @@ let unsubscribe = null;
 let datesCache = [];
 let remoteChangeCb = null;
 let firstSnapshot = null; // promise that resolves once the first onSnapshot fires
+let spaceKey = null;      // CryptoKey for E2EE, loaded from the `spaceKey` setting
+let lastSnapshot = null;  // raw docs of the latest snapshot, so a late-arriving key can re-decrypt
 
 function assertConfigured() {
   if (!firebaseConfig.apiKey) {
@@ -40,10 +43,20 @@ async function ensureFirebase() {
     import(/* @vite-ignore */ `${CDN}/firebase-firestore.js`),
   ]);
   const app = appMod.initializeApp(firebaseConfig);
+  // Persistent local cache: dates survive offline restarts even in cloud mode.
+  let fs;
+  try {
+    fs = fsMod.initializeFirestore(app, {
+      localCache: fsMod.persistentLocalCache({ tabManager: fsMod.persistentMultipleTabManager() }),
+    });
+  } catch (err) {
+    console.warn("Persistent Firestore cache unavailable, using memory cache:", err);
+    fs = fsMod.getFirestore(app);
+  }
   sdk = {
     app,
     auth: authMod.getAuth(app),
-    fs: fsMod.getFirestore(app),
+    fs,
     ...appMod, ...authMod, ...fsMod,
   };
   if (EMU) {
@@ -100,10 +113,33 @@ export async function signOut() {
   if (sdk?.auth) await sdk.signOut(sdk.auth);
 }
 
+// ---- E2EE key ----
+async function loadSpaceKey() {
+  const b64 = await local.getSetting("spaceKey", null);
+  spaceKey = b64 ? await e2ee.importKeyB64(b64) : null;
+}
+
+// Decrypt one raw Firestore date doc. Plaintext (legacy) docs pass through.
+async function decryptDate(doc) {
+  if (!doc?.enc) return doc;
+  if (!spaceKey) return { id: doc.id, date: doc.date, title: "🔒 Encrypted (enter key in ⋯ menu)" };
+  try {
+    return { id: doc.id, date: doc.date, ...(await e2ee.decryptJSON(spaceKey, doc.enc)) };
+  } catch {
+    return { id: doc.id, date: doc.date, title: "🔒 Encrypted (wrong key?)" };
+  }
+}
+
+async function applySnapshot(docs) {
+  lastSnapshot = docs;
+  datesCache = await Promise.all(docs.map(decryptDate));
+}
+
 function detachSpace() {
   if (unsubscribe) { unsubscribe(); unsubscribe = null; }
   spaceId = null;
   datesCache = [];
+  lastSnapshot = null;
   firstSnapshot = null;
 }
 
@@ -112,14 +148,15 @@ function attachSpace(id) {
   spaceId = id;
   const s = sdk;
   const col = s.collection(s.fs, "spaces", spaceId, "dates");
-  firstSnapshot = new Promise((resolve, reject) => {
+  firstSnapshot = loadSpaceKey().then(() => new Promise((resolve, reject) => {
     let resolved = false;
     unsubscribe = s.onSnapshot(col, snap => {
-      datesCache = snap.docs.map(d => d.data());
-      if (!resolved) { resolved = true; resolve(); }
-      remoteChangeCb?.();
+      applySnapshot(snap.docs.map(d => d.data())).then(() => {
+        if (!resolved) { resolved = true; resolve(); }
+        remoteChangeCb?.();
+      });
     }, err => { if (!resolved) { resolved = true; reject(err); } });
-  });
+  }));
   return firstSnapshot;
 }
 
@@ -137,6 +174,11 @@ export async function createSpace() {
   // Order matters: the invite must exist before any member doc references it
   // (security rules validate new member docs against an existing invite/code).
   const spaceRef = s.doc(s.collection(s.fs, "spaces"));
+  // E2EE: generate the space key up front. The invite code shared with the
+  // partner is `${serverCode}.${keyB64}` — the server only ever sees serverCode.
+  const key = await e2ee.genKey();
+  const keyB64 = await e2ee.exportKeyB64(key);
+  await local.setSetting("spaceKey", keyB64);
   const code = genCode();
   await s.setDoc(s.doc(s.fs, "invites", code), {
     spaceId: spaceRef.id, createdBy: user.uid,
@@ -147,8 +189,9 @@ export async function createSpace() {
     { joinedAt: s.serverTimestamp(), joinedVia: "created", code });
 
   await attachSpace(spaceRef.id);
-  await local.setSetting("spaceInviteCode", code);
-  return { spaceId: spaceRef.id, code };
+  const combined = `${code}.${keyB64}`;
+  await local.setSetting("spaceInviteCode", combined);
+  return { spaceId: spaceRef.id, code: combined };
 }
 
 export async function joinSpace(codeRaw) {
@@ -156,7 +199,14 @@ export async function joinSpace(codeRaw) {
   const user = await waitForAuthUser();
   if (!user) throw new Error("Sign in first");
 
-  const code = codeRaw.trim().toUpperCase();
+  // Combined code: `${serverCode}.${keyB64}`. Only the server part is
+  // case-insensitive — the key is base64url and must keep its case.
+  const [serverPart, keyPart] = codeRaw.trim().split(".");
+  const code = serverPart.trim().toUpperCase();
+  if (keyPart) {
+    await e2ee.importKeyB64(keyPart); // validate before saving
+    await local.setSetting("spaceKey", keyPart);
+  }
   const inviteRef = s.doc(s.fs, "invites", code);
   const inviteSnap = await s.getDoc(inviteRef);
   if (!inviteSnap.exists()) throw new Error("That code isn't valid");
@@ -229,14 +279,19 @@ export async function getAllDates() {
 
 export async function putDate(entry) {
   const clean = JSON.parse(JSON.stringify(entry));
-  await sdk.setDoc(sdk.doc(sdk.fs, "spaces", spaceId, "dates", clean.id), clean);
+  let doc = clean;
+  if (spaceKey) {
+    const { id, date, ...rest } = clean;
+    doc = { id, date, enc: await e2ee.encryptJSON(spaceKey, rest) };
+  }
+  await sdk.setDoc(sdk.doc(sdk.fs, "spaces", spaceId, "dates", clean.id), doc);
 }
 
 export async function getDate(id) {
   const cached = datesCache.find(d => d.id === id);
   if (cached) return cached;
   const snap = await sdk.getDoc(sdk.doc(sdk.fs, "spaces", spaceId, "dates", id));
-  return snap.exists() ? snap.data() : undefined;
+  return snap.exists() ? decryptDate(snap.data()) : undefined;
 }
 
 export async function deleteDate(id) {
@@ -256,10 +311,14 @@ const MAX_PHOTO_BYTES = 900_000; // base64 length ceiling, safely under Firestor
 
 async function uploadPhoto(id, blob) {
   const fitted = await fitUnderLimit(blob);
-  const data = await blobToDataURL(fitted);
+  // E2EE: encrypt the blob; mime becomes "enc:<origMime>" so no new doc field
+  // is needed (firestore.rules allows only data/mime/createdAt).
+  const wire = spaceKey ? await e2ee.encryptBlob(spaceKey, fitted) : fitted;
+  const mime = spaceKey ? `enc:${fitted.type || "image/jpeg"}` : (fitted.type || "image/jpeg");
+  const data = await blobToDataURL(wire);
   await sdk.setDoc(sdk.doc(sdk.fs, "spaces", spaceId, "photos", id),
-    { data, mime: fitted.type || "image/jpeg", createdAt: sdk.serverTimestamp() });
-  await local.cachePhoto(id, fitted); // warm local cache so the uploader sees it instantly
+    { data, mime, createdAt: sdk.serverTimestamp() });
+  await local.cachePhoto(id, fitted); // warm local cache (plaintext) so the uploader sees it instantly
 }
 
 export async function putPhoto(blob) {
@@ -273,7 +332,12 @@ export async function getPhoto(id) {
   if (cached) return cached;
   const snap = await sdk.getDoc(sdk.doc(sdk.fs, "spaces", spaceId, "photos", id));
   if (!snap.exists()) return null;
-  const blob = await dataURLToBlob(snap.data().data);
+  const { data, mime } = snap.data();
+  let blob = await dataURLToBlob(data);
+  if (mime?.startsWith("enc:")) {
+    if (!spaceKey) return null; // can't decrypt without the key
+    blob = await e2ee.decryptBlob(spaceKey, blob, mime.slice(4));
+  }
   await local.cachePhoto(id, blob);
   return blob;
 }
@@ -367,6 +431,53 @@ export async function migrateLocalData(localDates) {
       if (blob) await uploadPhoto(id, blob);
     }
   }
+}
+
+// ---- E2EE key management ----
+
+export function getSpaceKeyB64() {
+  return local.getSetting("spaceKey", null);
+}
+
+export async function setSpaceKeyB64(b64) {
+  const key = await e2ee.importKeyB64(b64.trim()); // throws if malformed
+  await local.setSetting("spaceKey", b64.trim());
+  spaceKey = key;
+  if (lastSnapshot) {
+    datesCache = await Promise.all(lastSnapshot.map(decryptDate));
+    remoteChangeCb?.();
+  }
+}
+
+// Migration: encrypt every plaintext date + photo doc already in the space.
+// Idempotent — already-encrypted docs are skipped.
+export async function encryptExistingData(onProgress) {
+  if (!spaceKey) {
+    const key = await e2ee.genKey();
+    const b64 = await e2ee.exportKeyB64(key);
+    await local.setSetting("spaceKey", b64);
+    spaceKey = key;
+  }
+  const s = sdk;
+  const snap = await s.getDocs(s.collection(s.fs, "spaces", spaceId, "dates"));
+  const raw = snap.docs.map(d => d.data());
+  const plainDates = raw.filter(d => !d.enc);
+  const photoIds = [...new Set(raw.flatMap(d => d.photos || []))];
+  const total = plainDates.length + photoIds.length;
+  let done = 0;
+  for (const d of plainDates) { // ponytail: serial; a couple's data set is small
+    await putDate(d); // putDate encrypts now that spaceKey is set
+    onProgress?.(++done, total);
+  }
+  for (const pid of photoIds) {
+    const psnap = await s.getDoc(s.doc(s.fs, "spaces", spaceId, "photos", pid));
+    if (psnap.exists() && !psnap.data().mime?.startsWith("enc:")) {
+      const blob = await dataURLToBlob(psnap.data().data);
+      await uploadPhoto(pid, blob);
+    }
+    onProgress?.(++done, total);
+  }
+  return done;
 }
 
 function blobToDataURL(blob) {

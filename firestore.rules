@@ -46,6 +46,12 @@ service cloud.firestore {
       }
       match /dates/{dateId} {
         allow read: if isMember(spaceId);
+        // Encrypted (E2EE) shape: only id/date plaintext, everything else in `enc`.
+        allow create, update: if isMember(spaceId) &&
+          request.resource.data.id == dateId &&
+          request.resource.data.keys().hasOnly(['id','date','enc']) &&
+          request.resource.data.enc is string;
+        // Legacy plaintext shape (pre-E2EE spaces).
         allow create, update: if isMember(spaceId) &&
           request.resource.data.id == dateId &&
           request.resource.data.keys().hasOnly([

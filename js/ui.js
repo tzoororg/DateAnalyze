@@ -47,6 +47,8 @@ export async function init() {
   show(location.hash === "#history" ? "history" : "home");
   db.subscribe(onRemoteChange);
   push.refreshToken();
+  if (dates.length) maybeRequestPersist();
+  maybeBackupNudge();
   const TABS = [...document.querySelectorAll(".tab[data-tab]")].map(b => b.dataset.tab);
   let swipeTarget = null;
   viewEl().addEventListener("touchstart", e => { swipeTarget = e.target; }, { passive: true, capture: true });
@@ -145,6 +147,9 @@ function wireChrome() {
   document.getElementById("syncCopyCodeBtn").addEventListener("click", onSyncCopyCode);
   document.getElementById("syncNotifyBtn").addEventListener("click", onSyncNotify);
   document.getElementById("syncBackfillBtn").addEventListener("click", onSyncBackfill);
+  document.getElementById("syncShowKeyBtn").addEventListener("click", onSyncShowKey);
+  document.getElementById("syncEnterKeyBtn").addEventListener("click", onSyncEnterKey);
+  document.getElementById("syncEncryptBtn").addEventListener("click", onSyncEncrypt);
   document.getElementById("syncSignOutBtn").addEventListener("click", onSyncSignOut);
   renderSyncStatus();
 }
@@ -155,6 +160,38 @@ function renderSwVersion() {
   const channel = new MessageChannel();
   channel.port1.onmessage = e => { el.textContent = `App build: ${e.data}`; };
   navigator.serviceWorker.controller.postMessage("GET_VERSION", [channel.port2]);
+}
+
+// ---------- storage persistence (plan §3.1) ----------
+
+// Ask the browser to protect IndexedDB from eviction. Once per install.
+async function maybeRequestPersist() {
+  if (!navigator.storage?.persist) return;
+  if (await db.getSetting("persistAsked", false)) return;
+  await db.setSetting("persistAsked", true);
+  const granted = await navigator.storage.persist().catch(() => false);
+  await db.setSetting("persistGranted", granted);
+}
+
+async function renderStorageStatus() {
+  const el = document.getElementById("storageStatus");
+  if (!el || !navigator.storage?.estimate) return;
+  try {
+    const { usage = 0 } = await navigator.storage.estimate();
+    const persisted = await navigator.storage.persisted?.() ?? false;
+    el.textContent = `Storage: ${(usage / 1048576).toFixed(1)} MB used · ${persisted ? "persistent ✓" : "not guaranteed"}`;
+  } catch { el.textContent = ""; }
+}
+
+// Gentle reminder to back up if local-only, has data, and no export in 60 days.
+async function maybeBackupNudge() {
+  if (db.getMode() !== "local" || !dates.length) return;
+  const last = await db.getSetting("lastExportAt", 0);
+  if (last && Date.now() - last < 60 * 86400e3) return;
+  const snooze = await db.getSetting("backupNudgeSnooze", 0);
+  if (snooze && Date.now() < snooze) return;
+  await db.setSetting("backupNudgeSnooze", Date.now() + 7 * 86400e3);
+  toast("It's been a while — back up your dates (⋯ menu → Export) or turn on sync");
 }
 
 // ---------- sync menu ----------
@@ -169,8 +206,17 @@ async function renderSyncStatus() {
   const notify = document.getElementById("syncNotifyBtn");
   const backfill = document.getElementById("syncBackfillBtn");
   const signOut = document.getElementById("syncSignOutBtn");
+  const showKey = document.getElementById("syncShowKeyBtn");
+  const enterKey = document.getElementById("syncEnterKeyBtn");
+  const encrypt = document.getElementById("syncEncryptBtn");
   const mode = db.getMode();
   const user = db.getUser();
+  renderStorageStatus();
+
+  const keyB64 = mode === "cloud" ? await db.getSpaceKeyB64() : null;
+  showKey.classList.toggle("hidden", !keyB64);
+  enterKey.classList.toggle("hidden", !(mode === "cloud" && user && !keyB64));
+  encrypt.classList.toggle("hidden", !(mode === "cloud" && user && keyB64));
 
   if (mode === "cloud" && user) {
     lastInviteCode = await db.getInviteCode();
@@ -219,6 +265,36 @@ async function onSyncBackfill() {
   finally { btn.disabled = false; btn.textContent = "🖼️ Sync my photos to partner"; }
 }
 
+async function onSyncShowKey() {
+  const keyB64 = await db.getSpaceKeyB64();
+  if (!keyB64) return;
+  prompt("Your encryption key — store this safely. Lost key = lost cloud data.\nYour partner needs it too (it's part of the invite code).", keyB64);
+}
+
+async function onSyncEnterKey() {
+  const b64 = prompt("Paste your encryption key:");
+  if (!b64) return;
+  try {
+    await db.setSpaceKeyB64(b64);
+    await reload();
+    renderSyncStatus();
+    show(currentTab);
+    toast("Key saved — data decrypted");
+  } catch (err) { console.error(err); toast("That key doesn't look right"); }
+}
+
+async function onSyncEncrypt() {
+  const btn = document.getElementById("syncEncryptBtn");
+  btn.disabled = true;
+  toast("Encrypting cloud data…");
+  try {
+    const n = await db.encryptExistingData((done, total) => { btn.textContent = `🔐 Encrypting ${done}/${total}…`; });
+    toast(n ? `Encrypted ${n} item${n > 1 ? "s" : ""}` : "Everything already encrypted");
+    renderSyncStatus();
+  } catch (err) { console.error(err); toast(err.message || "Couldn't encrypt"); }
+  finally { btn.disabled = false; btn.textContent = "🔐 Encrypt cloud data"; }
+}
+
 async function onSyncCopyCode() {
   if (!lastInviteCode) return;
   try {
@@ -248,7 +324,7 @@ async function onSyncCreate() {
 }
 
 async function onSyncJoin() {
-  const code = prompt("Enter the 6-character code from your partner:");
+  const code = prompt("Enter the code from your partner:");
   if (!code) return;
   try {
     await db.joinSpace(code);
@@ -681,6 +757,7 @@ async function saveDraft() {
   draft.ratings = { ...(draft.ratings || {}), [myKey()]: draft.enjoyment };
   await db.putDate(draft);
   if (isNew) push.sendNewDatePush(draft.title); // fire-and-forget; no-op unless syncing
+  maybeRequestPersist(); // first date saved → ask browser to protect our storage
   await reload();
   toast(editingId ? "Updated ♥" : "Date saved ♥");
   resetDraft();
@@ -1537,6 +1614,7 @@ async function onExport() {
   a.download = `date-tracker-backup-${new Date().toISOString().slice(0, 10)}.json`;
   a.click();
   URL.revokeObjectURL(a.href);
+  await db.setSetting("lastExportAt", Date.now());
   document.getElementById("sheet").classList.add("hidden");
   toast("Backup downloaded");
 }

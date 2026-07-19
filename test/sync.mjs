@@ -45,7 +45,8 @@ try {
   // 1. phone A creates a space
   const code = await a.evaluate(`import("./js/store.js")
     .then(async s => { await s.signIn(); return s.createSpace(false); })`);
-  check("create space returns invite code", /^[A-HJ-NP-Z2-9]{8}$/.test(code || ""), String(code));
+  check("create space returns combined code (server.key)",
+    /^[A-HJ-NP-Z2-9]{8}\.[A-Za-z0-9_-]{43}$/.test(code || ""), String(code));
   const spaceId = await a.evaluate(`import("./js/store.js").then(s => s.getSetting("spaceId"))`);
 
   // 2. phone B joins with the code
@@ -70,6 +71,14 @@ try {
     .then(d => [d.title, d.category, d.enjoyment, Array.isArray(d.mood) && d.mood.length, d.cost])`);
   check("synced fields intact", JSON.stringify(fields) === JSON.stringify(["Sync Test Date", "outdoors", 5, 2, 42]),
     JSON.stringify(fields));
+
+  // 3b. E2EE: the raw Firestore doc is ciphertext (emulator REST API bypasses the app)
+  const rawDoc = await fetch(
+    `http://127.0.0.1:8080/v1/projects/us-date-tracker-c988b/databases/(default)/documents/spaces/${spaceId}/dates/${entryId}`,
+    { headers: { Authorization: "Bearer owner" } } // emulator accepts the owner bypass token
+  ).then(r => r.text());
+  check("raw doc has enc field", rawDoc.includes('"enc"'), rawDoc.slice(0, 300));
+  check("raw doc does not leak plaintext title", !rawDoc.includes("Sync Test Date"), rawDoc.slice(0, 300));
 
   // 4. photo syncs as a base64 Firestore doc
   const photoId = await a.evaluate(`import("./js/store.js").then(async s => {

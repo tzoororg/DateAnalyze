@@ -11,6 +11,7 @@ const SHELL = [
   "./js/db.js",
   "./js/store.js",
   "./js/sync.js",
+  "./js/crypto.js",
   "./js/firebase-config.js",
   "./js/model.js",
   "./js/catalog.js",
