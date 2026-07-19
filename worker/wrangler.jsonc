@@ -3,8 +3,9 @@
   //   cd worker && npx wrangler deploy
   // Secrets are set separately (not stored here):
   //   npx wrangler secret put FCM_SERVICE_ACCOUNT   (the service-account JSON)
-  //   npx wrangler secret put PUSH_KEY              (matches js/push-config.js)
-  // The feedback worker is deployed via the dashboard and is unaffected by this.
+  // Auth is now a verified Firebase ID token (see verify-token.js) — PUSH_KEY is gone.
+  // The feedback worker also imports verify-token.js now, so it must be deployed
+  // via `wrangler deploy` too (dashboard paste-in-editor no longer works for either).
   "name": "dateanalyze-push",
   "main": "push-worker.js",
   "compatibility_date": "2025-01-01",

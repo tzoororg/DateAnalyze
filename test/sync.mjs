@@ -45,7 +45,7 @@ try {
   // 1. phone A creates a space
   const code = await a.evaluate(`import("./js/store.js")
     .then(async s => { await s.signIn(); return s.createSpace(false); })`);
-  check("create space returns invite code", /^[A-HJ-NP-Z2-9]{6}$/.test(code || ""), String(code));
+  check("create space returns invite code", /^[A-HJ-NP-Z2-9]{8}$/.test(code || ""), String(code));
   const spaceId = await a.evaluate(`import("./js/store.js").then(s => s.getSetting("spaceId"))`);
 
   // 2. phone B joins with the code

@@ -12,16 +12,18 @@ Current rules: any signed-in user can read any `invites/{code}`; expiry is check
 no member cap. A stranger with (or brute-forcing) a code joins a couple's space and reads
 their entire history, including photos.
 
-- [ ] Enforce `expiresAt > request.time` in the member-create rule (server-side expiry).
-- [ ] Cap membership at 2: member-create also requires the members collection to have < 2 docs
-      (rules can't count; store `memberCount` on the space doc and increment transactionally,
-      or write member uids into the space doc itself).
-- [ ] Invalidate the invite on join: allow the joiner to delete the invite doc; delete it in
-      `joinSpace` after the member doc lands.
-- [ ] Restrict invite read to exact-id `get` semantics is not possible in rules — instead
-      lengthen codes to 8 chars (32^8 ≈ 1.1e12) to make brute force impractical, and enable
-      Firebase App Check to keep non-app clients out entirely.
-- [ ] Add `allow delete` for expired invites (or a TTL policy via Firestore TTL field).
+- [x] Enforce `expiresAt > request.time` in the member-create rule (server-side expiry).
+- [x] Cap membership at 2: implemented via one-time invite consumption instead of a
+      `memberCount` counter — the invite-update rule only allows `usedBy` to go from absent
+      to the joiner's uid once, and the member-create rule requires that same-batch
+      consumption (`getAfter`), so a second joiner's batch always fails (invite already has
+      `usedBy`). No counter field needed.
+- [x] Invalidate the invite on join: `joinSpace` best-effort deletes the invite doc after the
+      batch commits (wrapped in try/catch — deletion is now also allowed by rules for the
+      creator/expired/used cases regardless).
+- [x] Lengthened invite codes to 8 chars (32^8 ≈ 1.1e12); `invites/{code}` now only allows
+      `get`, not `list`, closing enumeration. App Check is still open (see 1.6).
+- [x] Added `allow delete` for creator / expired / already-used invites.
 
 ### 1.2 Feedback worker: public key + repo-write PAT — HIGH
 `FEEDBACK_KEY` ships in the client (by design, documented as not-a-secret), but the worker's
@@ -29,32 +31,36 @@ PAT has **Contents RW on the app repo, which is also the GitHub Pages deployment
 who extracts the key can commit arbitrary files into `feedback-assets/` on the default
 branch — i.e. host arbitrary content on the app's own domain — and spam issues.
 
-- [ ] Move feedback photos out of the app repo: separate assets-only repo (PAT scoped to it),
-      so the deployed site can never be written through this path.
-- [ ] Drop Contents scope from the app-repo PAT; keep Issues only.
-- [ ] Require a Firebase Auth ID token in the request and verify it in the worker
-      (JWKS verify, no SDK needed) — replaces the shared key for signed-in users.
-- [ ] Add a Cloudflare rate-limiting rule on the worker route (e.g. 5 req/min/IP).
-- [ ] Validate `photoBase64` is a JPEG and cap its decoded size explicitly.
+- [x] Move feedback photos out of the app repo: `ASSET_REPO` + `ASSET_TOKEN` (separate PAT)
+      — the deployed site can no longer be written through this path.
+- [x] Drop Contents scope from the app-repo PAT (`GITHUB_TOKEN`); Issues-only now.
+- [x] Optional Firebase Auth ID token path (JWKS verify via `worker/verify-token.js`, no SDK)
+      — bypasses `FEEDBACK_KEY` for signed-in users and tags the issue with their uid.
+- [ ] Add a Cloudflare rate-limiting rule on the worker route (e.g. 5 req/min/IP) — console-only,
+      see deploy checklist below.
+- [x] Validate `photoBase64` is a JPEG (magic-byte check) and cap decoded size at 1.5 MB.
 
 ### 1.3 Push worker is an open FCM relay — MEDIUM
 `PUSH_KEY` also ships in the client, so anyone can send arbitrary-text notifications to any
 FCM token they obtain (tokens leak in logs, backups, etc.). The `ponytail:` comment in the
 worker already names the upgrade path.
 
-- [ ] Verify a Firebase ID token in the worker; require the sender to be a member of the
-      space (worker holds the service account — one Firestore REST `get` on the member doc).
-- [ ] Look up partner tokens server-side from the members subcollection instead of trusting
-      client-supplied tokens; fix the notification text server-side too.
-- [ ] Rate-limit the route.
+- [x] Verify a Firebase ID token in the worker; require the sender to be a member of the
+      space (worker holds the service account — one Firestore REST list on the members
+      subcollection, matched against the verified caller uid).
+- [x] Look up partner tokens server-side from the members subcollection instead of trusting
+      client-supplied tokens; notification text is now fixed server-side (title/body/link).
+      `PUSH_KEY` removed entirely (client and worker).
+- [ ] Rate-limit the route — console-only, see deploy checklist below.
 
 ### 1.4 Firestore write validation — MEDIUM
 `dates` and `photos` writes have no schema/size validation: a compromised or buggy member
 client can write arbitrary junk, oversized docs, or clobber fields.
 
-- [ ] Rules: validate date docs (required keys, `id == dateId`, string length caps on
-      title/notes/location, enjoyment/effort in 1–5, photos is a list of strings).
-- [ ] Rules: photo docs limited to `{data, mime, createdAt}`, `data` is a string
+- [x] Rules: validate date docs (required keys via `hasOnly`, `id == dateId`, string length
+      caps on title/notes/location, enjoyment/effort in 1–5 when present, photos a list,
+      legacy numeric `mood` still allowed).
+- [x] Rules: photo docs limited to `{data, mime, createdAt}`, `data`/`mime` are strings
       (Firestore's 1 MiB cap already bounds size).
 
 ### 1.5 XSS via partner-synced strings — MEDIUM
@@ -70,6 +76,27 @@ and it renders on your phone. 49 `innerHTML` sites in ui.js.
       connect-src 'self' https://*.googleapis.com https://*.firebaseio.com
       https://*.workers.dev; img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'`
       (tune against the real network map; verify sign-in popup + FCM still work).
+
+### 1.7 Deploy checklist (manual/console steps remaining after §1.1–1.4 code changes)
+
+The rules and worker code for 1.1–1.4 are implemented and test-covered (`test/sync.mjs`,
+`worker/push-worker.test.js`, `worker/verify-token.test.js`). Still needed by hand before
+this is live in production:
+
+- [ ] Create the assets-only GitHub repo (e.g. `tzoororg/DateAnalyze-feedback-assets`) and a
+      fine-grained PAT scoped to it with Contents RW only.
+- [ ] Set worker vars/secrets on `dateanalyze-feedback`: `ASSET_REPO` (plaintext),
+      `ASSET_TOKEN` (secret, the new PAT above), `FIREBASE_PROJECT_ID` (plaintext, enables
+      the ID-token path). Re-scope `GITHUB_TOKEN` to Issues-only (drop Contents).
+- [ ] Both workers now import `worker/verify-token.js`, so they must be deployed with
+      `cd worker && npx wrangler deploy` instead of the dashboard paste-in-editor flow.
+      `PUSH_KEY` secret can be removed from `dateanalyze-push` (no longer read).
+- [ ] Add a Cloudflare rate-limiting rule on both worker routes (e.g. 5 req/min/IP) —
+      not implemented in code, console/WAF-level control.
+- [ ] Enable Firebase **App Check** (still open from 1.6) — biggest remaining lever against
+      non-app traffic hitting Firestore/Auth directly.
+- [ ] Deploy the updated `firestore.rules` (`firebase deploy --only firestore:rules`) and
+      both workers to production.
 
 ### 1.6 Firebase project hardening — MEDIUM
 - [ ] Enable **App Check** (reCAPTCHA v3 / Play Integrity / App Attest per platform) on

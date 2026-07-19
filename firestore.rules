@@ -5,25 +5,69 @@ service cloud.firestore {
       return exists(/databases/$(db)/documents/spaces/$(spaceId)/members/$(request.auth.uid));
     }
     match /invites/{code} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null && request.resource.data.createdBy == request.auth.uid;
+      // No `list` — enumeration would let an attacker brute-force live codes.
+      allow get: if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.spaceId is string
+        && request.resource.data.expiresAt is timestamp
+        && request.resource.data.expiresAt <= request.time + duration.value(8, 'd');
+      // One-time consume: only usedBy may change, and only from absent -> caller's uid.
+      allow update: if request.auth != null
+        && !('usedBy' in resource.data)
+        && request.resource.data.usedBy == request.auth.uid
+        && resource.data.expiresAt > request.time
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usedBy']);
+      allow delete: if request.auth != null && (
+        resource.data.createdBy == request.auth.uid ||
+        resource.data.expiresAt < request.time ||
+        ('usedBy' in resource.data)
+      );
     }
     match /spaces/{spaceId} {
       allow create: if request.auth != null && request.resource.data.createdBy == request.auth.uid;
       allow read:   if isMember(spaceId);
       match /members/{uid} {
         allow read: if isMember(spaceId);
-        allow create: if request.auth.uid == uid &&
-          exists(/databases/$(db)/documents/invites/$(request.resource.data.code)) &&
-          get(/databases/$(db)/documents/invites/$(request.resource.data.code)).data.spaceId == spaceId;
+        allow create: if request.auth.uid == uid && (
+          // Creator: sets up their own membership right after creating the space.
+          get(/databases/$(db)/documents/spaces/$(spaceId)).data.createdBy == request.auth.uid ||
+          // Joiner: must atomically consume the invite in the same batch.
+          (
+            request.resource.data.code is string &&
+            get(/databases/$(db)/documents/invites/$(request.resource.data.code)).data.spaceId == spaceId &&
+            !('usedBy' in get(/databases/$(db)/documents/invites/$(request.resource.data.code)).data) &&
+            get(/databases/$(db)/documents/invites/$(request.resource.data.code)).data.expiresAt > request.time &&
+            getAfter(/databases/$(db)/documents/invites/$(request.resource.data.code)).data.usedBy == request.auth.uid
+          )
+        );
         // Members update only their own doc (e.g. to store their FCM push token).
         allow update: if request.auth.uid == uid;
       }
       match /dates/{dateId} {
-        allow read, write: if isMember(spaceId);
+        allow read: if isMember(spaceId);
+        allow create, update: if isMember(spaceId) &&
+          request.resource.data.id == dateId &&
+          request.resource.data.keys().hasOnly([
+            'id','date','createdAt','status','title','url','category','enjoyment','mood','vibe',
+            'effort','wouldRepeat','cost','costTier','location','notes','capsule','photos','durationMin'
+          ]) &&
+          (!('title' in request.resource.data) || (request.resource.data.title is string && request.resource.data.title.size() <= 200)) &&
+          (!('notes' in request.resource.data) || (request.resource.data.notes is string && request.resource.data.notes.size() <= 5000)) &&
+          (!('location' in request.resource.data) || (request.resource.data.location is string && request.resource.data.location.size() <= 200)) &&
+          (!('enjoyment' in request.resource.data) || (request.resource.data.enjoyment is int && request.resource.data.enjoyment >= 1 && request.resource.data.enjoyment <= 5)) &&
+          (!('effort' in request.resource.data) || (request.resource.data.effort is int && request.resource.data.effort >= 1 && request.resource.data.effort <= 5)) &&
+          (!('photos' in request.resource.data) || request.resource.data.photos is list) &&
+          (!('mood' in request.resource.data) || request.resource.data.mood is list || request.resource.data.mood is number);
+        allow delete: if isMember(spaceId);
       }
       match /photos/{photoId} {
-        allow read, write: if isMember(spaceId);
+        allow read: if isMember(spaceId);
+        allow create, update: if isMember(spaceId) &&
+          request.resource.data.keys().hasOnly(['data', 'mime', 'createdAt']) &&
+          request.resource.data.data is string &&
+          request.resource.data.mime is string;
+        allow delete: if isMember(spaceId);
       }
     }
   }

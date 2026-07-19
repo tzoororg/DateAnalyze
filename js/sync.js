@@ -125,7 +125,7 @@ function attachSpace(id) {
 
 function genCode() {
   let code = "";
-  for (let i = 0; i < 6; i++) code += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
+  for (let i = 0; i < 8; i++) code += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
   return code;
 }
 
@@ -157,13 +157,27 @@ export async function joinSpace(codeRaw) {
   if (!user) throw new Error("Sign in first");
 
   const code = codeRaw.trim().toUpperCase();
-  const inviteSnap = await s.getDoc(s.doc(s.fs, "invites", code));
+  const inviteRef = s.doc(s.fs, "invites", code);
+  const inviteSnap = await s.getDoc(inviteRef);
   if (!inviteSnap.exists()) throw new Error("That code isn't valid");
   const invite = inviteSnap.data();
   if (invite.expiresAt?.toDate?.() < new Date()) throw new Error("That code has expired");
 
-  await s.setDoc(s.doc(s.fs, "spaces", invite.spaceId, "members", user.uid),
+  // Batched so the invite is consumed atomically with membership creation — the
+  // security rules require both writes to land together (see firestore.rules).
+  const batch = s.writeBatch(s.fs);
+  batch.update(inviteRef, { usedBy: user.uid });
+  batch.set(s.doc(s.fs, "spaces", invite.spaceId, "members", user.uid),
     { joinedAt: s.serverTimestamp(), joinedVia: "code", code });
+  try {
+    await batch.commit();
+  } catch (err) {
+    if (err?.code === "permission-denied") {
+      throw new Error("That code was already used or has expired");
+    }
+    throw err;
+  }
+  try { await s.deleteDoc(inviteRef); } catch { /* best-effort cleanup */ }
 
   await attachSpace(invite.spaceId);
   return invite.spaceId;
@@ -198,12 +212,12 @@ export async function setMyPushToken(token) {
     { fcmToken: token, tokenUpdatedAt: sdk.serverTimestamp() }, { merge: true });
 }
 
-// Every member's token except mine (the partner, in a 2-person space).
-export async function getPartnerTokens() {
-  if (!sdk || !spaceId) return [];
-  const me = sdk.auth?.currentUser?.uid;
-  const snap = await sdk.getDocs(sdk.collection(sdk.fs, "spaces", spaceId, "members"));
-  return snap.docs.filter(d => d.id !== me).map(d => d.data().fcmToken).filter(Boolean);
+export function getSpaceId() { return spaceId; }
+
+// Current user's Firebase ID token, for authenticating to our own workers
+// (push-worker verifies this server-side against the space membership).
+export async function getIdToken() {
+  return sdk?.auth?.currentUser ? sdk.auth.currentUser.getIdToken() : null;
 }
 
 // ---- Data interface (mirrors db.js) ----

@@ -5,7 +5,7 @@
 // Spark plan has no Cloud Functions to trigger a push server-side.
 
 import * as store from "./store.js";
-import { VAPID_PUBLIC_KEY, PUSH_ENDPOINT, PUSH_KEY } from "./push-config.js";
+import { VAPID_PUBLIC_KEY, PUSH_ENDPOINT } from "./push-config.js";
 
 const supported = () =>
   "Notification" in window && "serviceWorker" in navigator && "PushManager" in window;
@@ -40,17 +40,13 @@ export async function refreshToken() {
 export async function sendNewDatePush(title) {
   try {
     if (store.getMode() !== "cloud" || !PUSH_ENDPOINT) return;
-    const tokens = await store.getPartnerTokens();
-    if (!tokens.length) return;
+    const spaceId = store.getSpaceId?.();
+    const idToken = await store.getIdToken?.();
+    if (!spaceId || !idToken) return;
     await fetch(PUSH_ENDPOINT, {
       method: "POST",
-      headers: { "Content-Type": "application/json", ...(PUSH_KEY ? { "x-push-key": PUSH_KEY } : {}) },
-      body: JSON.stringify({
-        tokens,
-        title: "New date ♥",
-        body: title || "Your partner added a date",
-        link: "./#history",
-      }),
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${idToken}` },
+      body: JSON.stringify({ spaceId }),
     });
   } catch (e) { console.warn("push send failed", e); }
 }

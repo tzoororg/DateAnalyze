@@ -6,6 +6,7 @@
 
 import { downscale, toast } from "./ui.js";
 import { FEEDBACK_ENDPOINT, FEEDBACK_KEY } from "./feedback-config.js";
+import * as store from "./store.js";
 
 let photoDataUrl = null;   // base64 data URL of the (single) attached photo, or null
 let sending = false;
@@ -103,6 +104,12 @@ async function submit(el, close) {
   try {
     const headers = { "Content-Type": "application/json" };
     if (FEEDBACK_KEY) headers["x-feedback-key"] = FEEDBACK_KEY;
+    // Best-effort: signed-in (cloud-sync) users get an authenticated request that
+    // bypasses FEEDBACK_KEY server-side. Never let auth trouble block feedback.
+    try {
+      const idToken = await store.getIdToken?.();
+      if (idToken) headers["Authorization"] = `Bearer ${idToken}`;
+    } catch { /* feedback still works without it */ }
     const res = await fetch(FEEDBACK_ENDPOINT, {
       method: "POST",
       headers,
