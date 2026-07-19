@@ -47,7 +47,7 @@ export async function init() {
   show(location.hash === "#history" ? "history" : "home");
   db.subscribe(onRemoteChange);
   push.refreshToken();
-  const TABS = ["home", "history", "insights", "suggest"];
+  const TABS = ["home", "history", "suggest", "insights"];
   let swipeTarget = null;
   viewEl().addEventListener("touchstart", e => { swipeTarget = e.target; }, { passive: true, capture: true });
   attachSwipe(viewEl(),

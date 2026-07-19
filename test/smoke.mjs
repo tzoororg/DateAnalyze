@@ -92,9 +92,9 @@ try {
     await t.evaluate(`document.querySelector('[data-wrap-period="all"]').classList.contains("on")`));
   check("wrap-card swipe doesn't also change the active tab",
     await t.evaluate(`document.querySelector('.tab[data-tab="insights"]').getAttribute("aria-selected") === "true"`));
-  await swipe("#view", -80);
+  await swipe("#view", 80);
   await sleep(300);
-  check("view-container swipe advances to the next tab",
+  check("view-container swipe goes back to the previous tab",
     await t.evaluate(`document.querySelector('.tab[data-tab="suggest"]').getAttribute("aria-selected") === "true"`));
 
   // 6. suggestions
