@@ -288,6 +288,26 @@ try {
     (await t.evaluate(`document.getElementById("f-title").value`)).length > 0);
   await t.evaluate(`document.getElementById("logCloseBtn").click()`);
 
+  // 9f. Date Night mode (Roadmap #7): start from Home, banner + camera FAB appear,
+  // "End" pre-fills the log sheet with the "From tonight" chip.
+  t = await shotTab("home");
+  await t.evaluate(`document.querySelector("#dn-start").click()`);
+  await sleep(300);
+  const dnStarted = await t.evaluate(`[
+    document.querySelector("#dnBanner .dn-banner")?.textContent || "",
+    document.getElementById("fab").textContent,
+    document.getElementById("fab").getAttribute("aria-label")]`);
+  check("starting date night shows the banner", dnStarted[0].includes("Date night"), dnStarted[0]);
+  check("FAB becomes the camera button while active",
+    dnStarted[1] === "📷" && dnStarted[2] === "Take a photo", JSON.stringify(dnStarted));
+  await t.evaluate(`document.getElementById("dn-end").click()`);
+  await t.waitFor(`!document.getElementById("logSheet").classList.contains("hidden")`);
+  const fromTonight = await t.evaluate(`document.querySelector(".dn-fromtonight")?.textContent || ""`);
+  check("'End' opens the log sheet with the From tonight chip", fromTonight.includes("From tonight"), fromTonight);
+  const fabAfterEnd = await t.evaluate(`document.getElementById("fab").textContent`);
+  check("FAB reverts to ＋ after ending date night", fabAfterEnd === "＋", fabAfterEnd);
+  await t.evaluate(`document.getElementById("logCloseBtn").click()`);
+
   // 10. no console errors anywhere
   for (const { state, tab } of tabs) {
     check(`no console errors [${state}]`, tab.errors.length === 0, tab.errors.slice(0, 2).join(" | "));

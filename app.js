@@ -7,7 +7,7 @@ import { autoEnableSync, completeRedirectSignIn } from "./js/store.js";
 const shot = new URLSearchParams(location.search).get("shot");
 
 (async () => {
-  if (shot && shot !== "empty") await (await import("./js/dev-shots.js")).seed();
+  if (shot && shot !== "empty") await (await import("./js/dev-shots.js")).seed(shot);
   await completeRedirectSignIn().catch(err => console.warn("Redirect sign-in failed:", err));
   await autoEnableSync().catch(err => console.warn("Sync auto-enable failed, staying local:", err));
   await init();

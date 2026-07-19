@@ -84,7 +84,7 @@ body {
 }
 
 /* View area */
-.view { flex: 1; padding: 4px 16px calc(110px + var(--safe-b)); max-width: 720px; width: 100%; margin: 0 auto; }
+.view { flex: 1; padding: 4px 16px calc(140px + var(--safe-b)); max-width: 720px; width: 100%; margin: 0 auto; }
 .section-title { font-size: 12px; text-transform: uppercase; letter-spacing: .14em; font-weight: 800; color: var(--muted); margin: 22px 4px 10px; }
 
 /* Floating log button */
@@ -168,7 +168,7 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); bo
 .btn-row { display: flex; gap: 10px; margin-top: 16px; }
 /* Suggest-card compact action row: auto-width ♡ Save / ＋ Log it (+ vote chips when matched) */
 .sug-actions { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
-.sug-actions .btn { width: auto; padding: 8px 14px; font-size: 13px; border-radius: 13px; }
+.sug-actions .btn { flex: 1; min-width: 0; padding: 8px 10px; font-size: 13px; border-radius: 13px; white-space: nowrap; }
 .sug-actions .spacer { flex: 1; }
 .vote-chip { border: none; border-radius: 999px; width: 42px; height: 34px; font-size: 16px; background: var(--card-2); cursor: pointer; }
 .vote-chip.on { background: var(--accent); }
@@ -213,17 +213,42 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); bo
 .chart-wrap { width: 100%; overflow: hidden; }
 .chart-wrap svg { width: 100%; height: auto; display: block; }
 
-/* ---- Date-night banner: compact single row ---- */
-.dn-banner { border: 2px solid var(--accent); display: flex; align-items: center; gap: 10px; }
-.dn-banner .dn-icon { font-size: 22px; flex: none; }
-.dn-banner .dn-txt { flex: 1; min-width: 0; }
-.dn-banner .dn-txt b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dn-banner .dn-txt .sub { font-size: 12px; color: var(--muted); white-space: nowrap; }
-.dn-banner .icon-btn {
-  flex: none; width: 40px; height: 40px; border-radius: 50%; border: none;
-  background: var(--card-2); font-size: 17px; display: grid; place-items: center; cursor: pointer;
+/* ---- Date Night mode (Roadmap #7) — see design/date-night.html ---- */
+#dnBanner { max-width: 720px; width: 100%; margin: 0 auto; }
+#dnBanner:not(:empty) { padding: 10px 16px 0; }
+.dn-invite { display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
+.dn-invite .moon {
+  width: 40px; height: 40px; border-radius: 50%; flex: none;
+  background: var(--card-2); display: grid; place-items: center; font-size: 20px;
 }
-.dn-banner .btn.end { flex: none; width: auto; padding: 9px 16px; }
+.dn-invite .txt { flex: 1; min-width: 0; }
+.dn-invite h3 { margin: 0; font-size: 15px; }
+.dn-invite .mini-btn { flex: none; margin-top: 0; }
+
+.dn-banner {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; margin-bottom: 14px; cursor: pointer;
+  background: linear-gradient(135deg, var(--card), var(--card-2));
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+}
+.dn-banner .moon { font-size: 18px; flex: none; animation: dn-glow 2.5s ease-in-out infinite; }
+@keyframes dn-glow { 50% { opacity: .55; } }
+.dn-banner .txt { flex: 1; min-width: 0; line-height: 1.25; }
+.dn-banner .txt b { font-size: 13px; }
+.dn-banner .txt .sub { font-size: 12px; color: var(--muted); }
+.dn-banner .end {
+  flex: none; background: none; border: 1.5px solid var(--accent);
+  border-radius: 999px; color: var(--accent-2); font-size: 12px; font-weight: 700;
+  padding: 10px 14px; margin-left: 6px; cursor: pointer;
+}
+
+.dn-fromtonight {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--mint-bg); color: var(--mint-fg);
+  border-radius: 999px; font-size: 12px; font-weight: 700;
+  padding: 5px 12px; margin-bottom: 10px;
+}
 
 /* ---- Insights: merged "Your vibes" list ---- */
 .vibe-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; }
@@ -255,13 +280,14 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); bo
 .sug-reason { color: var(--muted); font-size: 14px; margin: 8px 0 12px; }
 .sug-meta { display: flex; gap: 14px; font-size: 13px; color: var(--muted); margin-bottom: 12px; flex-wrap: wrap; }
 
-/* History */
-.hist-controls { display: flex; align-items: flex-end; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
-.hist-sort-label { flex: 1; }
-.hist-sort-label > span { display: block; font-size: 13px; color: var(--muted); font-weight: 600; margin-bottom: 6px; }
-.hist-sort-label select { width: 100%; }
-.hist-count { font-size: 13px; color: var(--muted); white-space: nowrap; padding-bottom: 14px; }
-.hist-chips { margin-bottom: 2px; }
+/* History — control stack collapsed to two rows (Release triage backlog, v2.1.0) */
+.hist-row1 { display: flex; gap: 8px; margin-bottom: 8px; }
+.hist-row1 .h-search { flex: 1; margin: 0; }
+.hist-row1 select { flex: none; width: auto; max-width: 42%; }
+.hist-row2 { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.hist-row2 .filter-group { flex: none; margin: 0; }
+.hist-row2 .filter-group summary { padding: 8px 10px; font-size: 13px; }
+.hist-count { font-size: 13px; color: var(--muted); white-space: nowrap; margin-left: auto; }
 
 /* Collapsible filter groups */
 .filter-group { border: none; padding: 0; margin: 0 0 4px; }

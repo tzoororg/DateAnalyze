@@ -4,7 +4,7 @@ import * as db from "./store.js";
 import {
   CATEGORIES, MOOD_OPTIONS, COST_TIERS, METER, catLabel, catEmoji,
   blankEntry, fmtMoney, fmtDate, entryTimeMs, tierLabel, tierForCost, repeatForEnjoyment,
-  normTitle, todayISO,
+  normTitle, todayISO, fmtDuration,
 } from "./model.js";
 import * as A from "./analytics.js";
 import * as C from "./charts.js";
@@ -21,16 +21,28 @@ const done = () => dates.filter(e => e.status !== "idea");
 let draft = blankEntry();        // the entry currently being composed/edited
 let editingId = null;
 let currentTab = "home";
-const sug = { explore: 0.5, budget: null, maxEffort: null, category: null, moods: [] };
+const sug = { explore: 0.5, budget: null, budgetTier: null, maxEffort: null, category: null, moods: [] };
+// Upper $ bound per cost tier (mirrors tierForCost's own boundaries) — "$$$" has no cap.
+const BUDGET_TIER_MAX = { free: 0, low: 100, mid: 300, high: null };
 const hist = { sort: "date-desc", category: null, moods: [], query: "", view: "list", expanded: null };
 let wrapPeriod = "year";
 let memoryDismissed = false;
 const urlCache = new Map();      // photoId -> objectURL
 
+// ---------- Date Night mode (Roadmap #7) ----------
+// activeDate: { startedAt: <ms>, photoIds: [<uuid>...] } | null. Device-local setting;
+// the finished entry syncs like any other date once "End" saves it.
+let activeDate = null;
+let dnTimer = null;
+const DN_MAX_MIN = 720; // 12h auto-expire cap
+
 export async function init() {
   dates = await db.getAllDates();
+  activeDate = await db.getSetting("activeDate", null);
   wireChrome();
   wireIdle();
+  updateFab();
+  if (activeDate) startDnTimer();
   // A notification tap opens the app at #history (see sw.js notificationclick).
   show(location.hash === "#history" ? "history" : "home");
   db.subscribe(onRemoteChange);
@@ -89,7 +101,11 @@ function wireChrome() {
   document.querySelectorAll(".tab").forEach(btn =>
     btn.addEventListener("click", () => show(btn.dataset.tab)));
 
-  document.getElementById("fab").addEventListener("click", openLogSheet);
+  document.getElementById("fab").addEventListener("click", () => {
+    if (activeDate) document.getElementById("dnCameraInput").click();
+    else openLogSheet();
+  });
+  document.getElementById("dnCameraInput").addEventListener("change", onDnPhotoPick);
   document.getElementById("logCloseBtn").addEventListener("click", closeLogSheet);
   document.querySelectorAll("[data-theme-pick]").forEach(b =>
     b.addEventListener("click", () => applyTheme(b.dataset.themePick)));
@@ -264,8 +280,78 @@ function show(tab) {
   else if (tab === "history") renderHistory();
   else if (tab === "insights") renderInsights();
   else renderSuggest();
+  renderDnBanner();
   viewEl().scrollTo?.(0, 0);
   window.scrollTo(0, 0);
+}
+
+// ---------- Date Night banner (pinned above the view content, every tab) ----------
+function updateFab() {
+  const fab = document.getElementById("fab");
+  fab.textContent = activeDate ? "📷" : "＋";
+  fab.setAttribute("aria-label", activeDate ? "Take a photo" : "Log a date");
+}
+
+function startDnTimer() {
+  clearInterval(dnTimer);
+  dnTimer = setInterval(renderDnBanner, 60000);
+}
+
+function renderDnBanner() {
+  const host = document.getElementById("dnBanner");
+  if (!host) return;
+  if (!activeDate) { host.innerHTML = ""; return; }
+  const elapsedMin = Math.min(DN_MAX_MIN, Math.round((Date.now() - activeDate.startedAt) / 60000));
+  const n = activeDate.photoIds.length;
+  host.innerHTML = `
+    <section class="dn-banner" id="dn-banner-body">
+      <span class="moon">🌙</span>
+      <div class="txt"><b>Date night</b><div class="sub">${fmtDuration(elapsedMin)} · ${n} photo${n === 1 ? "" : "s"}</div></div>
+      <button class="end" id="dn-end">End</button>
+    </section>`;
+  host.querySelector("#dn-banner-body").addEventListener("click", () => document.getElementById("dnCameraInput").click());
+  host.querySelector("#dn-end").addEventListener("click", ev => { ev.stopPropagation(); onDnEnd(); });
+}
+
+async function onDnStart() {
+  activeDate = { startedAt: Date.now(), photoIds: [] };
+  await db.setSetting("activeDate", activeDate);
+  startDnTimer();
+  updateFab();
+  show(currentTab);
+}
+
+async function onDnPhotoPick(e) {
+  const files = [...e.target.files];
+  e.target.value = "";
+  if (!activeDate) return;
+  for (const file of files) {
+    try {
+      const blob = await downscale(file, 1280, 0.82);
+      activeDate.photoIds.push(await db.putPhoto(blob));
+    } catch (err) { console.error(err); toast("Couldn't add photo"); }
+  }
+  await db.setSetting("activeDate", activeDate);
+  renderDnBanner();
+  toast("Photo added 📸");
+}
+
+async function onDnEnd() {
+  const elapsedMin = Math.min(DN_MAX_MIN, Math.round((Date.now() - activeDate.startedAt) / 60000));
+  const startedAt = activeDate.startedAt;
+  const photoIds = activeDate.photoIds;
+  await db.setSetting("activeDate", null);
+  activeDate = null;
+  clearInterval(dnTimer); dnTimer = null;
+  updateFab();
+  renderDnBanner();
+
+  draft = blankEntry();
+  draft.date = todayISO(startedAt);
+  draft.photos = photoIds;
+  draft.durationMin = elapsedMin;
+  editingId = null;
+  openLogSheet();
 }
 
 // ---------- HOME tab ----------
@@ -307,11 +393,18 @@ function renderHome() {
       <p class="sug-reason">${escHtml(top.reason)}</p>
       <button class="mini-btn" id="home-plan">Plan it →</button>
     </section>` : ""}
+    ${!activeDate ? `
+    <section class="card dn-invite">
+      <div class="moon">🌙</div>
+      <div class="txt"><h3>Date night?</h3></div>
+      <button class="mini-btn" id="dn-start">Start</button>
+    </section>` : ""}
     ${memoryCard}
     <h3 class="section-title">Recent memories</h3>
     <div id="date-list"></div>
   `;
   bind("home-plan", "click", () => show("suggest"));
+  bind("dn-start", "click", onDnStart);
   bind("memory-dismiss", "click", () => { memoryDismissed = true; renderHome(); });
   renderList();
 }
@@ -338,6 +431,7 @@ function renderLog() {
   const vibeSugs = pastVibes().filter(w => w !== (draft.vibe || "").trim().toLowerCase()).slice(0, 4);
   v.innerHTML = `
     <section class="card logform">
+      ${draft.durationMin != null ? `<span class="dn-fromtonight">✨ From tonight — ${fmtDuration(draft.durationMin)} · ${draft.photos.length} photo${draft.photos.length === 1 ? "" : "s"}</span>` : ""}
       <div class="polaroid">
         <button class="pshot empty" id="f-add-photo" type="button"></button>
         <div class="photo-menu hidden" id="f-photo-menu">
@@ -626,7 +720,7 @@ async function renderList() {
     // one hearts sticker: my rating, else partner's, else the legacy enjoyment score
     const { lines } = resolveRatings(e);
     const r = lines.find(l => l.mine) || lines.find(l => !l.mine && l.name) || lines.find(l => l.key === null);
-    const cost = e.costTier ? tierLabel(e.costTier) : e.cost === 0 ? "Free" : (e.cost != null ? fmtMoney(e.cost) : "");
+    const cost = costBadge(e);
     return `
     <div class="card home-card" data-open="${e.id}">
       <div class="home-photos" data-photos="${(e.photos || []).join(",")}" data-cat="${e.category}"></div>
@@ -691,52 +785,52 @@ function renderHistory() {
 
   v.innerHTML = `
     <section class="card tight">
-      <div class="hist-controls">
-        <label class="hist-sort-label"><span>Sort by</span>
-          <select id="h-sort">
-            <option value="date-desc" ${hist.sort === "date-desc" ? "selected" : ""}>Date (newest)</option>
-            <option value="date-asc" ${hist.sort === "date-asc" ? "selected" : ""}>Date (oldest)</option>
-            <option value="enjoy-desc" ${hist.sort === "enjoy-desc" ? "selected" : ""}>Enjoyment (high)</option>
-            <option value="enjoy-asc" ${hist.sort === "enjoy-asc" ? "selected" : ""}>Enjoyment (low)</option>
-            <option value="cost-desc" ${hist.sort === "cost-desc" ? "selected" : ""}>Cost (high)</option>
-            <option value="cost-asc" ${hist.sort === "cost-asc" ? "selected" : ""}>Cost (low)</option>
-            <option value="title-asc" ${hist.sort === "title-asc" ? "selected" : ""}>Title (A–Z)</option>
-          </select>
-        </label>
-        <div class="hist-view-toggle">
-          <button class="seg ${hist.view === "list" ? "on" : ""}" data-view="list">☰ List</button>
-          <button class="seg ${hist.view === "gallery" ? "on" : ""}" data-view="gallery">⊞ Gallery</button>
-          <button class="seg ${hist.view === "wishlist" ? "on" : ""}" data-view="wishlist">☆ Wishlist</button>
-        </div>
-        <button class="seg slideshow-btn" id="h-slideshow" title="Play a slideshow of your highlights">▶ Slideshow</button>
+      <div class="hist-row1">
+        <input class="h-search" id="h-search" type="text" placeholder="Search title, notes, place…" value="${escAttr(hist.query)}"/>
+        <select id="h-sort" title="Sort by">
+          <option value="date-desc" ${hist.sort === "date-desc" ? "selected" : ""}>Date (newest)</option>
+          <option value="date-asc" ${hist.sort === "date-asc" ? "selected" : ""}>Date (oldest)</option>
+          <option value="enjoy-desc" ${hist.sort === "enjoy-desc" ? "selected" : ""}>Enjoyment (high)</option>
+          <option value="enjoy-asc" ${hist.sort === "enjoy-asc" ? "selected" : ""}>Enjoyment (low)</option>
+          <option value="cost-desc" ${hist.sort === "cost-desc" ? "selected" : ""}>Cost (high)</option>
+          <option value="cost-asc" ${hist.sort === "cost-asc" ? "selected" : ""}>Cost (low)</option>
+          <option value="title-asc" ${hist.sort === "title-asc" ? "selected" : ""}>Title (A–Z)</option>
+        </select>
       </div>
-      <input class="h-search" id="h-search" type="text" placeholder="Search title, notes, place…" value="${escAttr(hist.query)}"/>
-      <details class="filter-group" id="h-cat-group">
-        <summary>
-          <span class="fg-label">Category</span>
-          <span class="fg-right">
-            ${hist.category ? `<span class="fg-badge">${CATEGORIES.find(c => c.key === hist.category)?.emoji} ${CATEGORIES.find(c => c.key === hist.category)?.label}</span>` : ""}
-            <span class="fg-arrow">▼</span>
-          </span>
-        </summary>
-        <div class="chips" id="h-cat">
-          <button class="chip ${!hist.category ? "on" : ""}" data-hcat="">All</button>
-          ${CATEGORIES.map(c => `<button class="chip ${hist.category === c.key ? "on" : ""}" data-hcat="${c.key}">${c.emoji} ${c.label}</button>`).join("")}
+      <div class="hist-row2">
+        <div class="hist-view-toggle">
+          <button class="seg ${hist.view === "list" ? "on" : ""}" data-view="list" title="List">☰</button>
+          <button class="seg ${hist.view === "gallery" ? "on" : ""}" data-view="gallery" title="Gallery">⊞</button>
+          <button class="seg ${hist.view === "wishlist" ? "on" : ""}" data-view="wishlist" title="Wishlist">☆</button>
         </div>
-      </details>
-      <details class="filter-group" id="h-mood-group">
-        <summary>
-          <span class="fg-label">Vibe</span>
-          <span class="fg-right">
-            ${hist.moods.length ? `<span class="fg-badge">${hist.moods.length === 1 ? (MOOD_OPTIONS.find(m => m.key === hist.moods[0])?.emoji + " " + MOOD_OPTIONS.find(m => m.key === hist.moods[0])?.label) : hist.moods.length + " selected"}</span>` : ""}
-            <span class="fg-arrow">▼</span>
-          </span>
-        </summary>
-        <div class="chips" id="h-mood">
-          ${MOOD_OPTIONS.map(m => `<button class="chip ${hist.moods.includes(m.key) ? "on" : ""}" data-hmood="${m.key}">${m.emoji} ${m.label}</button>`).join("")}
-        </div>
-      </details>
-      <span class="hist-count" id="h-count">${dates.length} date${dates.length !== 1 ? "s" : ""}</span>
+        <button class="seg slideshow-btn" id="h-slideshow" title="Play a slideshow of your highlights">▶</button>
+        <details class="filter-group" id="h-cat-group">
+          <summary>
+            <span class="fg-label">Category</span>
+            <span class="fg-right">
+              ${hist.category ? `<span class="fg-badge">${CATEGORIES.find(c => c.key === hist.category)?.emoji} ${CATEGORIES.find(c => c.key === hist.category)?.label}</span>` : ""}
+              <span class="fg-arrow">▼</span>
+            </span>
+          </summary>
+          <div class="chips" id="h-cat">
+            <button class="chip ${!hist.category ? "on" : ""}" data-hcat="">All</button>
+            ${CATEGORIES.map(c => `<button class="chip ${hist.category === c.key ? "on" : ""}" data-hcat="${c.key}">${c.emoji} ${c.label}</button>`).join("")}
+          </div>
+        </details>
+        <details class="filter-group" id="h-mood-group">
+          <summary>
+            <span class="fg-label">Vibe</span>
+            <span class="fg-right">
+              ${hist.moods.length ? `<span class="fg-badge">${hist.moods.length === 1 ? (MOOD_OPTIONS.find(m => m.key === hist.moods[0])?.emoji + " " + MOOD_OPTIONS.find(m => m.key === hist.moods[0])?.label) : hist.moods.length + " selected"}</span>` : ""}
+              <span class="fg-arrow">▼</span>
+            </span>
+          </summary>
+          <div class="chips" id="h-mood">
+            ${MOOD_OPTIONS.map(m => `<button class="chip ${hist.moods.includes(m.key) ? "on" : ""}" data-hmood="${m.key}">${m.emoji} ${m.label}</button>`).join("")}
+          </div>
+        </details>
+        <span class="hist-count" id="h-count">${dates.length} date${dates.length !== 1 ? "s" : ""}</span>
+      </div>
     </section>
     <div id="hist-list"></div>
   `;
@@ -867,7 +961,7 @@ async function renderHistoryList() {
         <div class="thumb" data-thumb="${e.photos?.[0] || ""}">${catEmoji(e.category)}</div>
         <div class="meta">
           <h4>${escHtml(e.title)}</h4>
-          <div class="sub">${fmtDate(e.date)} · ${catLabel(e.category)}${e.costTier ? " · " + tierLabel(e.costTier) : e.cost === 0 ? " · Free" : e.cost != null ? " · " + fmtMoney(e.cost) : ""}${isOpen && e.location ? " · 📍 " + escHtml(e.location) : ""}</div>
+          <div class="sub">${fmtDate(e.date)} · ${catLabel(e.category)}${costBadge(e) ? " · " + costBadge(e) : ""}${isOpen && e.location ? " · 📍 " + escHtml(e.location) : ""}${e.durationMin ? " · " + fmtDuration(e.durationMin) : ""}</div>
         </div>
         ${isOpen
           ? `<button class="kebab" data-kebab="${e.id}">⋯</button>`
@@ -1022,7 +1116,7 @@ function renderWishlist(host, countEl) {
         <div class="thumb">${catEmoji(e.category)}</div>
         <div class="meta">
           <h4>${escHtml(e.title)}</h4>
-          <div class="sub">${catLabel(e.category)}${e.cost != null ? " · ~" + fmtMoney(e.cost) : ""}${e.effort ? " · effort " + "●".repeat(e.effort) + "○".repeat(5 - e.effort) : ""}</div>
+          <div class="sub">${catLabel(e.category)}${costBadge(e) ? " · " + costBadge(e) : ""}${e.effort ? " · effort " + "●".repeat(e.effort) + "○".repeat(5 - e.effort) : ""}</div>
           ${e.url ? `<a class="url-link" href="${escAttr(e.url)}" target="_blank" rel="noopener">🔗 ${escHtml(prettyUrl(e.url))}</a>` : ""}
         </div>
       </div>
@@ -1074,6 +1168,12 @@ function topVibeWords(list, n) {
   return [...freq.entries()].sort((a, b) => b[1] - a[1]).slice(0, n).map(([w]) => w);
 }
 
+// Full month name only ("June"), not a specific date — Release triage backlog, v2.1.0.
+function fullMonthName(ym) {
+  const [y, m] = ym.split("-");
+  return new Date(Number(y), Number(m) - 1, 1).toLocaleDateString(undefined, { month: "long" });
+}
+
 function wrappedStats(period) {
   const year = new Date().getFullYear();
   const periodLabel = period === "year" ? `${year} SO FAR` : "ALL TIME";
@@ -1093,7 +1193,7 @@ function wrappedStats(period) {
     mostRepeated: mostRepeated && mostRepeated.count > 1
       ? { emoji: catEmoji(mostRepeated.category), title: mostRepeated.title, avgEnjoyment: mostRepeated.avgEnjoyment }
       : null,
-    bestMonth: { label: bestMonth.label, count: bestMonth.count },
+    bestMonth: { label: fullMonthName(bestMonth.month), count: bestMonth.count },
     vibes: topVibeWords(list, 3),
   };
 }
@@ -1241,15 +1341,15 @@ function renderSuggest() {
       </div>
       <div class="slider-ends"><span>Comfort (favorites)</span><span>Adventure (new)</span></div>
 
-      <div class="row" style="margin-top:14px">
-        <label class="field" style="margin:0"><span>Max budget</span>
-          <input id="s-budget" type="number" inputmode="numeric" min="0" placeholder="any" value="${sug.budget ?? ""}"/></label>
-        <label class="field" style="margin:0"><span>Max effort</span>
-          <select id="s-effort">
-            ${[["", "Any"], [1, "1 (easy)"], [2, "2"], [3, "3"], [4, "4"], [5, "5 (big)"]]
-              .map(([val, lbl]) => `<option value="${val}" ${String(sug.maxEffort ?? "") === String(val) ? "selected" : ""}>${lbl}</option>`).join("")}
-          </select></label>
+      <div class="blocklabel" style="margin-top:14px">Max budget</div>
+      <div class="seg4" id="s-budget">
+        ${COST_TIERS.map(t => `<button class="${sug.budgetTier === t.key ? "on" : ""}" data-btier="${t.key}">${t.label}</button>`).join("")}
       </div>
+      <label class="field"><span>Max effort</span>
+        <select id="s-effort">
+          ${[["", "Any"], [1, "1 (easy)"], [2, "2"], [3, "3"], [4, "4"], [5, "5 (big)"]]
+            .map(([val, lbl]) => `<option value="${val}" ${String(sug.maxEffort ?? "") === String(val) ? "selected" : ""}>${lbl}</option>`).join("")}
+        </select></label>
 
       <details class="filter-group" id="s-cat-group">
         <summary>
@@ -1313,8 +1413,8 @@ function renderSugCards(results) {
       <div class="sug-actions">
         ${isSaved
           ? `<button class="btn ghost" disabled style="opacity:.55">✓ Saved</button>`
-          : `<button class="btn ghost" data-save='${payload}'>♡ Save</button>`}
-        <button class="btn secondary" data-log='${payload}'>＋ Log it</button>
+          : `<button class="btn ghost" data-save='${payload}'>♡ Wishlist</button>`}
+        <button class="btn secondary" data-log='${payload}'>Log →</button>
       </div>
     </div>`;
   }).join("");
@@ -1340,7 +1440,14 @@ function wireSuggest() {
     loadSugPhotos();
   };
   v.querySelector("#s-explore").addEventListener("input", e => { sug.explore = e.target.value / 100; rerun(); });
-  bind("s-budget", "input", e => { sug.budget = e.target.value === "" ? null : Number(e.target.value); rerun(); });
+  v.querySelector("#s-budget").addEventListener("click", e => {
+    const b = e.target.closest("[data-btier]"); if (!b) return;
+    const key = b.dataset.btier;
+    if (sug.budgetTier === key) { sug.budgetTier = null; sug.budget = null; }
+    else { sug.budgetTier = key; sug.budget = BUDGET_TIER_MAX[key]; }
+    setOn(v.querySelectorAll("#s-budget button"), sug.budgetTier ? b : null);
+    rerun();
+  });
   bind("s-effort", "change", e => { sug.maxEffort = e.target.value === "" ? null : Number(e.target.value); rerun(); });
   v.querySelector("#s-cat").addEventListener("click", e => {
     const b = e.target.closest("[data-scat]"); if (!b) return;
@@ -1656,6 +1763,12 @@ function starStr(n) { return `<span class="star-on">${"★".repeat(n)}</span><sp
 // ---------- small helpers ----------
 // ids are unique app-wide (form ids live in the log sheet, tab ids in #view)
 function bind(id, ev, fn) { const el = document.getElementById(id); if (el) el.addEventListener(ev, fn); }
+// One coarse Free/$/$$/$$$ badge everywhere costs show — kills the mixed
+// "Free" / shekel-glyph renderings (Release triage backlog, v2.1.0).
+function costBadge(e) {
+  const key = e.costTier || tierForCost(e.cost);
+  return key ? tierLabel(key) : "";
+}
 function setOn(nodes, active) { nodes.forEach(n => n.classList.toggle("on", n === active)); }
 
 async function photoURL(id) {

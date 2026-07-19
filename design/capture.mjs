@@ -19,7 +19,7 @@ const SHOTS = {
   "history-list": 1250, "history-detail": 1450, "history-gallery": 1000,
   "lightbox": 844, "insights": 2750, "suggest": 1650,
   "wrapped": 2900, "wishlist-suggest": 1750, "wishlist-history": 1500,
-  "after-reminders": 900, "after-datenight-home": 1150, "after-datenight-active": 1150,
+  "after-reminders": 900, "datenight-home": 1150, "datenight-active": 1150,
   "after-forecast": 1300, "after-value": 1200, "after-interview": 1300,
   "after-capsule-log": 2200, "after-capsule-home": 1100, "after-match": 1750,
 };

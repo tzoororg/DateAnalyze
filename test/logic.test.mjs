@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 
 import {
   CATEGORIES, MOOD_OPTIONS, blankEntry, normTitle, daysBetween,
-  entryTimeMs, toILS, fmtMoney,
+  entryTimeMs, toILS, fmtMoney, fmtDuration,
   COST_TIERS, tierForCost, tierLabel, repeatForEnjoyment, METER,
 } from "../js/model.js";
 import * as analytics from "../js/analytics.js";
@@ -27,6 +27,13 @@ test("again-o-meter maps enjoyment to wouldRepeat (top=yes, mid=maybe, low=no)",
   assert.equal(repeatForEnjoyment(2), "no");
   assert.equal(repeatForEnjoyment(1), "no");
   assert.equal(METER.length, 5);
+});
+
+test("fmtDuration renders minutes/hours (Date Night mode, Roadmap #7)", () => {
+  assert.equal(fmtDuration(45), "45m");
+  assert.equal(fmtDuration(60), "1h");
+  assert.equal(fmtDuration(84), "1h 24m");
+  assert.equal(fmtDuration(null), "");
 });
 
 test("cost tiers bucket legacy numeric costs and label correctly", () => {

@@ -17,20 +17,33 @@ function isoDaysAgo(n) {
 }
 
 // Seed sample dates + a year-ago entry (memory card) + placeholder photos.
-export async function seed() {
-  if ((await db.getAllDates()).length) return;
-  const { SAMPLE_DATES, attachSamplePhotos } = await import("./sample.js");
-  for (const e of SAMPLE_DATES) await db.putDate(e());
-  await attachSamplePhotos(db);
+// shotName drives the Date Night mode (Roadmap #7) activeDate setting: seeded active
+// for "datenight-active", explicitly cleared for every other shot so a leftover
+// session from an earlier capture run in the same Chrome profile can't leak in
+// (ui.js reads this setting once, at init() — must be set before app.js calls init()).
+export async function seed(shotName) {
+  if (!(await db.getAllDates()).length) {
+    const { SAMPLE_DATES, attachSamplePhotos } = await import("./sample.js");
+    for (const e of SAMPLE_DATES) await db.putDate(e());
+    await attachSamplePhotos(db);
 
-  await db.putDate({
-    ...blankEntry(), date: isoDaysAgo(365), createdAt: Date.now() - 365 * 86400000,
-    title: "Rooftop dinner under the stars", category: "dining", enjoyment: 5,
-    mood: ["romantic", "magical"], effort: 3, wouldRepeat: "yes", cost: 280,
-    location: "Rooftop 21", notes: "Anniversary — the city lights were unreal.",
-    capsule: "If you're reading this, book the rooftop again.",
-  });
+    await db.putDate({
+      ...blankEntry(), date: isoDaysAgo(365), createdAt: Date.now() - 365 * 86400000,
+      title: "Rooftop dinner under the stars", category: "dining", enjoyment: 5,
+      mood: ["romantic", "magical"], effort: 3, wouldRepeat: "yes", cost: 280,
+      location: "Rooftop 21", notes: "Anniversary — the city lights were unreal.",
+      capsule: "If you're reading this, book the rooftop again.",
+    });
+  }
 
+  if (shotName === "datenight-active") {
+    await db.setSetting("activeDate", {
+      startedAt: Date.now() - 84 * 60000, // 1h 24m ago
+      photoIds: ["seed-photo-1", "seed-photo-2", "seed-photo-3"],
+    });
+  } else {
+    await db.setSetting("activeDate", null);
+  }
 }
 
 // ---------- state drivers ----------
@@ -84,26 +97,10 @@ const STATES = {
     $("#seedBtn").after(html(`<button class="menu-row">🔔 Gentle reminders — <span class="muted small">anniversaries & long gaps · off</span></button>`));
   },
 
-  async "after-datenight-home"() {
-    await tab("home");
-    $("#view").prepend(html(`
-      <section class="card" style="text-align:center">
-        <h3 style="margin:0 0 6px">🌙 Date night?</h3>
-        <p class="muted small" style="margin:0 0 10px">Start now — photos and timing get logged for you.</p>
-        <button class="btn">Start date night</button>
-      </section>`));
-  },
-
-  async "after-datenight-active"() {
-    await tab("home");
-    $("#view").prepend(html(`
-      <section class="card dn-banner">
-        <div class="dn-icon">🌙</div>
-        <div class="dn-txt"><b>Date night</b><div class="sub">1h 24m · 3 📷</div></div>
-        <button class="icon-btn" title="Take photo">📷</button>
-        <button class="btn end">End</button>
-      </section>`));
-  },
+  // Real Date Night mode states (Roadmap #7) — activeDate is seeded/cleared in
+  // seed() above, before init() runs, so ui.js picks it up on load.
+  async "datenight-home"() { await tab("home"); },
+  async "datenight-active"() { await tab("home"); },
 
   async "after-forecast"() {
     await tab("insights");

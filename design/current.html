@@ -43,7 +43,8 @@
       <li><b>Tonight's pick</b> — the top result from the suggestion engine, with a sticker tag ("favorite ♥" or "new!") and the reason it was picked. "Plan it →" jumps to the Ideas tab.</li>
       <li><b>On this day</b> — memory card shown when a past date matches today's month/day in a prior year; dismissible per session. Entries with a time-capsule note show it inside the card as a gold-bordered "💌 From you" panel, exactly one year after it was written.</li>
       <li><b>Recent memories</b> — the three latest entries as edge-to-edge photo cards (1 = full-bleed, 2 = 50/50, 3+ = big-left mosaic with "+N"; all the same height, emoji banner when photoless). Metadata sits ON the photo as stickers: date tape strip (top-left), category badge (top-right), cursive title + category·cost caption over a bottom scrim, hearts pill (bottom-right, my rating → partner's → legacy), and the vibe word as a small tape label when set. Tapping the card jumps to the Album tab with that date expanded — no inline Edit/Delete.</li>
-      <li><b>＋ FAB</b> (bottom-right) opens the full-screen log sheet from any tab.</li>
+      <li><b>🌙 Date night?</b> card (between Tonight's pick and On this day) — "Start" begins a Date Night session (Roadmap #7). While active it's replaced everywhere by a pinned banner (moon glow, elapsed time · photo count, End pill) and the <b>＋ FAB becomes a camera</b> that saves photos straight into the session. "End" clears the session and opens the log sheet pre-filled with date/duration/photos.</li>
+      <li><b>＋ FAB</b> (bottom-right) opens the full-screen log sheet from any tab; becomes a camera button during an active Date Night session.</li>
     </ul></div>
   </div>
 </section>
@@ -59,6 +60,7 @@
       <li>Below: date pill + swipeable category dots (11, right-edge gradient fade as the scroll cue) on one row, <b>cost tiers</b> Free/$/$$/$$$ (a representative ₪ lands in the numeric cost for analytics), and a free-text <b>"one word for the vibe"</b> with your most-used past words as suggestion chips (replaces the fixed mood list).</li>
       <li><b>Again-o-meter</b> — vertical slider docked right of those fields (😵 never again → 😍 again ASAP). One drag sets enjoyment 1–5 AND wouldRepeat (4–5 yes, 3 maybe, 1–2 no); the thumb face and cursive verdict line update live. Effort and location were dropped from the form; notes hide behind "+ add a note" and an optional <b>link</b> (booking page, Pinterest…) hides behind "+ add a link" — set once on a wishlist idea, it carries through to the logged date. A butter <b>"💌 note to next year"</b> pill on the note row opens the time-capsule field (dashed gold box, "opens &lt;date+1y&gt;" caption); the note resurfaces in Home's On-this-day card a year later.</li>
       <li>The same sheet is reused for <b>editing</b> an existing entry (title becomes "Edit date", adds Cancel).</li>
+      <li>Ending a Date Night session opens this same sheet with a mint <b>"✨ From tonight — 1h 24m · 3 photos"</b> chip at the top and the date/duration/photos already filled in — display-only, the rest of the form is unchanged.</li>
     </ul></div>
   </div>
 </section>
@@ -70,8 +72,8 @@
     <figure><img src="shots/history-list.png" alt="Album list view"/><figcaption>List view (default)</figcaption></figure>
     <figure><img src="shots/history-detail.png" alt="Expanded entry"/><figcaption>Entry expanded in place</figcaption></figure>
     <div class="notes"><ul>
-      <li><b>Controls card</b>: sort select (date / enjoyment / cost / title), List ⇄ Gallery toggle, ▶ Slideshow, free-text search, and collapsible Category + Vibe filter groups with badges.</li>
-      <li>Tapping a row <b>expands it in place</b>: a <b>full-bleed photo hero</b> (190px; single photo fills it, 2+ tile into the grid, "+N" badge, tap → lightbox), one wrapping <b>chip row</b> (moods + would-repeat; location joins the header meta line as "· 📍 …", cost 0 shows "Free"), then per-partner <b>star ratings</b> — unrated shows a raspberry <b>"Rate ★" pill</b> that swaps into the 5-star input — notes, and a <b>"Notes to each other"</b> comment thread with input. Edit/Delete live in a ⋯ corner menu.</li>
+      <li><b>Controls card</b>, collapsed to two compact rows: search + sort select on row one; icon-only List ⇄ Gallery ⇄ Wishlist toggle, ▶ Slideshow, and collapsible Category + Vibe filter chips (badges when set) on row two, with the filtered count pushed to the right.</li>
+      <li>Tapping a row <b>expands it in place</b>: a <b>full-bleed photo hero</b> (190px; single photo fills it, 2+ tile into the grid, "+N" badge, tap → lightbox), one wrapping <b>chip row</b> (moods + would-repeat; location joins the header meta line as "· 📍 …"), then per-partner <b>star ratings</b> — unrated shows a raspberry <b>"Rate ★" pill</b> that swaps into the 5-star input — notes, and a <b>"Notes to each other"</b> comment thread with input. Edit/Delete live in a ⋯ corner menu. Cost shows everywhere as one coarse <b>Free/$/$$/$$$</b> badge; Date Night entries append their logged duration ("· 1h 24m").</li>
       <li>The count under the filters ("19 dates") tracks the active filter.</li>
     </ul></div>
   </div>
@@ -87,7 +89,7 @@
   <div class="pair">
     <figure><img src="shots/wishlist-history.png" alt="Wishlist segment"/><figcaption>☆ Wishlist segment</figcaption></figure>
     <div class="notes"><ul>
-      <li><b>☆ Wishlist</b> segment (alongside List/Gallery) lists date ideas saved from the Ideas tab — title, category · ~cost · effort, and an optional link. Ideas are ordinary date docs with <code>status:"idea"</code>, so they sync for free but are excluded from every stat, chart, suggestion and the normal list/gallery.</li>
+      <li><b>☆ Wishlist</b> segment (alongside List/Gallery) lists date ideas saved from the Ideas tab — title, category · cost badge · effort, and an optional link. Ideas are ordinary date docs with <code>status:"idea"</code>, so they sync for free but are excluded from every stat, chart, suggestion and the normal list/gallery.</li>
       <li><b>We did it! Log it →</b> opens the log sheet pre-filled from the idea (same doc, keeps id + link) so saving converts it into a real logged date — no duplicate. <b>Remove</b> deletes it.</li>
     </ul></div>
   </div>
@@ -100,8 +102,8 @@
     <figure><img src="shots/wishlist-suggest.png" alt="Ideas tab with a saved card"/><figcaption>Ideas tab (one idea saved to wishlist)</figcaption></figure>
     <div class="notes"><ul>
       <li><b>Comfort ⇄ Adventure slider</b> — the explore parameter: left repeats favorites, right pushes unseen catalog ideas. Results always mix both.</li>
-      <li>Filters: <b>max budget</b>, <b>max effort</b>, category, vibe. "🎲 Surprise us" re-rolls with jitter; "📍 Find nearby" opens a maps search.</li>
-      <li>Each card: sticker ("Favorite"/"New"), reason line, category · $-tier · effort dots, and a compact action row — <b>"♡ Save"</b> (stores it as a <code>status:"idea"</code> date for the Album's Wishlist segment) and <b>"＋ Log it"</b> (pre-fills the log sheet). Already-saved cards (matched by normalized title) show a "saved ♡" sticker and a disabled ✓ Saved button. The results list carries bottom padding so the FAB never covers the last card.</li>
+      <li>Filters: <b>max budget</b> (Free/$/$$/$$$ segmented pill, tap again to clear), <b>max effort</b>, category, vibe. "🎲 Surprise us" re-rolls with jitter; "📍 Find nearby" opens a maps search.</li>
+      <li>Each card: sticker ("Favorite"/"New"), reason line, category · $-tier · effort dots, and a compact one-line action row — <b>"♡ Wishlist"</b> (stores it as a <code>status:"idea"</code> date for the Album's Wishlist segment) and <b>"Log →"</b> (pre-fills the log sheet). Already-saved cards (matched by normalized title) show a "saved ♡" sticker and a disabled ✓ Saved button. The results list carries bottom padding so the FAB never covers the last card.</li>
       <li>Cards of past favorites show their photos.</li>
     </ul></div>
   </div>
@@ -113,7 +115,7 @@
   <div class="pair">
     <figure><img src="shots/insights.png" alt="Stats tab"/><figcaption>Stats tab (full scroll)</figcaption></figure>
     <div class="notes"><ul>
-      <li><b>Your Wrapped ✨</b>: a shareable Spotify-Wrapped-style recap card at the top, with a This year / All time toggle. Shows dates count, avg★ + total spend, favorite category, most-repeated activity, best month, and top vibe words. "Share this card" rasterizes it to a PNG via canvas and opens the OS share sheet (falls back to a download).</li>
+      <li><b>Your Wrapped ✨</b>: a shareable Spotify-Wrapped-style recap card at the top, with a This year / All time toggle. Shows dates count, avg★ + total spend, favorite category, most-repeated activity, best month (full month name, e.g. "June"), and top vibe words. "Share this card" rasterizes it to a PNG via canvas and opens the OS share sheet (falls back to a download).</li>
       <li><b>Stat grid</b>: dates logged, average enjoyment, total spent, categories tried.</li>
       <li>Charts are hand-rolled inline SVG themed by CSS variables: <b>enjoyment by category</b> (bars), <b>your vibes</b> (one merged list: emoji · avg★ + top-category icon · inline frequency bar · count), <b>trend over time</b> (enjoyment line vs. date count), <b>enjoyment vs. cost</b> (scatter — "top-left = cheap &amp; wonderful").</li>
       <li>Lists: <b>best value for money</b> and <b>most repeat-worthy</b> (repeats grouped by normalized title).</li>

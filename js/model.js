@@ -84,13 +84,23 @@ export function blankEntry() {
     notes: "",
     capsule: "", // optional "note to next year"; opens 1yr after entry date on Home memory card
     photos: [], // array of photo blob ids
+    durationMin: null, // minutes; set only by Date Night mode (Roadmap #7)
   };
 }
 
-export function todayISO() {
-  const d = new Date();
+export function todayISO(ms = Date.now()) {
+  const d = new Date(ms);
   const off = d.getTimezoneOffset();
   return new Date(d.getTime() - off * 60000).toISOString().slice(0, 10);
+}
+
+// "45m" / "1h" / "1h 24m" — used by Date Night mode's banner and the pre-filled log chip.
+export function fmtDuration(min) {
+  if (min == null) return "";
+  const h = Math.floor(min / 60), m = min % 60;
+  if (h && m) return `${h}h ${m}m`;
+  if (h) return `${h}h`;
+  return `${m}m`;
 }
 
 export function normTitle(s) {

@@ -229,6 +229,8 @@ parser tolerant and always let the user edit the date.
 
 ## 7. Date Night mode (log as a byproduct)
 
+**Status.** ✅ Shipped 2026-07-19.
+
 **What.** A live in-date companion: tap "Start date night" → the app timestamps
 the start, offers a big camera button that saves photos straight into a pending
 pool, and on "End" opens the Log form pre-filled with date, duration, and the
@@ -254,6 +256,8 @@ recovery draft covers it. No geolocation tracking during the date (creepy,
 off-brand); location stays a manual field.
 
 ## 11. Time-capsule notes
+
+**Status.** ✅ Shipped 2026-07-16 (commit 7c49285).
 
 **What.** When logging, an optional "note to your future selves" field; it
 resurfaces exactly one year later via the existing memory card.
@@ -292,12 +296,7 @@ popup (unreliable in installed iOS PWAs), and a real-device verification pass
 
 ## Release triage backlog
 
-- **medium** — Album control stack is bloated (~300px of sort/view/search/filter chrome before the first date); collapse to two rows with inline chips. Found in v2.1.0.
-- **medium** — Cost display inconsistent across views (Home "Free" vs Album "▣0" vs Ideas "~▣180"; shekel glyph renders as a box at small sizes); use one coarse Free/$/$$/$$$ badge everywhere. Found in v2.1.0.
-- **low** — Ideas "Max budget" free-text numeric input → replace with Free/$/$$/$$$ segmented pill. Found in v2.1.0.
-- **medium** — FAB overlaps the bottom home card's hearts sticker; add bottom scroll clearance or shift the sticker. Found in v2.1.0.
-- **low** — Ideas card action buttons wrap to two lines; make compact one-line actions ("♡ Wishlist" / "Log →"). Found in v2.1.0.
-- **low** — Wrapped card "BEST MONTH" shows a specific date ("Jun 26") instead of a month. Found in v2.1.0.
+*(empty — all six v2.1.0 items above shipped 2026-07-19)*
 
 ## Explicitly NOT doing
 
