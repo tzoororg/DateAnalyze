@@ -28,6 +28,7 @@ const SHELL = [
   "./js/crash-report.js",
   "./js/push.js",
   "./js/push-config.js",
+  "./js/version.js",
   "./manifest.webmanifest",
   "./icons/icon.svg",
   "./icons/icon-maskable.svg",
@@ -86,6 +87,8 @@ self.addEventListener("notificationclick", e => {
 self.addEventListener("fetch", e => {
   const { request } = e;
   if (request.method !== "GET" || new URL(request.url).origin !== self.location.origin) return;
+  // never cache the kill switch
+  if (new URL(request.url).pathname.endsWith("/version.json")) return;
   // Match only OUR cache — caches.match() searches every cache on the origin
   // and would serve stale files from an old (or the other channel's) cache.
   e.respondWith(

@@ -216,8 +216,11 @@ Design (all WebCrypto, no dependencies, fits the no-build-step constraint):
       exports to a GCS bucket (or point-in-time recovery).
 - [ ] **Uptime/abuse visibility**: Cloudflare worker analytics are already there; add a
       Firebase usage-alert (reads/writes) so quota exhaustion doesn't look like an outage.
-- [ ] **Kill switch / min-version**: a tiny `version.json` fetched at boot lets you force-
-      refresh clients past a bad SW cache or disable sync in an incident. (Cheap; decide.)
+- [x] **Kill switch / min-version**: `version.json` at repo root (never cached by the SW,
+      2.5s fail-open fetch at boot). `minCache` force-refreshes clients stuck on an old SW
+      cache (one-shot loop guard via localStorage); `syncDisabled`/`message` gate
+      `store.js`'s `loadCloud()` to kill sync in an incident. Editing `version.json` on
+      `master` is the production incident switch.
 
 ## Suggested order
 

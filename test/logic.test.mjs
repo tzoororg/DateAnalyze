@@ -313,3 +313,27 @@ test("shouldReport: true for a fingerprint last reported on a different day", ()
   const storage = fakeStorage({ "crash:fp1": "2000-01-01" });
   assert.equal(shouldReport("fp1", now, storage, { count: 0 }), true);
 });
+
+// ================= version.js (kill-switch cache compare) =================
+import { cacheOutdated } from "../js/version.js";
+
+test("cacheOutdated: older running cache than min -> true", () => {
+  assert.equal(cacheOutdated("us-date-tracker-v2.1.0", "us-date-tracker-v2.1.1"), true);
+});
+
+test("cacheOutdated: equal versions -> false", () => {
+  assert.equal(cacheOutdated("us-date-tracker-v2.1.1", "us-date-tracker-v2.1.1"), false);
+});
+
+test("cacheOutdated: beta-prefixed running name older than min -> true", () => {
+  assert.equal(cacheOutdated("beta-abc1234-us-date-tracker-v2.1.0", "us-date-tracker-v2.1.1"), true);
+});
+
+test("cacheOutdated: garbage input -> false", () => {
+  assert.equal(cacheOutdated("not-a-version", "also-not-a-version"), false);
+  assert.equal(cacheOutdated(null, "us-date-tracker-v2.1.1"), false);
+});
+
+test("cacheOutdated: running newer than min -> false", () => {
+  assert.equal(cacheOutdated("us-date-tracker-v2.2.0", "us-date-tracker-v2.1.1"), false);
+});

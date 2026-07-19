@@ -10,10 +10,16 @@ let backend = local;
 let cloud = null;      // lazily-imported sync.js module, once sync is ever enabled
 let mode = "local";    // "local" | "cloud"
 let subscribers = [];
+let syncDisabled = false; // remote kill switch (version.json), set by app.js at boot
+let syncMsg = "";
+
+// Remote kill switch: set from version.json's syncDisabled/message fields.
+export function setSyncDisabled(v, msg) { syncDisabled = v; syncMsg = msg; }
 
 function notify() { subscribers.slice().forEach(cb => { try { cb(); } catch (e) { console.error(e); } }); }
 
 async function loadCloud() {
+  if (syncDisabled) throw new Error(syncMsg || "Sync temporarily disabled");
   if (!cloud) {
     cloud = await import("./sync.js");
     cloud.setRemoteChangeHandler(notify);
