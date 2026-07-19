@@ -308,6 +308,41 @@ try {
   check("FAB reverts to ＋ after ending date night", fabAfterEnd === "＋", fabAfterEnd);
   await t.evaluate(`document.getElementById("logCloseBtn").click()`);
 
+  // 9g. XSS: cloud-sourced identifier fields (title/notes/location/url) must
+  // never execute as HTML, and javascript: URLs must be neutralized.
+  t = await shotTab("history-list");
+  await t.evaluate(`(async () => {
+    const s = await import("./js/store.js");
+    const payload = '<img src=x onerror="window.__xss=(window.__xss||0)+1">';
+    await s.putDate({ id: "xss-test-1", date: "2026-01-01", category: "dining",
+      enjoyment: 5, photos: [], title: payload, notes: payload, location: payload });
+    await s.putDate({ id: "xss-test-2", date: "2026-01-02", category: "dining",
+      enjoyment: 5, photos: [], status: "idea", title: "xss idea",
+      url: 'javascript:window.__xss=1' });
+  })()`);
+  t = await shotTab("history-list");
+  const xssFired = await t.evaluate(`window.__xss || 0`);
+  check("XSS payload did not execute on history list", xssFired === 0, `__xss=${xssFired}`);
+  const xssRendered = await t.evaluate(`(() => {
+    const h4 = [...document.querySelectorAll(".hist-entry h4")].find(el => el.textContent.includes("<img src=x onerror"));
+    return { found: !!h4, hasImg: !!h4?.querySelector("img") };
+  })()`);
+  check("hostile title renders as literal text, not markup",
+    xssRendered.found && !xssRendered.hasImg, JSON.stringify(xssRendered));
+
+  await t.evaluate(`document.querySelector('.tab[data-tab="history"]').click()`);
+  await sleep(200);
+  await t.evaluate(`document.querySelector('.hist-view-toggle [data-view="wishlist"]').click()`);
+  await sleep(300);
+  const jsUrlNeutralized = await t.evaluate(`(() => {
+    const a = [...document.querySelectorAll(".url-link")].find(a => a.textContent.includes("xss idea") || a.closest(".card")?.textContent.includes("xss idea"));
+    const link = document.querySelector('[data-didit="xss-test-2"]')?.closest(".card")?.querySelector(".url-link");
+    return link ? link.getAttribute("href") : "no-link-found";
+  })()`);
+  check("javascript: url neutralized to #", jsUrlNeutralized === "#" || jsUrlNeutralized === "no-link-found", jsUrlNeutralized);
+  const xssFiredAfterWishlist = await t.evaluate(`window.__xss || 0`);
+  check("XSS payload still did not execute on wishlist view", xssFiredAfterWishlist === 0, `__xss=${xssFiredAfterWishlist}`);
+
   // 10. no console errors anywhere
   for (const { state, tab } of tabs) {
     check(`no console errors [${state}]`, tab.errors.length === 0, tab.errors.slice(0, 2).join(" | "));

@@ -2,22 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://accounts.google.com; connect-src 'self' https://*.googleapis.com https://*.firebaseapp.com https://accounts.google.com https://*.workers.dev https://api.frankfurter.app http://127.0.0.1:8080 http://127.0.0.1:9099; frame-src https://us-date-tracker-c988b.firebaseapp.com https://accounts.google.com; img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; base-uri 'self'; object-src 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#2a1b26" />
   <title>Us — Date Tracker</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icons/icon-180.png" />
-  <script>
-    // Apply the saved theme before the stylesheet paints to avoid a flash.
-    (function () {
-      var t = localStorage.getItem("theme");
-      if (t) document.documentElement.dataset.theme = t;
-      var colors = { pink: "#e8577e", plum: "#2a1b26", navy: "#0d1220" };
-      var c = colors[t] || colors.plum; // Plum is the default theme
-      document.querySelector('meta[name="theme-color"]').setAttribute("content", c);
-    })();
-  </script>
+  <script src="js/theme-boot.js"></script>
   <link rel="stylesheet" href="css/styles.css?v=25" />
 </head>
 <body>

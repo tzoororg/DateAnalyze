@@ -68,14 +68,20 @@ client can write arbitrary junk, oversized docs, or clobber fields.
 trust boundary: a malicious/compromised partner client can put HTML in title/notes/location
 and it renders on your phone. 49 `innerHTML` sites in ui.js.
 
-- [ ] One-time audit of every `innerHTML` site: every interpolated user/partner/cloud string
-      goes through `escHtml`/`escAttr` (include charts.js labels and the invite-code display).
-- [ ] Add a smoke-test entry whose title/notes/location are `<img src=x onerror=...>` strings
-      and assert no script execution / correct escaping in rendered DOM.
-- [ ] Add a CSP `<meta>` tag: `default-src 'self'; script-src 'self' https://www.gstatic.com;
-      connect-src 'self' https://*.googleapis.com https://*.firebaseio.com
-      https://*.workers.dev; img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'`
-      (tune against the real network map; verify sign-in popup + FCM still work).
+- [x] One-time audit of every `innerHTML` site (2026-07-20): text sinks were already escaped
+      (charts.js labels, invite code/email via `textContent`). Real gap found and fixed:
+      wishlist `url` allowed `javascript:` hrefs — new `safeUrl()` scheme allowlist in ui.js.
+      Also wrapped all cloud-sourced id/category `data-*` attributes in `escAttr` (defense
+      in depth vs a hostile partner client).
+- [x] Smoke test 9g: seeds `<img src=x onerror=...>` in title/notes/location + a
+      `javascript:` wishlist URL; asserts no execution, literal-text rendering, href → `#`.
+- [x] CSP `<meta>` added to index.html, tuned to the real network map (gstatic +
+      accounts.google.com script-src; googleapis/firebaseapp/workers.dev/frankfurter +
+      emulator ports connect-src; frame-src for the Auth popup iframe; blob:/data: images;
+      base-uri 'self'; object-src 'none'). Inline theme script extracted to
+      `js/theme-boot.js` (added to SW SHELL). Smoke suite clean, no CSP violations.
+      Remaining runtime check: one real Google sign-in + FCM with DevTools console open
+      (meta CSP can't report violations) — if `unsafe-eval` refusals appear, add it.
 
 ### 1.7 Deploy checklist (manual/console steps remaining after §1.1–1.4 code changes)
 

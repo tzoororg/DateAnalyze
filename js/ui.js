@@ -799,8 +799,8 @@ async function renderList() {
     const r = lines.find(l => l.mine) || lines.find(l => !l.mine && l.name) || lines.find(l => l.key === null);
     const cost = costBadge(e);
     return `
-    <div class="card home-card" data-open="${e.id}">
-      <div class="home-photos" data-photos="${(e.photos || []).join(",")}" data-cat="${e.category}"></div>
+    <div class="card home-card" data-open="${escAttr(e.id)}">
+      <div class="home-photos" data-photos="${escAttr((e.photos || []).join(","))}" data-cat="${escAttr(e.category)}"></div>
       <span class="stk tape">${fmtDate(e.date)}</span>
       <span class="stk cat">${catEmoji(e.category)}</span>
       ${e.vibe ? `<span class="stk vibe">${escHtml(e.vibe)}</span>` : ""}
@@ -1006,8 +1006,8 @@ async function renderHistoryList() {
       return;
     }
     host.innerHTML = `<div class="hist-gallery">${photoEntries.map(({ pid, e }) =>
-      `<div class="gallery-tile" data-entry="${e.id}" data-pid="${pid}">
-        <img src="" data-load="${pid}" alt="${escAttr(e.title)}"/>
+      `<div class="gallery-tile" data-entry="${escAttr(e.id)}" data-pid="${escAttr(pid)}">
+        <img src="" data-load="${escAttr(pid)}" alt="${escAttr(e.title)}"/>
         <div class="gallery-label">${escHtml(e.title)}</div>
       </div>`).join("")}</div>`;
     host.querySelectorAll("[data-load]").forEach(async img => {
@@ -1034,14 +1034,14 @@ async function renderHistoryList() {
     const isOpen = hist.expanded === e.id;
     return `
     <div class="card tight hist-entry ${isOpen ? "open" : ""}">
-      <div class="entry hist-row" data-toggle="${e.id}">
-        <div class="thumb" data-thumb="${e.photos?.[0] || ""}">${catEmoji(e.category)}</div>
+      <div class="entry hist-row" data-toggle="${escAttr(e.id)}">
+        <div class="thumb" data-thumb="${escAttr(e.photos?.[0] || "")}">${catEmoji(e.category)}</div>
         <div class="meta">
           <h4>${escHtml(e.title)}</h4>
           <div class="sub">${fmtDate(e.date)} · ${catLabel(e.category)}${costBadge(e) ? " · " + costBadge(e) : ""}${isOpen && e.location ? " · 📍 " + escHtml(e.location) : ""}${e.durationMin ? " · " + fmtDuration(e.durationMin) : ""}</div>
         </div>
         ${isOpen
-          ? `<button class="kebab" data-kebab="${e.id}">⋯</button>`
+          ? `<button class="kebab" data-kebab="${escAttr(e.id)}">⋯</button>`
           : `<div class="score">${"★".repeat(e.enjoyment)}</div>`}
       </div>
       ${isOpen ? histDetail(e) : ""}
@@ -1075,8 +1075,8 @@ function histDetail(e) {
   const rateInput = mineRated ? "" : `
     <div class="rate-line">
       <span class="who me">${escHtml(myInitial())}</span><span class="name">You</span>
-      <button class="btn rate-cta" style="width:auto;padding:5px 14px;font-size:13px" data-rate-cta="${e.id}">Rate ★</button>
-      <span class="big-stars hidden" data-rate="${e.id}">${[1, 2, 3, 4, 5].map(n => `<span class="rk off" data-k="${n}">★</span>`).join("")}</span>
+      <button class="btn rate-cta" style="width:auto;padding:5px 14px;font-size:13px" data-rate-cta="${escAttr(e.id)}">Rate ★</button>
+      <span class="big-stars hidden" data-rate="${escAttr(e.id)}">${[1, 2, 3, 4, 5].map(n => `<span class="rk off" data-k="${n}">★</span>`).join("")}</span>
     </div>`;
 
   // only mood chips + would-repeat flow below the photo; effort/location moved elsewhere
@@ -1098,7 +1098,7 @@ function histDetail(e) {
 
   return `
   <div class="hist-detail">
-    <div class="hero-photo"><div class="hist-photos mosaic-slot" data-hist-photos="${(e.photos || []).join(",")}" data-cat="${e.category}"></div></div>
+    <div class="hero-photo"><div class="hist-photos mosaic-slot" data-hist-photos="${escAttr((e.photos || []).join(","))}" data-cat="${escAttr(e.category)}"></div></div>
     ${chips.length ? `<div class="chip-flow">${chips.join("")}</div>` : ""}
     <div class="rate-meta">${rateLines}${rateInput}</div>
     ${e.notes ? `<p class="notes">${escHtml(e.notes)}</p>` : ""}
@@ -1106,7 +1106,7 @@ function histDetail(e) {
       <h5>Notes to each other 💬</h5>
       ${comments}
       <div class="cmt-input">
-        <input placeholder="Add a note…" data-cmt="${e.id}"/><button data-cmt-send="${e.id}">➤</button>
+        <input placeholder="Add a note…" data-cmt="${escAttr(e.id)}"/><button data-cmt-send="${escAttr(e.id)}">➤</button>
       </div>
     </div>
   </div>`;
@@ -1120,7 +1120,7 @@ function wireHistDetail(host) {
     const id = btn.dataset.kebab;
     const pop = document.createElement("div");
     pop.className = "menu-pop";
-    pop.innerHTML = `<div data-edit="${id}">✎ Edit</div><div class="danger" data-del="${id}">🗑 Delete</div>`;
+    pop.innerHTML = `<div data-edit="${escAttr(id)}">✎ Edit</div><div class="danger" data-del="${escAttr(id)}">🗑 Delete</div>`;
     btn.closest(".hist-entry").appendChild(pop);
     pop.querySelector("[data-edit]").addEventListener("click", ev2 => { ev2.stopPropagation(); editEntry(id); });
     pop.querySelector("[data-del]").addEventListener("click", async ev2 => {
@@ -1194,12 +1194,12 @@ function renderWishlist(host, countEl) {
         <div class="meta">
           <h4>${escHtml(e.title)}</h4>
           <div class="sub">${catLabel(e.category)}${costBadge(e) ? " · " + costBadge(e) : ""}${e.effort ? " · effort " + "●".repeat(e.effort) + "○".repeat(5 - e.effort) : ""}</div>
-          ${e.url ? `<a class="url-link" href="${escAttr(e.url)}" target="_blank" rel="noopener">🔗 ${escHtml(prettyUrl(e.url))}</a>` : ""}
+          ${e.url ? `<a class="url-link" href="${escAttr(safeUrl(e.url))}" target="_blank" rel="noopener">🔗 ${escHtml(prettyUrl(e.url))}</a>` : ""}
         </div>
       </div>
       <div class="btn-row">
-        <button class="btn small" data-didit="${e.id}">We did it! Log it →</button>
-        <button class="btn ghost small" data-rmidea="${e.id}">Remove</button>
+        <button class="btn small" data-didit="${escAttr(e.id)}">We did it! Log it →</button>
+        <button class="btn ghost small" data-rmidea="${escAttr(e.id)}">Remove</button>
       </div>
     </div>`).join("");
   host.querySelectorAll("[data-didit]").forEach(b => b.addEventListener("click", () => logIdea(b.dataset.didit)));
@@ -1480,7 +1480,7 @@ function renderSugCards(results) {
         <h3>${catEmoji(r.category)} ${escHtml(r.title)}</h3>
         <span class="tag ${r.kind}">${r.kind === "explore" ? "New" : "Favorite"}</span>
       </div>
-      ${r.photos?.length ? `<div class="sug-photos" data-sug-photos="${r.photos.join(",")}"></div>` : ""}
+      ${r.photos?.length ? `<div class="sug-photos" data-sug-photos="${escAttr(r.photos.join(","))}"></div>` : ""}
       <p class="sug-reason">${escHtml(r.reason)}</p>
       <div class="sug-meta">
         <span>${catLabel(r.category)}</span>
@@ -1987,3 +1987,8 @@ function emptyState(big, title, sub) {
 }
 function escHtml(s) { return String(s ?? "").replace(/[<>&]/g, c => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c])); }
 function escAttr(s) { return String(s ?? "").replace(/[<>&"]/g, c => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c])); }
+// ponytail: ids are app-generated UUIDs; escaping + CSP is belt-and-suspenders vs a hostile partner client.
+function safeUrl(u) {
+  try { const p = new URL(u, location.origin); return (p.protocol === "http:" || p.protocol === "https:") ? p.href : "#"; }
+  catch { return "#"; }
+}
