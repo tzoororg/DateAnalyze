@@ -205,9 +205,13 @@ Design (all WebCrypto, no dependencies, fits the no-build-step constraint):
 
 ## 5. Operations
 
-- [ ] **Client error reporting**: none exists. Minimal version: `window.onerror` /
-      `unhandledrejection` → POST to the existing feedback worker with a distinct label,
-      rate-limited client-side. No Sentry needed yet.
+- [x] **Client error reporting**: `js/crash-report.js` catches `window.onerror` /
+      `unhandledrejection` and POSTs to the existing feedback worker (`kind:"crash"`),
+      labeled `crash`. Rate-limited per fingerprint/day plus 5-per-session client-side;
+      worker dedups by commenting on the matching open issue instead of filing a new
+      one; opt-out via `localStorage.crashReports = "off"`; payload carries no user
+      content (message/stack/filename only). No Sentry needed. Worker deploy still
+      pending the §1.7 checklist.
 - [ ] **Backups**: Spark has no Firestore backups. On Blaze, enable scheduled Firestore
       exports to a GCS bucket (or point-in-time recovery).
 - [ ] **Uptime/abuse visibility**: Cloudflare worker analytics are already there; add a

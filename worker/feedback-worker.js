@@ -101,18 +101,46 @@ export default {
       } catch (_) { /* ignore photo errors */ }
     }
 
-    // 2) Create the issue.
-    const title = firstLine(text).slice(0, 60) || "App feedback";
+    // 2) Crash reports: dedup against an existing open issue by fingerprint marker.
+    // ponytail: GitHub search-index lag means a dupe filed within ~a few seconds of
+    // the first might not be found yet and creates a second issue — acceptable, the
+    // per-fingerprint/day client rate limit already keeps volume low.
+    const isCrash = payload.kind === "crash";
+    const label = isCrash ? "crash" : LABEL;
+    const fp = isCrash ? String(payload.fingerprint || "").replace(/\W/g, "").slice(0, 32) : "";
+
+    if (isCrash && fp) {
+      const q = encodeURIComponent(`repo:${REPO} label:crash state:open "crashfp:${fp}"`);
+      const search = await gh(`/search/issues?q=${q}`);
+      if (search.ok) {
+        const results = await search.json();
+        const hit = results.items?.[0];
+        if (hit) {
+          const meta = payload.meta || {};
+          const comment = `Another occurrence · ${esc(meta.at)} · ${esc(meta.ua)}`;
+          await gh(`/repos/${REPO}/issues/${hit.number}/comments`, {
+            method: "POST",
+            body: JSON.stringify({ body: comment }),
+          });
+          return json({ number: hit.number, url: hit.html_url, deduped: true }, 201, cors);
+        }
+      }
+    }
+
+    // 3) Create the issue.
+    const title = firstLine(text).slice(0, 60) || (isCrash ? "Crash report" : "App feedback");
     const meta = payload.meta || {};
     const uidFooter = uid ? ` · uid ${esc(uid)}` : "";
+    const header = isCrash ? "**From in-app crash report**" : "**From in-app feedback**";
+    const fpFooter = isCrash && fp ? `\n<sub>crashfp:${fp}</sub>` : "";
     const body =
-      `**From in-app feedback**\n\n${text}${photoMd}\n\n` +
+      `${header}\n\n${text}${photoMd}\n\n` +
       `---\n` +
-      `<sub>app ${esc(meta.appVersion)} · ${esc(meta.at)} · ${esc(meta.ua)}${uidFooter}</sub>`;
+      `<sub>app ${esc(meta.appVersion)} · ${esc(meta.at)} · ${esc(meta.ua)}${uidFooter}</sub>${fpFooter}`;
 
     const res = await gh(`/repos/${REPO}/issues`, {
       method: "POST",
-      body: JSON.stringify({ title, body, labels: [LABEL] }),
+      body: JSON.stringify({ title, body, labels: [label] }),
     });
 
     if (!res.ok) {

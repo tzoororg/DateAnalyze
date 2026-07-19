@@ -25,6 +25,7 @@ const SHELL = [
   "./js/gphotos-config.js",
   "./js/feedback.js",
   "./js/feedback-config.js",
+  "./js/crash-report.js",
   "./js/push.js",
   "./js/push-config.js",
   "./manifest.webmanifest",

@@ -1,6 +1,9 @@
 // Bootstrap: start the UI and register the service worker for offline use.
 import { init } from "./js/ui.js";
 import { autoEnableSync, completeRedirectSignIn } from "./js/store.js";
+import { installCrashReporter } from "./js/crash-report.js";
+
+installCrashReporter();
 
 // Dev-only screenshot mode: ?shot=<state> seeds demo data and drives the UI
 // into a named view so headless Chrome can capture it (see design/capture.mjs).

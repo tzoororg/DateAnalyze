@@ -12,6 +12,7 @@ import * as analytics from "../js/analytics.js";
 import { suggest } from "../js/suggest.js";
 import { barChart, trendChart, scatterChart, balanceDonut, wrappedCard } from "../js/charts.js";
 import { SAMPLE_DATES } from "../js/sample.js";
+import { shouldReport } from "../js/crash-report.js";
 
 // ---- fixture: sample dataset + edge cases ----
 const dates = SAMPLE_DATES.map(f => f());
@@ -287,4 +288,28 @@ test("crypto: key export/import round-trip (base64url, no padding)", async () =>
   const key2 = await importKeyB64(b64);
   const enc = await encryptJSON(key, { hello: "world" });
   assert.deepEqual(await decryptJSON(key2, enc), { hello: "world" });
+});
+
+// ================= crash-report =================
+
+function fakeStorage(map = {}) {
+  return { getItem: k => (k in map ? map[k] : null) };
+}
+
+test("shouldReport: false once session cap is reached", () => {
+  const storage = fakeStorage();
+  assert.equal(shouldReport("fp1", Date.now(), storage, { count: 5 }), false);
+});
+
+test("shouldReport: false for a fingerprint already reported today", () => {
+  const now = Date.now();
+  const today = new Date(now).toISOString().slice(0, 10);
+  const storage = fakeStorage({ "crash:fp1": today });
+  assert.equal(shouldReport("fp1", now, storage, { count: 0 }), false);
+});
+
+test("shouldReport: true for a fingerprint last reported on a different day", () => {
+  const now = Date.now();
+  const storage = fakeStorage({ "crash:fp1": "2000-01-01" });
+  assert.equal(shouldReport("fp1", now, storage, { count: 0 }), true);
 });
