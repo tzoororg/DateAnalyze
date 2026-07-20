@@ -145,6 +145,7 @@ function wireChrome() {
   document.getElementById("syncCreateBtn").addEventListener("click", onSyncCreate);
   document.getElementById("syncJoinBtn").addEventListener("click", onSyncJoin);
   document.getElementById("syncCopyCodeBtn").addEventListener("click", onSyncCopyCode);
+  document.getElementById("syncRegenBtn").addEventListener("click", onSyncRegen);
   document.getElementById("syncNotifyBtn").addEventListener("click", onSyncNotify);
   document.getElementById("syncBackfillBtn").addEventListener("click", onSyncBackfill);
   document.getElementById("syncShowKeyBtn").addEventListener("click", onSyncShowKey);
@@ -204,6 +205,7 @@ async function renderSyncStatus() {
   const create = document.getElementById("syncCreateBtn");
   const join = document.getElementById("syncJoinBtn");
   const copyCode = document.getElementById("syncCopyCodeBtn");
+  const regen = document.getElementById("syncRegenBtn");
   const notify = document.getElementById("syncNotifyBtn");
   const backfill = document.getElementById("syncBackfillBtn");
   const signOut = document.getElementById("syncSignOutBtn");
@@ -222,12 +224,18 @@ async function renderSyncStatus() {
 
   if (mode === "cloud" && user) {
     lastInviteCode = await db.getInviteCode();
-    status.textContent = lastInviteCode
-      ? `🔄 Syncing as ${user.email} — space code ${lastInviteCode}`
-      : `🔄 Syncing as ${user.email}`;
+    if (lastInviteCode) {
+      const exp = await db.getSetting("spaceInviteCodeExp", null);
+      const daysLeft = exp ? Math.ceil((exp - Date.now()) / 86_400_000) : null;
+      const validity = daysLeft == null ? "" : daysLeft > 0 ? ` (valid ${daysLeft}d)` : " (expired — tap New pairing code)";
+      status.textContent = `🔄 Syncing as ${user.email} — space code ${lastInviteCode}${validity}`;
+    } else {
+      status.textContent = `🔄 Syncing as ${user.email}`;
+    }
     status.classList.remove("hidden");
     signIn.classList.add("hidden"); create.classList.add("hidden"); join.classList.add("hidden");
     copyCode.classList.toggle("hidden", !lastInviteCode);
+    regen.classList.toggle("hidden", !lastInviteCode);
     notify.classList.remove("hidden");
     backfill.classList.remove("hidden");
     signOut.classList.remove("hidden");
@@ -237,6 +245,7 @@ async function renderSyncStatus() {
     status.classList.remove("hidden");
     signIn.classList.add("hidden"); create.classList.remove("hidden"); join.classList.remove("hidden");
     copyCode.classList.add("hidden");
+    regen.classList.add("hidden");
     notify.classList.add("hidden");
     backfill.classList.add("hidden");
     signOut.classList.remove("hidden");
@@ -245,6 +254,7 @@ async function renderSyncStatus() {
     status.classList.add("hidden");
     signIn.classList.remove("hidden"); create.classList.add("hidden"); join.classList.add("hidden");
     copyCode.classList.add("hidden");
+    regen.classList.add("hidden");
     notify.classList.add("hidden");
     backfill.classList.add("hidden");
     signOut.classList.add("hidden");
@@ -306,6 +316,17 @@ async function onSyncCopyCode() {
     await navigator.clipboard.writeText(lastInviteCode);
     toast(`Copied ${lastInviteCode} to clipboard`);
   } catch (err) { console.error(err); toast("Couldn't copy — long-press the code above instead"); }
+}
+
+async function onSyncRegen() {
+  if (!confirm("Get a fresh 7-day pairing code? The current code stops working.")) return;
+  try {
+    const combined = await db.regenerateInviteCode();
+    if (!combined) return;
+    try { await navigator.clipboard.writeText(combined); } catch { /* clipboard optional */ }
+    renderSyncStatus();
+    toast("New code ready — copied to clipboard");
+  } catch (err) { console.error(err); toast(err.message || "Couldn't make a new code"); }
 }
 
 async function onSyncSignIn() {

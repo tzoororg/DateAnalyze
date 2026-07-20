@@ -35,6 +35,7 @@ export function subscribe(cb) {
 export function getMode() { return mode; }
 export function getUser() { return cloud ? cloud.getCurrentUser() : null; }
 export function getInviteCode() { return cloud ? cloud.getInviteCode() : Promise.resolve(null); }
+export async function regenerateInviteCode() { return mode === "cloud" && cloud ? cloud.regenerateInviteCode() : null; }
 
 // Called once at boot, before the first render, so a returning cloud user lands
 // straight in their shared space instead of flashing local-only data first.

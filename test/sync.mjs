@@ -57,6 +57,24 @@ try {
                  await b.evaluate(`import("./js/store.js").then(s => s.getMode())`)];
   check("both phones in cloud mode", modes[0] === "cloud" && modes[1] === "cloud", modes.join(","));
 
+  // 2b. regenerate: fresh server code, same E2EE key, old invite doc retired
+  const oldServerCode = code.split(".")[0];
+  const oldKeySuffix = code.split(".")[1];
+  const newCode = await a.evaluate(`import("./js/store.js").then(s => s.regenerateInviteCode())`);
+  const newServerCode = (newCode || "").split(".")[0];
+  const newKeySuffix = (newCode || "").split(".")[1];
+  check("regenerate returns a different server code",
+    newServerCode && newServerCode !== oldServerCode, `old=${oldServerCode} new=${newServerCode}`);
+  check("regenerate preserves the E2EE key", newKeySuffix === oldKeySuffix,
+    `old=${oldKeySuffix} new=${newKeySuffix}`);
+  const storedCode = await a.evaluate(`import("./js/store.js").then(s => s.getInviteCode())`);
+  check("regenerated code persisted to spaceInviteCode setting", storedCode === newCode, `stored=${storedCode} new=${newCode}`);
+  const newInviteDoc = await fetch(
+    `http://127.0.0.1:8080/v1/projects/us-date-tracker-c988b/databases/(default)/documents/invites/${newServerCode}`,
+    { headers: { Authorization: "Bearer owner" } }
+  );
+  check("new invite doc exists in Firestore", newInviteDoc.status === 200, String(newInviteDoc.status));
+
   // 3. date logged on A appears on B with fields intact
   const entryId = await a.evaluate(`Promise.all([import("./js/store.js"), import("./js/model.js")])
     .then(async ([s, m]) => {

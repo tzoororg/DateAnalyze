@@ -125,8 +125,12 @@ but has production gaps:
       out weekly). Must submit for verification before general users.
 - [ ] `signInWithPopup` breaks in many webviews/wrapped contexts (TWA is OK, iOS wrappers
       often not). Add `signInWithRedirect` fallback; test inside the actual store wrappers.
-- [ ] Invite-code recovery: code expires in 7 days and there's no "regenerate code" flow if
-      pairing didn't happen in time. Add regenerate (and show remaining validity).
+- [x] Invite-code recovery: ⋯ menu → "🔁 New pairing code" mints a fresh 7-day code
+      (`sync.regenerateInviteCode()` — same E2EE key, new server code, old invite
+      best-effort retired) and copies it; the sync status line now shows remaining
+      validity ("valid Nd" / "expired — tap New pairing code") from a stored
+      `spaceInviteCodeExp` setting. (2026-07-20) Sync-tested (`test/sync.mjs` step 2b:
+      new code differs, key preserved, new invite doc exists) — passing.
 - [ ] First-run explainer: one screen stating "data stays on this phone unless you turn on
       sync" — doubles as the store-reviewer-friendly privacy statement.
 - [ ] `navigator.storage.persist()` on first run (see 3.1).

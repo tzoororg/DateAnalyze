@@ -230,6 +230,7 @@ export async function createSpace() {
   await attachSpace(spaceRef.id);
   const combined = `${code}.${keyB64}`;
   await local.setSetting("spaceInviteCode", combined);
+  await local.setSetting("spaceInviteCodeExp", Date.now() + INVITE_TTL_MS);
   return { spaceId: spaceRef.id, code: combined };
 }
 
@@ -281,6 +282,31 @@ export async function restoreSession(id) {
 
 export function getInviteCode() {
   return local.getSetting("spaceInviteCode", null);
+}
+
+// Mint a fresh 7-day pairing code for the current space (the old one may have
+// expired before the partner joined). Same E2EE key — only the server code
+// changes; the previous invite is best-effort retired so it can't be reused.
+export async function regenerateInviteCode() {
+  const s = await ensureFirebase();
+  const user = s.auth.currentUser;
+  if (!user || !spaceId) throw new Error("No active space");
+  const keyB64 = await local.getSetting("spaceKey", null);
+  if (!keyB64) throw new Error("Missing encryption key");
+  const oldCombined = await local.getSetting("spaceInviteCode", null);
+  const code = genCode();
+  await s.setDoc(s.doc(s.fs, "invites", code), {
+    spaceId, createdBy: user.uid,
+    createdAt: s.serverTimestamp(), expiresAt: new Date(Date.now() + INVITE_TTL_MS),
+  });
+  const combined = `${code}.${keyB64}`;
+  await local.setSetting("spaceInviteCode", combined);
+  await local.setSetting("spaceInviteCodeExp", Date.now() + INVITE_TTL_MS);
+  const oldServer = oldCombined ? oldCombined.split(".")[0] : null;
+  if (oldServer && oldServer !== code) {
+    try { await s.deleteDoc(s.doc(s.fs, "invites", oldServer)); } catch { /* best-effort */ }
+  }
+  return combined;
 }
 
 // ---- Push notifications ----
