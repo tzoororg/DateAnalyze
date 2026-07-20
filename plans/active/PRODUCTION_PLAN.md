@@ -80,8 +80,14 @@ and it renders on your phone. 49 `innerHTML` sites in ui.js.
       emulator ports connect-src; frame-src for the Auth popup iframe; blob:/data: images;
       base-uri 'self'; object-src 'none'). Inline theme script extracted to
       `js/theme-boot.js` (added to SW SHELL). Smoke suite clean, no CSP violations.
-      Remaining runtime check: one real Google sign-in + FCM with DevTools console open
-      (meta CSP can't report violations) — if `unsafe-eval` refusals appear, add it.
+      **Runtime sign-in check done 2026-07-20 (real beta Google sign-in w/ DevTools):
+      found a blocker — Firebase Auth loads `https://apis.google.com/js/api.js` during
+      Google sign-in, which the CSP `script-src` blocked → `auth/internal-error`, sign-in
+      fully broken for any fresh session. Fixed: added `https://apis.google.com` to
+      `script-src` and `frame-src`. No `unsafe-eval` refusals observed. (The `.map`
+      connect-src violations to www.gstatic.com are harmless source-map fetches, left as-is.)
+      Existing users didn't hit this because their session persisted from before the CSP
+      shipped; it blocks all new-user onboarding — hence a launch blocker, not cosmetic.**
 
 ### 1.7 Deploy checklist (manual/console steps remaining after §1.1–1.4 code changes)
 
