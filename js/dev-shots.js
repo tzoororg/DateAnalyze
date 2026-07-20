@@ -52,6 +52,7 @@ async function tab(name) { click(`.tab[data-tab="${name}"]`); await sleep(300); 
 const STATES = {
   async empty() { /* seed skipped for this one in app.js */ },
   async home() { await tab("home"); },
+  async intro() { await tab("home"); },
   async log() { click("#fab"); await sleep(300); },
   async menu() { click("#menuBtn"); await sleep(300); },
   async "history-list"() { await tab("history"); },

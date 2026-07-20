@@ -45,6 +45,13 @@ try {
     (await t.evaluate(`document.querySelector(".capsule-memory .msg")?.textContent || ""`))
       .includes("book the rooftop again"));
 
+  // first-run intro (PRODUCTION §2)
+  t = await shotTab("intro");
+  check("first-run intro sheet shows", await t.evaluate(`!document.getElementById("introSheet").classList.contains("hidden")`));
+  await t.evaluate(`document.getElementById("introStartBtn").click()`);
+  await sleep(150);
+  check("intro dismisses on Get started", await t.evaluate(`document.getElementById("introSheet").classList.contains("hidden")`));
+
   // 3. history list
   t = await shotTab("history-list");
   const histCount = await t.evaluate(`document.querySelectorAll(".hist-entry").length`);

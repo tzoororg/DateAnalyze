@@ -131,8 +131,14 @@ but has production gaps:
       validity ("valid Nd" / "expired — tap New pairing code") from a stored
       `spaceInviteCodeExp` setting. (2026-07-20) Sync-tested (`test/sync.mjs` step 2b:
       new code differs, key preserved, new invite doc exists) — passing.
-- [ ] First-run explainer: one screen stating "data stays on this phone unless you turn on
-      sync" — doubles as the store-reviewer-friendly privacy statement.
+- [x] First-run explainer: one-time bottom sheet (`#introSheet`) shown on the very first
+      open (0 dates, `seenIntro` unset; existing users are marked seen and never nagged).
+      States "your data stays on this phone unless you turn on sync" + two points
+      (private by default / sync optional & E2EE), "Get started" CTA (sets `seenIntro`),
+      and a link to privacy.html — doubles as the store-reviewer privacy statement.
+      Suppressed under `?shot=` except `?shot=intro` (capture/smoke). Design ran through
+      design-duel (3 rounds → SHIP); mock design/first-run.html, catalog design/current.html.
+      Smoke-tested (shows + dismisses), verified in the real app. (2026-07-20)
 - [ ] `navigator.storage.persist()` on first run (see 3.1).
 
 ## 3. Storage, hosting, and the admin question

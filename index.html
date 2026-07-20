@@ -98,6 +98,21 @@
     </div>
   </div>
 
+  <!-- First-run explainer: one-time welcome/privacy sheet (PRODUCTION §2) -->
+  <div id="introSheet" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="introTitle">
+    <div class="sheet-backdrop"></div>
+    <div class="sheet-body intro-sheet">
+      <h2 class="intro-title" id="introTitle">Welcome 💕</h2>
+      <p class="intro-lead">A little book of the dates you go on together — and ideas for what to do next.</p>
+      <ul class="intro-points">
+        <li><span class="intro-ic">🔒</span><div><div class="intro-t">Private by default</div><div class="intro-d">No account, no sign-up — your dates live only on this phone.</div></div></li>
+        <li><span class="intro-ic">💞</span><div><div class="intro-t">Sync is optional</div><div class="intro-d">Pair with your partner whenever you like — end-to-end encrypted, so only you two can read it.</div></div></li>
+      </ul>
+      <button class="btn" id="introStartBtn">Get started &nbsp;→</button>
+      <a class="privacy-link" href="privacy.html" target="_blank" rel="noopener">Read our privacy policy</a>
+    </div>
+  </div>
+
   <div id="toast" class="toast hidden"></div>
 
   <script type="module" src="app.js?v=24"></script>

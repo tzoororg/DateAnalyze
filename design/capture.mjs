@@ -15,7 +15,7 @@ const OUT = path.join(path.dirname(fileURLToPath(import.meta.url)), "shots");
 
 // shot name -> viewport height (390 wide = phone)
 const SHOTS = {
-  "empty": 844, "home": 1000, "log": 1750, "menu": 900,
+  "empty": 844, "home": 1000, "intro": 900, "log": 1750, "menu": 900,
   "history-list": 1250, "history-detail": 1450, "history-gallery": 1000,
   "lightbox": 844, "insights": 2750, "suggest": 1650,
   "wrapped": 2900, "wishlist-suggest": 1750, "wishlist-history": 1500,

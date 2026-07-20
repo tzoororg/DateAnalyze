@@ -45,6 +45,15 @@ export async function init() {
   if (activeDate) startDnTimer();
   // A notification tap opens the app at #history (see sw.js notificationclick).
   show(location.hash === "#history" ? "history" : "home");
+  // First-run explainer: show once to genuinely new users; ?shot=intro forces it
+  // (for capture/smoke); suppressed under every other ?shot so captures stay clean.
+  const shot = new URLSearchParams(location.search).get("shot");
+  const seenIntro = await db.getSetting("seenIntro", false);
+  if (shot === "intro") showIntro();
+  else if (!shot && !seenIntro) {
+    if (dates.length === 0) showIntro();
+    else await db.setSetting("seenIntro", true); // existing user — never nag later
+  }
   db.subscribe(onRemoteChange);
   push.refreshToken();
   if (dates.length) maybeRequestPersist();
@@ -154,6 +163,17 @@ function wireChrome() {
   document.getElementById("syncSignOutBtn").addEventListener("click", onSyncSignOut);
   document.getElementById("syncDeleteAcctBtn").addEventListener("click", onDeleteAccount);
   renderSyncStatus();
+}
+
+// First-run explainer (PRODUCTION §2): one-time welcome/privacy sheet, dismissed
+// only by its CTA. Gating lives in init().
+function showIntro() {
+  const el = document.getElementById("introSheet");
+  el.classList.remove("hidden");
+  document.getElementById("introStartBtn").addEventListener("click", async () => {
+    await db.setSetting("seenIntro", true);
+    el.classList.add("hidden");
+  }, { once: true });
 }
 
 function renderSwVersion() {

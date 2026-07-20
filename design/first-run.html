@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Us — First-run explainer mock</title>
+<style>
+  :root {
+    --bg:#2a1b26; --bg-soft:#33222e; --card:#3b2a37; --card-2:#4a3444;
+    --line:#54394c; --text:#f5e6ee; --muted:#c99bb0;
+    --accent:#ff7fa2; --accent-2:#ff9fba; --good:#7ed3ab; --warn:#eec97a;
+    --pink-bg:#4a2a38;
+    --cursive:"Segoe Script","Comic Sans MS",cursive;
+    --radius:18px; --shadow:0 6px 16px rgba(0,0,0,.35);
+  }
+  body { margin:0; font:15px/1.5 system-ui,sans-serif; background:#1c1218; color:var(--text); padding:32px 16px 80px; }
+  h1 { text-align:center; font-size:22px; } h1 span { color:var(--accent); }
+  .sub { text-align:center; color:var(--muted); max-width:64ch; margin:0 auto 30px; font-size:13px; }
+  .row { display:flex; gap:40px; justify-content:center; flex-wrap:wrap; align-items:flex-start; }
+  .phone { width:360px; position:relative; background:radial-gradient(120% 60% at 50% 0%, var(--bg-soft), var(--bg)); border-radius:28px; box-shadow:0 20px 50px rgba(0,0,0,.5); overflow:hidden; height:720px; }
+  .caption { text-align:center; color:var(--muted); font-size:12px; margin-top:12px; max-width:360px; font-weight:700; }
+
+  /* dimmed app behind the sheet — the app stays the hero */
+  .behind { position:absolute; inset:0; filter:blur(1px) brightness(.5); }
+  .app-header { display:flex; align-items:center; justify-content:space-between; padding:16px 16px 6px; }
+  .app-title { font:700 24px var(--cursive); color:var(--accent); margin:0; transform:rotate(-2deg); }
+  .icon-btn { background:var(--card); color:var(--muted); border:none; width:34px; height:34px; border-radius:12px; font-size:16px; box-shadow:var(--shadow); }
+  .tabbar { display:flex; gap:6px; padding:2px 16px 10px; }
+  .tab { flex:1; padding:8px 0; border-radius:999px; background:var(--card); border:2px solid var(--line); color:var(--muted); font-size:12px; font-weight:700; text-align:center; }
+  .tab.on { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .ghost-card { height:74px; margin:10px 16px; border-radius:var(--radius); background:var(--card); }
+  .ghost-card.tall { height:150px; }
+  .fab { position:absolute; right:18px; top:250px; width:52px; height:52px; border-radius:50%; background:var(--accent); color:#fff; font-size:26px; display:grid; place-items:center; box-shadow:0 8px 20px rgba(232,87,126,.45); z-index:1; }
+
+  /* explainer sheet */
+  .sheet-backdrop { position:absolute; inset:0; background:rgba(60,20,40,.5); }
+  .sheet-body { position:absolute; left:0; right:0; bottom:0; background:var(--bg-soft); border-radius:24px 24px 0 0; padding:24px 20px 26px; box-shadow:0 -8px 24px rgba(0,0,0,.4); }
+  .hello { font:700 27px var(--cursive); color:var(--accent); margin:0 0 8px; transform:rotate(-1.5deg); }
+  .lead { font-size:15px; line-height:1.5; margin:0 0 4px; color:var(--text); }
+  .points { list-style:none; padding:0; margin:16px 0 4px; display:flex; flex-direction:column; gap:13px; }
+  .points li { display:flex; gap:12px; align-items:flex-start; }
+  .points .ic { width:38px; height:38px; flex:none; border-radius:12px; display:grid; place-items:center; font-size:19px; background:var(--pink-bg); }
+  .points .t { font-weight:800; font-size:14.5px; }
+  .points .t b { color:var(--accent-2); font-weight:800; }
+  .points .d { color:var(--muted); font-size:13px; }
+  .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:15px; border-radius:16px; border:none; cursor:pointer; font-size:16px; font-weight:800; color:#fff; background:var(--accent); box-shadow:0 6px 14px rgba(232,87,126,.3); box-sizing:border-box; margin-top:20px; }
+  .privacy-link { display:block; text-align:center; color:var(--muted); font-size:12.5px; margin-top:14px; text-decoration:underline; }
+</style>
+</head>
+<body>
+  <h1><span>First-run explainer</span> — shown once on the very first open</h1>
+  <p class="sub">"Your data stays on this phone unless you turn on sync." A bottom sheet over the (dimmed) app, dismissed only by the CTA. Gated by a one-time setting.</p>
+
+  <div class="row">
+    <div>
+      <div class="phone">
+        <div class="behind">
+          <div class="app-header"><h2 class="app-title">Us&nbsp;♥</h2><button class="icon-btn">⋯</button></div>
+          <div class="tabbar"><span class="tab on">Home</span><span class="tab">Album</span><span class="tab">Ideas</span><span class="tab">Stats</span></div>
+          <div class="ghost-card tall"></div><div class="ghost-card"></div>
+          <div class="fab">＋</div>
+        </div>
+        <div class="sheet-backdrop"></div>
+        <div class="sheet-body">
+          <h2 class="hello">Welcome&nbsp;💕</h2>
+          <p class="lead">A little book of the dates you go on together — and ideas for what to do next.</p>
+          <ul class="points">
+            <li><span class="ic">🔒</span><div><div class="t">Private by default</div><div class="d">No account, no sign-up — your dates live only on this phone.</div></div></li>
+            <li><span class="ic">💞</span><div><div class="t">Sync is optional</div><div class="d">Pair with your partner whenever you like — end-to-end encrypted, so only you two can read it.</div></div></li>
+          </ul>
+          <button class="btn">Get started &nbsp;→</button>
+          <a class="privacy-link">Read our privacy policy</a>
+        </div>
+      </div>
+      <p class="caption">Refined A — bottom sheet, app stays the hero</p>
+    </div>
+  </div>
+
+<!-- duel round 1: critic verdict REVISE, proceed from A.
+  1. Cut duplicated privacy claim (lead said "stays on this phone", bullet 1 repeated "only in this browser, no cloud"). APPLIED: lead now describes the app; the privacy fact lives once, in bullet 1.
+  2. Off-palette emoji tiles (teal phone / yellow padlock). APPLIED (partial): tiles unified to raspberry (--pink-bg); kept emoji glyphs — the real app is emoji-forward in its own menu rows (🔔/🖼️/🔑/💞), so emoji are on-brand; the objection was the tile colors, now fixed.
+  3. Add privacy-policy link to A. APPLIED: link under CTA (privacy.html shipped in dd40ffb).
+  4. Drag handle implied swipe-to-dismiss. APPLIED: handle removed; CTA is the only dismiss.
+  5. Tighten sheet height. APPLIED: dropped B splash, one-line lead + two single-clause bullets; sheet now ~45% of viewport, app tabs visible above.
+
+  duel round 2: critic verdict REVISE.
+  1. Backdrop used fictional tabs (Home/History/Insights/Suggest). APPLIED: real shell — Home/Album/Ideas/Stats + the ＋ FAB, per index.html.
+  2. Mixed icon styles (pixel phone vs glossy heart). APPLIED: lock 🔒 + hearts 💞 pair (lock is also more on-message for "private").
+  3. "Start logging" landed on Home, not the log form (mislabel). APPLIED: renamed to "Get started →" (honest — dismisses to Home; wiring it straight to the FAB log sheet is a possible impl enhancement).
+  4. Bullet copy contradiction ("no cloud" then offers cloud sync). APPLIED: bullet 1 now "no account, no sign-up — lives only on this phone"; bullet 2 frames sync as opt-in, so the two read as one story. -->
+</body>
+</html>
