@@ -157,9 +157,31 @@ Base64 photos in Firestore: ~900 KB/photo against a **1 GiB total** Firestore qu
 photos across *all* users, and 50k reads/day is easy to blow because `attachSpace` snapshots
 the entire `dates` collection on every app open.
 
-- [ ] Move to the Blaze plan before public launch; set a billing budget + alert.
-- [ ] Migrate photos to Cloud Storage (upload/download path + `storage.rules` are preserved
-      in git history per CLAUDE.md); keep base64 docs as a read-fallback during migration.
+- [ ] **USER-GATED — Move to the Blaze plan before public launch; set a billing budget + alert.**
+      Billing decision in the Firebase console; can't be done from code. Required before the
+      Storage path can be turned on or tested end-to-end against real Firebase.
+- [x] Cloud Storage photo path implemented (2026-07-20). `sync.js` now has an `ensureStorage()`
+      lazy import of `firebase-storage.js` (mirrors the other Firebase modules) gated on a new
+      `firebaseConfig.useStorage` flag — **default false so Spark/local users never download the
+      Storage SDK and behaviour is byte-for-byte unchanged on Spark.** When flipped true (post-Blaze):
+      `uploadPhoto` encrypts client-side (E2EE preserved, mime `enc:<orig>` in the object contentType)
+      and `uploadBytes` to `spaces/{spaceId}/photos/{id}` — no 1 MiB cap, no Firestore quota use.
+      `getPhoto` tries Storage first and **falls back to the base64 Firestore doc on
+      `storage/object-not-found`**, so photos written before the migration still load; decrypted blobs
+      still cache in IndexedDB forever after first fetch. `deletePhoto` clears both backends best-effort.
+      `storage.rules` restored from commit d22f041 and adapted to the current `spaces/{spaceId}` member
+      isolation model (+ 5 MB write cap); `firebase.json` gains the storage rules + storage emulator
+      (port 9199); CSP already allows `*.googleapis.com`, added the emulator port. `firebaseConfig.storageBucket`
+      was already present.
+  - **USER-GATED — after enabling Blaze:** (1) deploy the rules with `firebase deploy --only storage`,
+    (2) set `useStorage: true` in `js/firebase-config.js` and deploy the app, (3) confirm the bucket name
+    is `us-date-tracker-c988b.firebasestorage.app`. Existing base64 photos keep working via the read
+    fallback; no data migration script is required (new writes go to Storage, old reads fall back).
+  - Tests: pure-logic guard for the enc-marker parse + photo blob encrypt→decrypt round-trip added to
+    `test/logic.test.mjs` (**passing**). `test/sync.mjs` step 4b exercises the real Storage round-trip and
+    the Storage-miss→base64 fallback against the emulator suite (`--only auth,firestore,storage`, port 9199;
+    `?emu=1` routes Storage to it) — **unrun in this sandbox** (no outbound internet for the gstatic Firebase
+    SDK, same caveat as the other sync steps); it self-skips if the storage emulator isn't up.
 - [x] **Enable Firestore persistent local cache** (`persistentLocalCache` in the SDK init in
       sync.js) — done ahead of the Blaze migration (works on Spark too). `attachSpace` snapshots the whole
       `dates` collection on every app open; without the cache every doc bills as a read every

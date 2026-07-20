@@ -49,6 +49,16 @@ export async function decryptJSON(key, b64) {
   return JSON.parse(new TextDecoder().decode(pt));
 }
 
+// Interpret a synced photo's mime marker. Encrypted blobs carry mime "enc:<orig>"
+// (the base64 Firestore path stores it in the doc; the Storage path in contentType)
+// so a reader knows to decrypt and what the plaintext mime was.
+export function photoDecryptInfo(mime) {
+  if (typeof mime === "string" && mime.startsWith("enc:")) {
+    return { encrypted: true, origMime: mime.slice(4) || "image/jpeg" };
+  }
+  return { encrypted: false, origMime: mime || "image/jpeg" };
+}
+
 export async function encryptBlob(key, blob) {
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const data = new Uint8Array(await blob.arrayBuffer());

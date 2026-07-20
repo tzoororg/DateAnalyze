@@ -1,9 +1,16 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+    // Photo blobs for a couple's space. Same isolation model as firestore.rules:
+    // only members of spaces/{spaceId} (checked via the members subcollection) may
+    // read or write, and writes are capped to keep a single object bounded.
     match /spaces/{spaceId}/photos/{photoId} {
-      allow read, write: if request.auth != null &&
-        firestore.exists(/databases/(default)/documents/spaces/$(spaceId)/members/$(request.auth.uid));
+      function isMember() {
+        return request.auth != null &&
+          firestore.exists(/databases/(default)/documents/spaces/$(spaceId)/members/$(request.auth.uid));
+      }
+      allow read: if isMember();
+      allow write: if isMember() && request.resource.size < 5 * 1024 * 1024;
     }
   }
 }

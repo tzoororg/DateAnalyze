@@ -1,8 +1,9 @@
-// Cloud backend: Firebase (Auth + Firestore), loaded only when the user turns on
-// sync. Mirrors db.js's data interface so store.js can swap backends
-// transparently. Date/text data and photos both sync via Firestore — photos ride
-// as base64 docs (no Cloud Storage on the free Spark plan). See the photo section
-// below and plans/done/SYNC_PLAN.md for the full design.
+// Cloud backend: Firebase (Auth + Firestore, plus Cloud Storage on Blaze), loaded
+// only when the user turns on sync. Mirrors db.js's data interface so store.js can
+// swap backends transparently. Date/text data syncs via Firestore; photo blobs go
+// to Cloud Storage when firebaseConfig.useStorage is set (Blaze), otherwise ride as
+// base64 Firestore docs (Spark). See the photo section below and
+// plans/done/SYNC_PLAN.md for the full design.
 
 import { firebaseConfig } from "./firebase-config.js";
 import * as local from "./db.js";
@@ -17,6 +18,7 @@ const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O/1/I
 const INVITE_TTL_MS = 7 * 24 * 3600 * 1000;
 
 let sdk = null;          // { app, auth, fs, ...firebase fns }
+let storageSdk = null;   // { storage, ...firebase-storage fns } — only when useStorage
 let spaceId = null;
 let unsubscribe = null;
 let datesCache = [];
@@ -34,9 +36,8 @@ function assertConfigured() {
 async function ensureFirebase() {
   if (sdk) return sdk;
   assertConfigured();
-  // No firebase-storage: the project is on the free Spark plan, which doesn't
-  // include Cloud Storage. Photos sync as base64 Firestore docs instead (see
-  // the photo section below).
+  // firebase-storage is imported separately and lazily (ensureStorage), only when
+  // firebaseConfig.useStorage is set, so Spark/local users never download it.
   const [appMod, authMod, fsMod] = await Promise.all([
     import(/* @vite-ignore */ `${CDN}/firebase-app.js`),
     import(/* @vite-ignore */ `${CDN}/firebase-auth.js`),
@@ -64,6 +65,23 @@ async function ensureFirebase() {
     fsMod.connectFirestoreEmulator(sdk.fs, "127.0.0.1", 8080);
   }
   return sdk;
+}
+
+// Cloud Storage backend for photo blobs. Lazily imported only when
+// firebaseConfig.useStorage is true (Blaze plan) — Spark/local users never load
+// the firebase-storage SDK. Routes to the Storage emulator under ?emu=1.
+async function ensureStorage() {
+  if (storageSdk) return storageSdk;
+  const s = await ensureFirebase();
+  const mod = await import(/* @vite-ignore */ `${CDN}/firebase-storage.js`);
+  const storage = mod.getStorage(s.app);
+  if (EMU) mod.connectStorageEmulator(storage, "127.0.0.1", 9199);
+  storageSdk = { storage, ...mod };
+  return storageSdk;
+}
+
+function photoRef(st, id) {
+  return st.ref(st.storage, `spaces/${spaceId}/photos/${id}`);
 }
 
 function waitForAuthUser() {
@@ -365,16 +383,30 @@ export async function deleteDate(id) {
   await sdk.deleteDoc(sdk.doc(sdk.fs, "spaces", spaceId, "dates", id));
 }
 
-// ---- Photos: base64 Firestore docs ----
-// No Cloud Storage on the free Spark plan, so each photo blob rides along as a
-// base64 field in its own doc under spaces/{spaceId}/photos/{photoId}. The id is
-// the same UUID already in date.photos[], so the date schema and UI are unchanged.
-// Photos aren't streamed by onSnapshot (that listens on `dates`); they're fetched
-// lazily on first view and cached in IndexedDB, mirroring the local-only path.
-// Firestore caps a doc at 1 MiB, so fitUnderLimit() re-encodes before writing.
+// ---- Photos ----
+// Two backends, chosen by firebaseConfig.useStorage:
+//   Storage (Blaze): blob bytes live in Cloud Storage at spaces/{spaceId}/photos/{id},
+//     no 1 MiB cap and no Firestore quota pressure. This is the launch path.
+//   base64 Firestore (Spark): each photo rides as a base64 field in its own doc
+//     under spaces/{spaceId}/photos/{id}, capped by fitUnderLimit(). Legacy path.
+// Reads try Storage first and fall back to the base64 doc, so photos written before
+// the Blaze migration still load. The id is the same UUID already in date.photos[],
+// so the date schema and UI are unchanged; photos are fetched lazily and cached in
+// IndexedDB. E2EE: bytes are encrypted client-side either way (mime "enc:<orig>").
 const MAX_PHOTO_BYTES = 900_000; // base64 length ceiling, safely under Firestore's 1 MiB doc cap
 
 async function uploadPhoto(id, blob) {
+  if (firebaseConfig.useStorage) {
+    const st = await ensureStorage();
+    const orig = blob.type || "image/jpeg";
+    const wire = spaceKey ? await e2ee.encryptBlob(spaceKey, blob) : blob;
+    // contentType carries the enc marker so getPhoto knows to decrypt; the
+    // spaceKey invariant below is the backstop if a store drops it.
+    const contentType = spaceKey ? `enc:${orig}` : orig;
+    await st.uploadBytes(photoRef(st, id), wire, { contentType });
+    await local.cachePhoto(id, blob); // warm local cache (plaintext) so the uploader sees it instantly
+    return;
+  }
   const fitted = await fitUnderLimit(blob);
   // E2EE: encrypt the blob; mime becomes "enc:<origMime>" so no new doc field
   // is needed (firestore.rules allows only data/mime/createdAt).
@@ -395,20 +427,49 @@ export async function putPhoto(blob) {
 export async function getPhoto(id) {
   const cached = await local.getPhoto(id);
   if (cached) return cached;
+  // Storage first (Blaze); a miss falls through to the base64 Firestore doc so
+  // photos written before the migration still load.
+  if (firebaseConfig.useStorage) {
+    const st = await ensureStorage();
+    try {
+      let blob = await st.getBlob(photoRef(st, id));
+      const { encrypted, origMime } = e2ee.photoDecryptInfo(blob.type);
+      if (encrypted || (spaceKey && !blob.type.startsWith("image/"))) {
+        if (!spaceKey) return null; // can't decrypt without the key
+        blob = await e2ee.decryptBlob(spaceKey, blob, origMime);
+      }
+      await local.cachePhoto(id, blob);
+      return blob;
+    } catch (err) {
+      if (err?.code !== "storage/object-not-found") throw err;
+      // fall through to the base64 fallback
+    }
+  }
   const snap = await sdk.getDoc(sdk.doc(sdk.fs, "spaces", spaceId, "photos", id));
   if (!snap.exists()) return null;
   const { data, mime } = snap.data();
   let blob = await dataURLToBlob(data);
-  if (mime?.startsWith("enc:")) {
+  const { encrypted, origMime } = e2ee.photoDecryptInfo(mime);
+  if (encrypted) {
     if (!spaceKey) return null; // can't decrypt without the key
-    blob = await e2ee.decryptBlob(spaceKey, blob, mime.slice(4));
+    blob = await e2ee.decryptBlob(spaceKey, blob, origMime);
   }
   await local.cachePhoto(id, blob);
   return blob;
 }
 
 export async function deletePhoto(id) {
-  await sdk.deleteDoc(sdk.doc(sdk.fs, "spaces", spaceId, "photos", id));
+  // Delete from both backends best-effort: a photo may live in Storage, the
+  // base64 Firestore doc, or (mid-migration) leftovers of both.
+  if (firebaseConfig.useStorage) {
+    try {
+      const st = await ensureStorage();
+      await st.deleteObject(photoRef(st, id));
+    } catch (err) {
+      if (err?.code !== "storage/object-not-found") throw err;
+    }
+  }
+  try { await sdk.deleteDoc(sdk.doc(sdk.fs, "spaces", spaceId, "photos", id)); } catch { /* may not exist */ }
   await local.deletePhoto(id);
 }
 

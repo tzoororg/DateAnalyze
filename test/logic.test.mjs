@@ -246,7 +246,7 @@ test("wishlist ideas are excluded from analytics and suggestions", () => {
 });
 
 // ================= crypto (E2EE) =================
-import { genKey, exportKeyB64, importKeyB64, encryptJSON, decryptJSON, encryptBlob, decryptBlob } from "../js/crypto.js";
+import { genKey, exportKeyB64, importKeyB64, encryptJSON, decryptJSON, encryptBlob, decryptBlob, photoDecryptInfo } from "../js/crypto.js";
 
 test("crypto: JSON round-trip", async () => {
   const key = await genKey();
@@ -288,6 +288,28 @@ test("crypto: key export/import round-trip (base64url, no padding)", async () =>
   const key2 = await importKeyB64(b64);
   const enc = await encryptJSON(key, { hello: "world" });
   assert.deepEqual(await decryptJSON(key2, enc), { hello: "world" });
+});
+
+test("crypto: photoDecryptInfo parses the enc:<mime> marker", () => {
+  assert.deepEqual(photoDecryptInfo("enc:image/png"), { encrypted: true, origMime: "image/png" });
+  assert.deepEqual(photoDecryptInfo("enc:"), { encrypted: true, origMime: "image/jpeg" });
+  assert.deepEqual(photoDecryptInfo("image/jpeg"), { encrypted: false, origMime: "image/jpeg" });
+  assert.deepEqual(photoDecryptInfo(undefined), { encrypted: false, origMime: "image/jpeg" });
+});
+
+// The Cloud Storage photo path (sync.js) uploads encryptBlob(bytes) and later
+// decryptBlob()s what getBlob returns. Guard that round-trip: bytes exact, mime
+// restored from the enc marker.
+test("crypto: photo blob encrypt→decrypt round-trip (Storage path)", async () => {
+  const key = await genKey();
+  const bytes = new Uint8Array(1024).map((_, i) => i % 256);
+  const orig = new Blob([bytes], { type: "image/jpeg" });
+  const wire = await encryptBlob(key, orig);
+  assert.notEqual(wire.size, orig.size); // IV + tag added; ciphertext differs
+  const { origMime } = photoDecryptInfo(`enc:${orig.type}`);
+  const back = await decryptBlob(key, wire, origMime);
+  assert.equal(back.type, "image/jpeg");
+  assert.deepEqual(new Uint8Array(await back.arrayBuffer()), bytes);
 });
 
 // ================= crash-report =================

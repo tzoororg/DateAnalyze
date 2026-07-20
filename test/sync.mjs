@@ -2,7 +2,9 @@
 // phone as its own headless-Chrome profile (separate IndexedDB + auth state)
 // and drives the app's real store/sync modules in-page.
 // Requires:  python -m http.server 8000
-//        and firebase emulators:start --only auth,firestore
+//        and firebase emulators:start --only auth,firestore,storage
+//            (storage needed only for the Cloud Storage photo step 4b; the rest
+//             run with --only auth,firestore)
 // Run: node test/sync.test.mjs [baseUrl]
 import { launchChrome, openTab, sleep } from "./cdp.mjs";
 
@@ -108,6 +110,34 @@ try {
   })`);
   check("photo B fetch", await until(b, `import("./js/store.js")
     .then(s => s.getPhoto(${JSON.stringify(photoId)})).then(bl => !!bl && bl.size > 0)`));
+
+  // 4b. Cloud Storage photo path (Blaze). Flip firebaseConfig.useStorage on both
+  // phones at runtime, then: (i) a new photo written on A rides Cloud Storage and
+  // B fetches+decrypts it; (ii) the step-4 base64 photo still loads via the
+  // Storage-miss → base64-doc read fallback. Needs the storage emulator (port
+  // 9199); skipped if it isn't up.
+  const storageUp = await fetch("http://127.0.0.1:9199").then(() => true).catch(() => false);
+  if (storageUp) {
+    for (const phone of [a, b]) {
+      await phone.evaluate(`import("./js/firebase-config.js").then(c => { c.firebaseConfig.useStorage = true; })`);
+    }
+    const storPhotoId = await a.evaluate(`import("./js/store.js").then(async s => {
+      const blob = new Blob([new Uint8Array(4096).fill(9)], { type: "image/jpeg" });
+      return s.putPhoto(blob);
+    })`);
+    check("Storage photo A→B fetch+decrypt", await until(b, `import("./js/store.js")
+      .then(s => s.getPhoto(${JSON.stringify(storPhotoId)})).then(bl => !!bl && bl.size === 4096)`));
+    // Read fallback: drop B's local cache of the base64-era photo, then getPhoto
+    // with useStorage on must miss Storage and fall back to the Firestore doc.
+    await b.evaluate(`import("./js/db.js").then(db => db.deletePhoto(${JSON.stringify(photoId)}))`);
+    check("Storage-miss falls back to base64 doc", await until(b, `import("./js/store.js")
+      .then(s => s.getPhoto(${JSON.stringify(photoId)})).then(bl => !!bl && bl.size > 0)`));
+    for (const phone of [a, b]) {
+      await phone.evaluate(`import("./js/firebase-config.js").then(c => { c.firebaseConfig.useStorage = false; })`);
+    }
+  } else {
+    check("Storage photo path (SKIPPED — storage emulator not on port 9199)", true);
+  }
 
   // 5. edit and delete propagate
   await a.evaluate(`import("./js/store.js").then(async s => {
