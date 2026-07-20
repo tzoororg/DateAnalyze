@@ -296,7 +296,9 @@ popup (unreliable in installed iOS PWAs), and a real-device verification pass
 
 ## Release triage backlog
 
-*(empty — all six v2.1.0 items above shipped 2026-07-19)*
+- **low** — Wishlist "We did it! Log it →" CTA wraps to two lines at narrow width (mid-phrase, arrow on line 2). Shorten copy or widen the button. *(found preparing v2.2.0 release)*
+- **low** — Lightbox photo is not full-bleed: image sits in a rounded card with side margins instead of edge-to-edge with overlaid arrows/caption. *(found preparing v2.2.0 release)*
+- **low** — Ideas cards repeat identical rationale sentences verbatim across consecutive cards ("Something new in Travel — a category you rate 5.0★…", "…worth a comeback."). Collapse the rationale into the badge row to shed two lines per card. *(found preparing v2.2.0 release)*
 
 ## Explicitly NOT doing
 

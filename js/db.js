@@ -122,7 +122,13 @@ function blobToDataURL(blob) {
     r.readAsDataURL(blob);
   });
 }
-async function dataURLToBlob(dataUrl) {
-  const res = await fetch(dataUrl);
-  return res.blob();
+function dataURLToBlob(dataUrl) {
+  // Decode directly rather than fetch(dataUrl) — the app's CSP connect-src does
+  // not allow data:, so fetching a data URL throws "Failed to fetch".
+  const [head, b64] = dataUrl.split(",");
+  const mime = head.slice(5, head.indexOf(";")); // "data:<mime>;base64"
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new Blob([bytes], { type: mime });
 }
