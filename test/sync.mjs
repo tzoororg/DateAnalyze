@@ -123,6 +123,28 @@ try {
   } finally {
     phoneC.close();
   }
+
+  // 8. account deletion: non-last member just loses membership; last member
+  // deleting takes the whole space (dates already emptied by step 5) with it.
+  const spaceDocUrl = `http://127.0.0.1:8080/v1/projects/us-date-tracker-c988b/databases/(default)/documents/spaces/${spaceId}`;
+  const membersBefore = await fetch(`${spaceDocUrl}/members`, { headers: { Authorization: "Bearer owner" } }).then(r => r.json());
+  check("space has 2 members before any deletion", (membersBefore.documents || []).length === 2, JSON.stringify(membersBefore));
+
+  await b.evaluate(`import("./js/store.js").then(s => s.deleteAccount())`);
+  check("B back to local mode after delete",
+    await b.evaluate(`import("./js/store.js").then(s => s.getMode())`) === "local");
+  const membersAfterB = await fetch(`${spaceDocUrl}/members`, { headers: { Authorization: "Bearer owner" } }).then(r => r.json());
+  check("B's member doc removed, space still exists (not last member)",
+    (membersAfterB.documents || []).length === 1, JSON.stringify(membersAfterB));
+
+  await a.evaluate(`import("./js/store.js").then(s => s.deleteAccount())`);
+  check("A back to local mode after delete",
+    await a.evaluate(`import("./js/store.js").then(s => s.getMode())`) === "local");
+  const spaceAfterA = await fetch(spaceDocUrl, { headers: { Authorization: "Bearer owner" } });
+  check("space doc deleted after last member deletes account", spaceAfterA.status === 404, String(spaceAfterA.status));
+  const membersAfterA = await fetch(`${spaceDocUrl}/members`, { headers: { Authorization: "Bearer owner" } }).then(r => r.json());
+  check("no member docs left after last member deletes account",
+    !(membersAfterA.documents || []).length, JSON.stringify(membersAfterA));
 } catch (err) {
   check("sync run completed", false, err.message);
 } finally {

@@ -27,6 +27,7 @@ service cloud.firestore {
     match /spaces/{spaceId} {
       allow create: if request.auth != null && request.resource.data.createdBy == request.auth.uid;
       allow read:   if isMember(spaceId);
+      allow delete: if isMember(spaceId);
       match /members/{uid} {
         allow read: if isMember(spaceId);
         allow create: if request.auth.uid == uid && (
@@ -43,6 +44,7 @@ service cloud.firestore {
         );
         // Members update only their own doc (e.g. to store their FCM push token).
         allow update: if request.auth.uid == uid;
+        allow delete: if request.auth.uid == uid;
       }
       match /dates/{dateId} {
         allow read: if isMember(spaceId);

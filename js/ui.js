@@ -151,6 +151,7 @@ function wireChrome() {
   document.getElementById("syncEnterKeyBtn").addEventListener("click", onSyncEnterKey);
   document.getElementById("syncEncryptBtn").addEventListener("click", onSyncEncrypt);
   document.getElementById("syncSignOutBtn").addEventListener("click", onSyncSignOut);
+  document.getElementById("syncDeleteAcctBtn").addEventListener("click", onDeleteAccount);
   renderSyncStatus();
 }
 
@@ -206,6 +207,7 @@ async function renderSyncStatus() {
   const notify = document.getElementById("syncNotifyBtn");
   const backfill = document.getElementById("syncBackfillBtn");
   const signOut = document.getElementById("syncSignOutBtn");
+  const deleteAcct = document.getElementById("syncDeleteAcctBtn");
   const showKey = document.getElementById("syncShowKeyBtn");
   const enterKey = document.getElementById("syncEnterKeyBtn");
   const encrypt = document.getElementById("syncEncryptBtn");
@@ -229,6 +231,7 @@ async function renderSyncStatus() {
     notify.classList.remove("hidden");
     backfill.classList.remove("hidden");
     signOut.classList.remove("hidden");
+    deleteAcct.classList.remove("hidden");
   } else if (user) {
     status.textContent = `Signed in as ${user.email} — set up a shared space:`;
     status.classList.remove("hidden");
@@ -237,6 +240,7 @@ async function renderSyncStatus() {
     notify.classList.add("hidden");
     backfill.classList.add("hidden");
     signOut.classList.remove("hidden");
+    deleteAcct.classList.remove("hidden");
   } else {
     status.classList.add("hidden");
     signIn.classList.remove("hidden"); create.classList.add("hidden"); join.classList.add("hidden");
@@ -244,6 +248,7 @@ async function renderSyncStatus() {
     notify.classList.add("hidden");
     backfill.classList.add("hidden");
     signOut.classList.add("hidden");
+    deleteAcct.classList.add("hidden");
   }
 }
 
@@ -345,6 +350,27 @@ async function onSyncSignOut() {
     show(currentTab);
     toast("Back to local-only mode");
   } catch (err) { console.error(err); toast(err.message || "Couldn't sign out"); }
+}
+
+async function onDeleteAccount() {
+  const cloud = db.getMode() === "cloud";
+  const msg = cloud
+    ? "Delete your account? This removes your sign-in and, if your partner isn't in the space, all shared dates and photos. This cannot be undone."
+    : "Delete your account and all data on this device? This cannot be undone.";
+  if (!confirm(msg)) return;
+  if (!confirm("Are you sure? This is permanent.")) return;
+  const btn = document.getElementById("syncDeleteAcctBtn");
+  btn.disabled = true;
+  try {
+    await db.deleteAccount();
+    await reload();
+    urlCache.clear();
+    renderSyncStatus();
+    document.getElementById("sheet").classList.add("hidden");
+    show("home");
+    toast("Account deleted");
+  } catch (err) { console.error(err); toast(err.message || "Couldn't delete account"); }
+  finally { btn.disabled = false; }
 }
 
 function show(tab) {

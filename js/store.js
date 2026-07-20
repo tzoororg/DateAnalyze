@@ -93,6 +93,21 @@ export async function signOut() {
   notify();
 }
 
+// Full account deletion: remove the cloud account/data (if signed in), then wipe
+// all local data + the sync settings, and drop back to local-only mode. wipeAll()
+// deliberately leaves settings alone (Erase-everything keeps you in your space),
+// so the sync keys are cleared here explicitly.
+export async function deleteAccount() {
+  if (cloud) await cloud.deleteAccount();
+  await local.wipeAll();
+  for (const k of ["spaceId", "spaceKey", "spaceInviteCode", "activeDate"]) {
+    await local.setSetting(k, null);
+  }
+  backend = local;
+  mode = "local";
+  notify();
+}
+
 // ---- Data interface (same 12 functions as db.js), routed to the active backend ----
 
 export async function getAllDates() { return backend.getAllDates(); }

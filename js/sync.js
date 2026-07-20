@@ -113,6 +113,45 @@ export async function signOut() {
   if (sdk?.auth) await sdk.signOut(sdk.auth);
 }
 
+// Delete the signed-in user's account. If they're the space's only member, the
+// whole space (dates, photos, space doc) is deleted; if the partner is still a
+// member, only this user's membership is removed and the shared history stays.
+// Order matters: content and the space doc are deleted while isMember still holds
+// (member doc present), and the member doc is deleted LAST. Local data is wiped by
+// store.deleteAccount() after this resolves.
+export async function deleteAccount() {
+  const s = await ensureFirebase();
+  const user = s.auth.currentUser;
+  if (!user) throw new Error("Not signed in");
+  if (spaceId) {
+    const members = await s.getDocs(s.collection(s.fs, "spaces", spaceId, "members"));
+    if (members.size <= 1) {
+      const dates = await s.getDocs(s.collection(s.fs, "spaces", spaceId, "dates"));
+      for (const d of dates.docs) await s.deleteDoc(d.ref);
+      const photos = await s.getDocs(s.collection(s.fs, "spaces", spaceId, "photos"));
+      for (const p of photos.docs) await s.deleteDoc(p.ref);
+      await s.deleteDoc(s.doc(s.fs, "spaces", spaceId));   // isMember still true here
+      await s.deleteDoc(s.doc(s.fs, "spaces", spaceId, "members", user.uid)); // last
+    } else {
+      await s.deleteDoc(s.doc(s.fs, "spaces", spaceId, "members", user.uid));
+    }
+  }
+  detachSpace();
+  // Auth user last. deleteUser needs a recent login; re-auth once if demanded.
+  try {
+    await s.deleteUser(user);
+  } catch (err) {
+    // ponytail: popup re-auth covers the common case; installed iOS PWAs would
+    // need a redirect re-auth — edge case, revisit if it shows up.
+    if (err?.code === "auth/requires-recent-login" && !EMU) {
+      await s.reauthenticateWithPopup(user, new s.GoogleAuthProvider());
+      await s.deleteUser(user);
+    } else {
+      throw err;
+    }
+  }
+}
+
 // ---- E2EE key ----
 async function loadSpaceKey() {
   const b64 = await local.getSetting("spaceKey", null);

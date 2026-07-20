@@ -192,10 +192,17 @@ Design (all WebCrypto, no dependencies, fits the no-build-step constraint):
 
 - [x] **Privacy policy** page (host on the Pages site) — required by both stores and by
       Google OAuth verification. — privacy.html at site root (2026-07-20)
-- [ ] **Account deletion** (Play policy, hard requirement): in-app flow that deletes the
-      auth user, their member doc, their space content (if last member), and local data.
-      Current `wipeAll` deletes dates but leaves member docs/space/auth user. Also requires
-      a web-reachable deletion path/instructions URL for the Play form.
+- [x] **Account deletion** (Play policy, hard requirement): ⋯ menu → "Delete account"
+      (shown whenever signed in). `store.deleteAccount()` → `sync.deleteAccount()` deletes
+      the member doc, and — if last member — all dates/photos and the space doc (order:
+      content + space doc while `isMember` still holds, member doc last), then the Firebase
+      auth user (`deleteUser`, with a one-shot popup re-auth on `requires-recent-login`);
+      then wipes local data and clears the `spaceId`/`spaceKey`/`spaceInviteCode`/`activeDate`
+      settings and drops to local mode. New `firestore.rules` deletes: `spaces/{id}` and
+      `members/{uid}`. Web-reachable instructions: privacy.html "Data deletion" section.
+      (2026-07-20) Tests: `test/sync.mjs` step 8 added (asserts non-last member keeps the
+      space, last member's delete removes space + all member docs) — unrun in this sandbox
+      (no outbound internet for the gstatic Firebase SDK); logic + smoke pass.
 - [ ] Play data-safety form / Apple privacy nutrition labels (answers fall out of 3.3).
 - [ ] Packaging: Android = TWA via Bubblewrap + `assetlinks.json` on the Pages domain;
       iOS = per ../done/IOS_PLAN.md. Verify Google sign-in, FCM push, camera/photo access, and the
