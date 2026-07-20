@@ -175,8 +175,13 @@ the entire `dates` collection on every app open.
       was already present.
   - **USER-GATED — after enabling Blaze:** (1) deploy the rules with `firebase deploy --only storage`,
     (2) set `useStorage: true` in `js/firebase-config.js` and deploy the app, (3) confirm the bucket name
-    is `us-date-tracker-c988b.firebasestorage.app`. Existing base64 photos keep working via the read
-    fallback; no data migration script is required (new writes go to Storage, old reads fall back).
+    is `us-date-tracker-c988b.firebasestorage.app`, (4) **set bucket CORS to allow the app origins** —
+    `getPhoto` uses `getBlob()`, a browser XHR against the object, which GCS blocks without a CORS rule.
+    Apply once with `gsutil cors set cors.json gs://us-date-tracker-c988b.firebasestorage.app` where
+    `cors.json` allows GET from the Pages origin (prod + `/beta/`) and `http://localhost:8000` for dev;
+    without this, photo loads fail silently in the browser (upload still works). Existing base64 photos
+    keep working via the read fallback; no data migration script is required (new writes go to Storage,
+    old reads fall back).
   - Tests: pure-logic guard for the enc-marker parse + photo blob encrypt→decrypt round-trip added to
     `test/logic.test.mjs` (**passing**). `test/sync.mjs` step 4b exercises the real Storage round-trip and
     the Storage-miss→base64 fallback against the emulator suite (`--only auth,firestore,storage`, port 9199;

@@ -14,5 +14,7 @@ export const firebaseConfig = {
   // Blaze + deploying storage.rules; new photos then upload to Storage and old
   // base64 docs stay readable as a fallback (see sync.js uploadPhoto/getPhoto).
   // Guards the firebase-storage SDK import so Spark/local users never download it.
+  // NOTE: getPhoto uses getBlob() — set bucket CORS (GET from the app origins) or
+  // photo loads fail silently. See PRODUCTION_PLAN 3.2 for the gsutil step.
   useStorage: false,
 };
