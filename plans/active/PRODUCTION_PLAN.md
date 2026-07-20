@@ -157,9 +157,10 @@ Base64 photos in Firestore: ~900 KB/photo against a **1 GiB total** Firestore qu
 photos across *all* users, and 50k reads/day is easy to blow because `attachSpace` snapshots
 the entire `dates` collection on every app open.
 
-- [ ] **USER-GATED — Move to the Blaze plan before public launch; set a billing budget + alert.**
-      Billing decision in the Firebase console; can't be done from code. Required before the
-      Storage path can be turned on or tested end-to-end against real Firebase.
+- [x] **Blaze plan enabled + budget alert set (2026-07-20).** Cloud Billing account "My Billing
+      Account" linked to the project (the initial upgrade left it unlinked — Storage silently kept
+      failing until the project↔billing link was completed on the GCP billing page). ₪20/mo budget
+      alert created (well above this app's real cents/mo cost). Free-trial credit ₪898 / 90 days active.
 - [x] Cloud Storage photo path implemented (2026-07-20). `sync.js` now has an `ensureStorage()`
       lazy import of `firebase-storage.js` (mirrors the other Firebase modules) gated on a new
       `firebaseConfig.useStorage` flag — **default false so Spark/local users never download the
@@ -173,15 +174,17 @@ the entire `dates` collection on every app open.
       isolation model (+ 5 MB write cap); `firebase.json` gains the storage rules + storage emulator
       (port 9199); CSP already allows `*.googleapis.com`, added the emulator port. `firebaseConfig.storageBucket`
       was already present.
-  - **USER-GATED — after enabling Blaze:** (1) deploy the rules with `firebase deploy --only storage`,
-    (2) set `useStorage: true` in `js/firebase-config.js` and deploy the app, (3) confirm the bucket name
-    is `us-date-tracker-c988b.firebasestorage.app`, (4) **set bucket CORS to allow the app origins** —
-    `getPhoto` uses `getBlob()`, a browser XHR against the object, which GCS blocks without a CORS rule.
-    Apply once with `gsutil cors set cors.json gs://us-date-tracker-c988b.firebasestorage.app` where
-    `cors.json` allows GET from the Pages origin (prod + `/beta/`) and `http://localhost:8000` for dev;
-    without this, photo loads fail silently in the browser (upload still works). Existing base64 photos
-    keep working via the read fallback; no data migration script is required (new writes go to Storage,
-    old reads fall back).
+  - **DONE (2026-07-20, driven via console/Cloud Shell):** (1) default bucket created,
+    `gs://us-date-tracker-c988b.firebasestorage.app`, no-cost US-EAST1 — matches `storageBucket`.
+    (2) `storage.rules` published via the Storage → Rules editor; the cross-service `firestore.exists()`
+    membership check triggered the "Provision cross-service rules" prompt → **Attach permissions**
+    (grants the Storage service agent the IAM role to read Firestore — required or the rules fail closed).
+    (3) Bucket CORS set via Cloud Shell (`gcloud storage buckets update … --cors-file`): GET/HEAD from
+    `https://tzoororg.github.io` (covers prod + `/beta/`, same origin) and `http://localhost:8000`;
+    verified with `buckets describe`. `cors.json` committed at repo root for reuse.
+    (4) `useStorage: true` set in `js/firebase-config.js` — shipped to dev/beta first for end-to-end
+    verification; prod picks it up at the next master release. Existing base64 photos keep working via
+    the read fallback; no data migration script needed.
   - Tests: pure-logic guard for the enc-marker parse + photo blob encrypt→decrypt round-trip added to
     `test/logic.test.mjs` (**passing**). `test/sync.mjs` step 4b exercises the real Storage round-trip and
     the Storage-miss→base64 fallback against the emulator suite (`--only auth,firestore,storage`, port 9199;
