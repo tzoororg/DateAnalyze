@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Us — Privacy Policy</title>
+<style>
+  :root {
+    --bg: #2a1b26; --card: #3b2a37; --text: #f5e6ee; --muted: #c99bb0; --accent: #ff7fa2; --line: #4a3444;
+  }
+  @media (prefers-color-scheme: light) {
+    :root { --bg: #ffd9e4; --card: #ffffff; --text: #5a3a4a; --muted: #a8798f; --accent: #e8577e; --line: #ffc9d8; }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  article {
+    max-width: 640px; margin: 0 auto; padding: 32px 20px 60px;
+  }
+  h1 { color: var(--accent); font-size: 26px; margin-bottom: 4px; }
+  .sub { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
+  h2 { font-size: 17px; margin: 28px 0 8px; }
+  p { margin: 0 0 12px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; margin: 0 0 12px; }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<article>
+  <h1>Privacy Policy</h1>
+  <p class="sub">Us — a private date-tracking app. Effective 2026-07-20.</p>
+
+  <div class="card">
+    <p><strong>Summary:</strong> your date entries stay on your device by default. Optional partner sync is end-to-end encrypted; we cannot read your content.</p>
+  </div>
+
+  <h2>Local data</h2>
+  <p>By default, everything you log — entries, ratings, notes, photos — is stored only in your browser's local database (IndexedDB) on your device. No account is required. Nothing leaves your device unless you turn on partner sync.</p>
+
+  <h2>Optional sync (Firebase)</h2>
+  <p>If you turn on sync, you sign in with Google and we store your email/user ID to identify your account. Your date and photo data is stored in Firestore, but it's encrypted on your device first (AES-256-GCM) before it's ever sent — the encryption key never leaves your and your partner's devices. As the app operator, we can only see entry counts, timestamps, and which devices belong to your shared space — never your titles, notes, ratings, or photos.</p>
+
+  <h2>Photos</h2>
+  <p>Photos are stored on your device. If sync is on, they're also stored as encrypted documents in Firestore so your partner can see them too.</p>
+
+  <h2>Crash reports</h2>
+  <p>If the app crashes, we may receive the error message, stack trace, and filename — never your entry content. You can opt out by setting <code>crashReports</code> to <code>"off"</code> in your browser's local storage.</p>
+
+  <h2>Feedback</h2>
+  <p>The in-app "Send feedback" form sends your message and any attached photo to a Cloudflare Worker, which files a GitHub issue so it can be reviewed.</p>
+
+  <h2>Push notifications</h2>
+  <p>If enabled, notifications are delivered via Firebase Cloud Messaging with fixed, generic text (e.g. "your partner logged a date") — no entry content is included.</p>
+
+  <h2>No analytics, no ads, no trackers</h2>
+  <p>We don't run analytics, advertising, or tracking scripts of any kind.</p>
+
+  <h2>Data deletion</h2>
+  <p>You can erase everything from the ⋯ menu in the app at any time. To delete a cloud account/space, contact us below.</p>
+
+  <h2>Contact</h2>
+  <p>Questions or deletion requests: <a href="mailto:tzoorp@gmail.com">tzoorp@gmail.com</a></p>
+</article>
+</body>
+</html>

@@ -184,14 +184,14 @@ Design (all WebCrypto, no dependencies, fits the no-build-step constraint):
 - [x] Migration for existing plaintext spaces: ⋯ menu "Encrypt cloud data" — idempotent
       re-write of plaintext dates + photos (no version gate; coordinate the one existing
       couple manually — old clients still read/write the legacy shape meanwhile).
-- [ ] Privacy policy then states: content is end-to-end encrypted; operators can see only
+- [x] Privacy policy then states: content is end-to-end encrypted; operators can see only
       entry counts, timestamps, and space membership. Console access still restricted to
-      one 2FA-protected account.
+      one 2FA-protected account. (privacy.html, 2026-07-20)
 
 ## 4. Store submission requirements
 
-- [ ] **Privacy policy** page (host on the Pages site) — required by both stores and by
-      Google OAuth verification.
+- [x] **Privacy policy** page (host on the Pages site) — required by both stores and by
+      Google OAuth verification. — privacy.html at site root (2026-07-20)
 - [ ] **Account deletion** (Play policy, hard requirement): in-app flow that deletes the
       auth user, their member doc, their space content (if last member), and local data.
       Current `wipeAll` deletes dates but leaves member docs/space/auth user. Also requires
@@ -200,7 +200,7 @@ Design (all WebCrypto, no dependencies, fits the no-build-step constraint):
 - [ ] Packaging: Android = TWA via Bubblewrap + `assetlinks.json` on the Pages domain;
       iOS = per ../done/IOS_PLAN.md. Verify Google sign-in, FCM push, camera/photo access, and the
       Google Photos picker inside each wrapper — webview behavior differs from Chrome.
-- [ ] Support contact + terms of service page (short).
+- [x] Support contact + terms of service page (short). — terms.html (2026-07-20)
 - [ ] Test push permission prompts in wrappers (Android 13+ runtime notification permission).
 
 ## 5. Operations
