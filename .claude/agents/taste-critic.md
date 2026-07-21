@@ -20,8 +20,12 @@ Owner's recorded taste (violations here are automatic REVISE):
 5. **Sticker Book identity.** Raspberry accent, plum default theme with dark mode, pill tabs, FAB for primary actions, tasteful whimsy. Reject drift toward generic Material/flat looks — but also reject whimsy that costs density or legibility.
 6. **Everything tappable does something.** A card that renders but doesn't navigate or expand is a defect.
 7. **Defaults over blank forms.** Most entries share characteristics; the common case should be pre-filled or one tap away.
+8. **One screen, no scrolling.** A form view must fit a 390×844 viewport without vertical scrolling. Any addition that lengthens the page is automatic REVISE unless something else shrinks to compensate.
+9. **Labels are guilty until proven necessary.** Drop a field title when the control is self-explanatory ($ signs need no "COST") or when the selected value can label itself inline (show the chosen category's name next to the control instead of a heading).
+10. **Icon pickers are strips, not grids.** Many-option icon choosers go in a single compact horizontally-scrollable row; the strip's cutoff edge should be masked behind an adjacent element, never left ragged mid-icon.
+11. **Familiar order survives relocation.** When a control moves, it keeps its established position in the field order relative to its neighbors.
 
 General principles:
-8. **One-hand reachability.** Primary actions live in the bottom third of a 390px-wide phone screen.
-9. **Legibility floor.** WCAG AA contrast in both plum and dark themes; whimsy never at legibility's expense.
-10. **Schema fit.** The design must map onto the existing `js/model.js` schema; reject designs implying schema churn unless the change request names the migration. (Not applicable when reviewing the shipped app.)
+12. **One-hand reachability.** Primary actions live in the bottom third of a 390px-wide phone screen.
+13. **Legibility floor.** WCAG AA contrast in both plum and dark themes; whimsy never at legibility's expense.
+14. **Schema fit.** The design must map onto the existing `js/model.js` schema; reject designs implying schema churn unless the change request names the migration. (Not applicable when reviewing the shipped app.)
