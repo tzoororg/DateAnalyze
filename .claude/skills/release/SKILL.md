@@ -61,17 +61,16 @@ Show the user: the release notes, the triage summary (each reject and its classi
 
 ## Phase 6 — Ship
 
-1. **Collect the issues this release closes** (before merging, while `master..dev` is still the release set):
+1. **Collect the issues this release closes** — the ones carrying the `next-release` label, which is applied by hand only when the *actual implementation* lands on dev (a mock- or roadmap-only commit that merely mentions `(#N)` does NOT get the label and must NOT be closed):
    ```
-   git log master..dev --format='%s%n%b' | grep -oE '#[0-9]+' | sort -u
+   gh issue list --label next-release --state open --json number,title --repo tzoororg/DateAnalyze
    ```
-   These are the `(#N)` references from fix/feature commits — the issues that were carrying the `next-release` label.
+   Sanity-check against `git log master..dev --format='%s%n%b' | grep -oE '#[0-9]+' | sort -u`: every labeled issue should have a real fix/feature commit in that range (use the sha for the close comment). If a `#N` appears in the log but has no `next-release` label, confirm it's mock/roadmap-only and leave it open.
 2. On `dev`: bump `CACHE` in `sw.js` to the approved version; commit (include any triage fixes + ROADMAP.md updates) and push `dev`.
 3. Merge `dev` into `master` (fast-forward is fine — the version was hand-bumped), push `master`.
-4. **Close the shipped issues.** For each `#N` from step 1 that is still open:
+4. **Close the shipped issues.** For each labeled `#N` from step 1:
    ```
    gh issue close N -c "Shipped in production (vX.Y.Z). Commit <sha>." --repo tzoororg/DateAnalyze
    gh issue edit N --remove-label next-release --repo tzoororg/DateAnalyze
    ```
-   (Closing removes it from the open list; the label removal keeps `next-release` meaning "on dev, not yet released.")
 5. Confirm both pushes succeeded and report the released version + the issues closed.
