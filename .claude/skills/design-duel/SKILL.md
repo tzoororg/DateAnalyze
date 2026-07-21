@@ -9,7 +9,7 @@ Design a new component/view for the DateAnalyze app. Two roles: **you are the de
 
 ## Flow
 
-1. **Designer pass.** Build a static HTML mock in `design/` per CLAUDE.md's design-first workflow (style like the app; see `design/roadmap.html` / `design/current.html` for the pattern). If the request is open-ended, produce 2–3 significantly different options in one file. Render it and capture screenshots (headless Chrome via `test/cdp.mjs`, or `design/capture.mjs <base> <shot>` for app views) — **at most 2–3 cropped screenshots**, only of the component under design.
+1. **Designer pass.** Build a static HTML mock in `design/` per CLAUDE.md's design-first workflow (style like the app; see `design/roadmap/roadmap.html` / `design/current.html` for the pattern). If the request is open-ended, produce 2–3 significantly different options in one file. Render it and capture screenshots (headless Chrome via `test/cdp.mjs`, or `design/capture.mjs <base> <shot>` for app views) — **at most 2–3 cropped screenshots**, only of the component under design.
 2. **Critic round** (repeat up to 3 times):
    - Launch an `Agent` (subagent_type `taste-critic`, `run_in_background: false`) — its definition in `.claude/agents/taste-critic.md` carries the Taste Charter (single source of truth for the app's design vision). Give it ONLY: the screenshot file paths (it Reads them) and one sentence of what the component is for. Do NOT share your design reasoning.
    - The critic returns a numbered list of **at most 5 concrete change requests**, each tied to a charter principle, plus a verdict: `REVISE` or `SHIP`.

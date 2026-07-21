@@ -1,6 +1,6 @@
 # Date Night mode (Roadmap #7) + v2.1.0 triage fixes
 
-Approved design: `design/date-night.html` (duel log in HTML comments at the bottom;
+Approved design: `design/past/date-night.html` (duel log in HTML comments at the bottom;
 final screenshot `design/shots/mock-datenight.png`). Implement exactly that design.
 
 ## Part 1 — Date Night mode

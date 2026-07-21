@@ -1,12 +1,12 @@
 # Time-capsule notes (Roadmap #11)
 
-Approved design: `design/time-capsule.html` (screenshots `design/shots/mock-capsule.png`; duel audit trail in HTML comments at the bottom of the mock). An optional "note to your future selves" written in the log form; it resurfaces exactly one year later inside the existing On-this-day memory card on Home.
+Approved design: `design/past/time-capsule.html` (screenshots `design/shots/mock-capsule.png`; duel audit trail in HTML comments at the bottom of the mock). An optional "note to your future selves" written in the log form; it resurfaces exactly one year later inside the existing On-this-day memory card on Home.
 
 ## Design summary (implement exactly this)
 
 - **Log form:** a butter sticker-pill toggle `💌 note to next year` sits on the same row as the existing `+ add a note` link (row becomes a flex `.link-row`, note-link left, pill right). Tapping the pill reveals a capsule field: `card-2` background, 1px **dashed** `--butter-fg` border, radius 13px. Header row: `💌 To future us` (13px, 700, `--butter-fg`) with a right-aligned passive muted caption `opens {entry date + 1 year, e.g. "Jul 18, 2027"}`. Below: a borderless transparent textarea (body font, no italic), placeholder `If you're reading this…`. Field is hidden unless toggled or `draft.capsule` is non-empty (same pattern as notes/link).
 - **Memory card (Home):** for each on-this-day entry with a `capsule`, append inside its `.memory-item`: a `.capsule-memory` panel — `card-2` bg, radius 13px, 3px solid `--butter-fg` left border, padding 10px 12px. Inside: `💌 FROM YOU` label (11px, 800, uppercase, letter-spacing .08em, `--butter-fg`) then the note text in *italic* body font, `--text`. No quote marks.
-- Exact CSS values are in the `<style>` block of `design/time-capsule.html` — copy them into `css/styles.css` (classes: `.link-row`, `.capsule-toggle`, `.capsule-wrap`, `.capsule-field`, `.capsule-head`, `.capsule-head .when`, `.capsule-memory`, `.capsule-memory .from`, `.capsule-memory .msg`).
+- Exact CSS values are in the `<style>` block of `design/past/time-capsule.html` — copy them into `css/styles.css` (classes: `.link-row`, `.capsule-toggle`, `.capsule-wrap`, `.capsule-field`, `.capsule-head`, `.capsule-head .when`, `.capsule-memory`, `.capsule-memory .from`, `.capsule-memory .msg`).
 
 ## Implementation steps
 
