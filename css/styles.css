@@ -453,18 +453,14 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); bo
 .logform .photo-strip { margin: 0 0 4px; }
 .logform .photo-strip:empty { display: none; }
 .form-grid { display: flex; gap: 12px; align-items: stretch; margin-top: 10px; }
-.form-grid .fields { flex: 1; min-width: 0; }
+.form-grid .fields { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .qrow { display: flex; gap: 8px; align-items: center; }
 .qrow input[type=date] { width: 150px; flex: none; padding: 9px 8px; font-size: 13px; border-radius: 999px; }
-.cat-fade { position: relative; flex: 1; min-width: 0; }
-.cat-fade::after {
-  content: ""; position: absolute; top: 0; right: 0; bottom: 0; width: 34px;
-  background: linear-gradient(to right, transparent 25%, var(--card)); pointer-events: none;
-}
-.cat-scroll { display: flex; gap: 6px; overflow-x: auto; flex: 1; min-width: 0; scrollbar-width: none; padding: 3px 0; }
-.cat-scroll::-webkit-scrollbar { display: none; }
-.cat-dot { width: 40px; height: 40px; flex: none; border-radius: 50%; border: none; background: var(--card-2); display: grid; place-items: center; font-size: 19px; cursor: pointer; }
+.cat-current { flex: 1; min-width: 0; padding-left: 6px; font: 700 15px var(--cursive); color: var(--accent-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cat-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 7px; margin: 10px 0; justify-items: center; }
+.cat-dot { width: 34px; height: 34px; flex: none; border-radius: 50%; border: none; background: var(--card-2); display: grid; place-items: center; font-size: 17px; cursor: pointer; }
 .cat-dot.on { background: var(--accent); box-shadow: 0 0 0 3px rgba(255, 127, 162, .35); }
+.fields-bottom { margin-top: auto; }
 .blocklabel { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); margin: 14px 2px 8px; }
 .seg4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .seg4 button { border: 1.5px solid var(--line); background: var(--card-2); color: var(--text); border-radius: 12px; padding: 10px 0; font-size: 14px; font-weight: 700; cursor: pointer; }

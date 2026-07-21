@@ -592,20 +592,20 @@ function renderLog() {
         <div class="fields">
           <div class="qrow">
             <input id="f-date" type="date" value="${draft.date}"/>
-            <div class="cat-fade">
-              <div class="cat-scroll" id="f-category">
-                ${CATEGORIES.map(c => `<button class="cat-dot ${draft.category === c.key ? "on" : ""}" data-cat="${c.key}" title="${c.label}" aria-label="${c.label}">${c.emoji}</button>`).join("")}
-              </div>
-            </div>
+            <span class="cat-current" id="f-cat-current">${draft.category ? catShort(draft.category) : ""}</span>
           </div>
-          <div class="blocklabel">Cost</div>
+          <div class="cat-grid" id="f-category">
+            ${CATEGORIES.map(c => `<button class="cat-dot ${draft.category === c.key ? "on" : ""}" data-cat="${c.key}" title="${c.label}" aria-label="${c.label}">${c.emoji}</button>`).join("")}
+          </div>
           <div class="seg4" id="f-cost">
             ${COST_TIERS.map(t => `<button class="${selTier === t.key ? "on" : ""}" data-tier="${t.key}">${t.label}</button>`).join("")}
           </div>
-          <div class="blocklabel">One word for the vibe</div>
-          <input id="f-vibe" type="text" class="vibe-input" placeholder="magical? chaotic? cozy?" value="${escAttr(draft.vibe || "")}"/>
-          <div class="vibe-sugs" id="f-vibe-sugs">
-            ${vibeSugs.map(w => `<button type="button" class="vibe-sug" data-vibe="${escAttr(w)}">${escHtml(w)}</button>`).join("")}
+          <div class="fields-bottom">
+            <div class="blocklabel">One word for the vibe</div>
+            <input id="f-vibe" type="text" class="vibe-input" placeholder="magical? chaotic? cozy?" value="${escAttr(draft.vibe || "")}"/>
+            <div class="vibe-sugs" id="f-vibe-sugs">
+              ${vibeSugs.map(w => `<button type="button" class="vibe-sug" data-vibe="${escAttr(w)}">${escHtml(w)}</button>`).join("")}
+            </div>
           </div>
         </div>
         <div class="meter-col">
@@ -695,6 +695,7 @@ function wireForm() {
     const b = e.target.closest("[data-cat]"); if (!b) return;
     draft.category = b.dataset.cat;
     setOn(v.querySelectorAll("#f-category .cat-dot"), b);
+    v.querySelector("#f-cat-current").textContent = catShort(b.dataset.cat);
   });
 
   // cost tiers — the tier is canonical; a representative ₪ lands in `cost` so
@@ -2053,6 +2054,7 @@ function emptyState(big, title, sub) {
   return `<div class="empty"><div class="big">${big}</div><h3 style="margin:8px 0 4px">${title}</h3><p class="muted">${sub}</p></div>`;
 }
 function escHtml(s) { return String(s ?? "").replace(/[<>&]/g, c => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c])); }
+const catShort = k => catLabel(k).split("/")[0].trim();
 function escAttr(s) { return String(s ?? "").replace(/[<>&"]/g, c => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c])); }
 // ponytail: ids are app-generated UUIDs; escaping + CSP is belt-and-suspenders vs a hostile partner client.
 function safeUrl(u) {

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Log form — move category picker below the vibe</title>
+<style>
+:root {
+  --bg:#2a1b26; --bg-soft:#33222e; --card:#3b2a37; --card-2:#4a3444;
+  --line:#54394c; --text:#f5e6ee; --muted:#c99bb0;
+  --accent:#ff7fa2; --accent-2:#ff9fba; --good:#7ed3ab;
+  --radius:18px; --shadow:0 6px 16px rgba(0,0,0,.35);
+  --cursive:"Segoe Script","Comic Sans MS",cursive;
+}
+* { box-sizing:border-box; }
+body { margin:0; padding:28px 16px 60px; background:#1a1017; color:var(--text);
+  font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+h1 { font:700 24px var(--cursive); color:var(--accent); margin:0 0 4px; text-align:center; }
+.intro { color:var(--muted); font-size:13px; text-align:center; max-width:640px; margin:0 auto 26px; line-height:1.6; }
+.row { display:flex; gap:40px; justify-content:center; flex-wrap:wrap; align-items:flex-start; }
+.frame { width:390px; flex:none; }
+.view-label { font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.12em; margin:0 4px 10px; text-align:center; }
+.frame-note { font-size:12px; color:#9a7f8e; margin:12px 6px 0; line-height:1.55; }
+.frame-note b { color:var(--muted); }
+.card { background:var(--card); border-radius:var(--radius); padding:16px; box-shadow:var(--shadow); }
+
+/* ---- log form styles (mirrored from css/styles.css) ---- */
+.polaroid { background:#fdf6ee; border-radius:6px; padding:10px 10px 8px; box-shadow:var(--shadow); transform:rotate(-1.2deg); position:relative; margin:2px 4px 8px; }
+.pshot { display:block; width:100%; height:150px; border-radius:3px; background:#efe4d8; border:2px dashed #cbb59f; color:#8d735c; }
+.pshot-empty { display:grid; height:100%; text-align:center; align-content:center; justify-items:center; gap:2px; }
+.pshot-empty .big { font-size:36px; }
+.pshot-empty .hint { font-size:15px; font-weight:700; }
+.pshot-empty .srcs { font-size:12px; color:#a98f76; }
+.pol-caption { margin-top:8px; width:100%; background:transparent; border:none; border-bottom:1.5px dashed #cbb59f; font:400 19px var(--cursive); color:#5a4636; padding:2px 4px; }
+.pol-caption::placeholder { color:#b9a288; }
+
+.form-grid { display:flex; gap:12px; align-items:stretch; margin-top:10px; }
+.fields { flex:1; min-width:0; }
+.qrow { display:flex; gap:8px; align-items:center; }
+.qrow input[type=date] { width:150px; flex:none; padding:9px 8px; font-size:13px; border-radius:999px; background:var(--card-2); color:var(--text); border:none; color-scheme:dark; }
+
+/* BEFORE: cramped inline scroll */
+.cat-fade { position:relative; flex:1; min-width:0; }
+.cat-fade::after { content:""; position:absolute; top:0; right:0; bottom:0; width:34px;
+  background:linear-gradient(to right, transparent 25%, var(--card)); pointer-events:none; }
+.cat-scroll { display:flex; gap:6px; overflow-x:hidden; flex:1; min-width:0; padding:3px 0; }
+
+.cat-dot { width:40px; height:40px; flex:none; border-radius:50%; border:none; background:var(--card-2);
+  display:grid; place-items:center; font-size:19px; cursor:pointer; }
+.cat-dot.on { background:var(--accent); box-shadow:0 0 0 3px rgba(255,127,162,.35); }
+
+.blocklabel { font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin:14px 2px 8px; }
+.seg4 { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+.seg4 button { border:1.5px solid var(--line); background:var(--card-2); color:var(--text); border-radius:12px; padding:10px 0; font-size:14px; font-weight:700; cursor:pointer; }
+.seg4 .on { background:var(--accent); border-color:var(--accent); color:#fff; }
+.vibe-input { width:100%; font-family:var(--cursive); background:var(--card-2); border:none; border-radius:12px; padding:11px 12px; color:var(--text); font-size:16px; }
+.vibe-input::placeholder { color:var(--muted); }
+.vibe-sugs { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+.vibe-sug { font-size:12px; color:var(--muted); background:var(--card-2); border:none; border-radius:999px; padding:4px 11px; font-family:var(--cursive); cursor:pointer; }
+
+.meter-col { flex:none; width:76px; display:flex; flex-direction:column; align-items:center; background:var(--card-2); border-radius:16px; padding:10px 6px; gap:6px; }
+.meter-col .end { font-size:20px; line-height:1; }
+.meter-col .end-lbl { font-size:9.5px; color:var(--muted); font-weight:700; text-align:center; line-height:1.25; }
+.vtrack { flex:1; width:8px; min-height:150px; border-radius:99px; background:var(--line); position:relative; margin:6px 0; }
+.vtrack .fill { position:absolute; left:0; right:0; bottom:0; height:82%; background:linear-gradient(0deg,#8a5a6a,var(--accent)); border-radius:99px; }
+.vtrack .thumb { position:absolute; left:50%; top:18%; width:34px; height:34px; transform:translate(-50%,-50%); border-radius:50%; background:var(--accent); box-shadow:0 0 0 4px rgba(255,127,162,.3); display:grid; place-items:center; font-size:18px; }
+
+/* one-line vibe suggestions (single row, scrolls if it overflows) */
+.vibe-sugs.oneline { flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; }
+.vibe-sugs.oneline::-webkit-scrollbar { display:none; }
+.vibe-sugs.oneline .vibe-sug { flex:none; }
+
+/* AFTER: category below the date, two rows, all 11 visible; vibe pinned to meter's base */
+.form-grid .fields { display:flex; flex-direction:column; }
+.cat-current { flex:1; min-width:0; padding-left:6px; font:700 15px var(--cursive); color:var(--accent-2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.cat-grid2 { display:grid; grid-template-columns:repeat(6,1fr); gap:7px; margin:10px 0; justify-items:center; }
+.cat-grid2 .cat-dot { width:34px; height:34px; font-size:17px; }
+.seg4 { margin-top:0; }
+.fields-bottom { margin-top:auto; }
+
+.verdict-word { text-align:center; font:700 16px var(--cursive); color:var(--accent-2); margin:12px 4px 0; }
+.link-row { display:flex; align-items:center; justify-content:space-between; margin-top:6px; }
+.addnote-link { background:none; border:none; font-size:13px; color:var(--accent-2); font-weight:700; padding:4px; cursor:pointer; }
+.capsule-toggle { background:var(--card-2); border:1px solid var(--line); color:var(--muted); font-size:12px; font-weight:700; border-radius:999px; padding:6px 12px; cursor:pointer; }
+.btn { display:flex; align-items:center; justify-content:center; width:100%; padding:15px; border-radius:16px; border:none; cursor:pointer; font-size:16px; font-weight:800; color:#fff; background:var(--accent); box-shadow:0 6px 14px rgba(232,87,126,.3); margin-top:16px; }
+</style>
+</head>
+<body>
+<h1>Log form — a real home for the category picker</h1>
+<p class="intro">The 11 category icons are jammed into a scroll strip beside the date field, where only ~1½ are ever visible. Moving them to a full-width, wrapping row below the vibe input lets all 11 show at once — nothing to scroll past, nothing to discover.</p>
+
+<div class="row">
+  <!-- BEFORE -->
+  <div class="frame">
+    <div class="view-label">Before</div>
+    <div class="card">
+      <div class="polaroid">
+        <div class="pshot"><div class="pshot-empty">
+          <div class="big">📷</div>
+          <div class="hint">Tap to add photos</div>
+          <div class="srcs">Camera · Gallery · Google Photos</div>
+        </div></div>
+        <input class="pol-caption" placeholder="write a caption…"/>
+      </div>
+      <div class="form-grid">
+        <div class="fields">
+          <div class="qrow">
+            <input type="date" value="2026-07-19"/>
+            <div class="cat-fade"><div class="cat-scroll">
+              <button class="cat-dot">🍽️</button>
+              <button class="cat-dot on">🎬</button>
+              <button class="cat-dot">🌳</button>
+              <button class="cat-dot">✈️</button>
+              <button class="cat-dot">🎨</button>
+            </div></div>
+          </div>
+          <div class="blocklabel">Cost</div>
+          <div class="seg4">
+            <button class="on">Free</button><button>$</button><button>$$</button><button>$$$</button>
+          </div>
+          <div class="blocklabel">One word for the vibe</div>
+          <input class="vibe-input" placeholder="magical? chaotic? cozy?"/>
+          <div class="vibe-sugs">
+            <button class="vibe-sug">cozy</button><button class="vibe-sug">spontaneous</button>
+            <button class="vibe-sug">giggly</button><button class="vibe-sug">romantic</button>
+          </div>
+        </div>
+        <div class="meter-col">
+          <span class="end">😍</span>
+          <span class="end-lbl">again<br/>ASAP</span>
+          <div class="vtrack"><div class="fill"></div><div class="thumb">😊</div></div>
+          <span class="end-lbl">never<br/>again</span>
+          <span class="end">😵</span>
+        </div>
+      </div>
+      <div class="verdict-word">“so good — we’d do it again”</div>
+      <div class="link-row">
+        <button class="addnote-link">+ add a note</button>
+        <button class="capsule-toggle">💌 note to next year</button>
+      </div>
+      <button class="btn">Save date ♥</button>
+    </div>
+    <p class="frame-note"><b>The problem:</b> only 🎬 and a sliver of the next icon show. The other 9 categories are hidden behind a fade with no scroll affordance.</p>
+  </div>
+
+  <!-- AFTER -->
+  <div class="frame">
+    <div class="view-label">After</div>
+    <div class="card">
+      <div class="polaroid">
+        <div class="pshot"><div class="pshot-empty">
+          <div class="big">📷</div>
+          <div class="hint">Tap to add photos</div>
+          <div class="srcs">Camera · Gallery · Google Photos</div>
+        </div></div>
+        <input class="pol-caption" placeholder="write a caption…"/>
+      </div>
+      <div class="form-grid">
+        <div class="fields">
+          <div class="qrow">
+            <input type="date" value="2026-07-19"/>
+            <span class="cat-current">Travel</span>
+          </div>
+          <div class="cat-grid2">
+            <button class="cat-dot">🍽️</button>
+            <button class="cat-dot">🌳</button>
+            <button class="cat-dot">🎬</button>
+            <button class="cat-dot on">✈️</button>
+            <button class="cat-dot">🎨</button>
+            <button class="cat-dot">🏠</button>
+            <button class="cat-dot">🍸</button>
+            <button class="cat-dot">🏛️</button>
+            <button class="cat-dot">🏃</button>
+            <button class="cat-dot">🧘</button>
+            <button class="cat-dot">💝</button>
+          </div>
+          <div class="seg4">
+            <button class="on">Free</button><button>$</button><button>$$</button><button>$$$</button>
+          </div>
+          <div class="fields-bottom">
+            <div class="blocklabel">One word for the vibe</div>
+            <input class="vibe-input" placeholder="magical? chaotic? cozy?"/>
+            <div class="vibe-sugs oneline">
+              <button class="vibe-sug">cozy</button><button class="vibe-sug">spontaneous</button>
+              <button class="vibe-sug">giggly</button>
+            </div>
+          </div>
+        </div>
+        <div class="meter-col">
+          <span class="end">😍</span>
+          <span class="end-lbl">again<br/>ASAP</span>
+          <div class="vtrack"><div class="fill"></div><div class="thumb">😊</div></div>
+          <span class="end-lbl">never<br/>again</span>
+          <span class="end">😵</span>
+        </div>
+      </div>
+
+      <div class="verdict-word">“so good — we’d do it again”</div>
+      <div class="link-row">
+        <button class="addnote-link">+ add a note</button>
+        <button class="capsule-toggle">💌 note to next year</button>
+      </div>
+      <button class="btn">Save date ♥</button>
+    </div>
+    <p class="frame-note"><b>The fix:</b> category moves to two full-width rows directly below the date (original order kept) — all 11 visible, no scroll. Dropping the redundant COST label buys the room; the vibe block is pinned to the bottom so its words align with the meter's base. Same 691px height as before.</p>
+  </div>
+</div>
+</body>
+</html>
