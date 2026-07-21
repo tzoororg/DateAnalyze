@@ -43,6 +43,16 @@
   and neither is #12 (iOS support) — platform work with no UI to mock, see <a href="../plans/done/IOS_PLAN.md">plans/done/IOS_PLAN.md</a>.</p>
 </header>
 
+<section class="point" id="p16">
+  <span class="crumb">Roadmap #16 · Log / edit form</span>
+  <h2>Auto-fill “When” from a photo <span class="badge small">Tiny</span><span class="badge parked" style="background:#e3f6e8;color:#2e7d4f">User request · #16</span></h2>
+  <p class="what">Adding a photo to the log/edit form reads its EXIF capture date and sets the “When” date to match — but only while the date is still the untouched default, so it never clobbers a date you set by hand. A small chip explains the change and lets you undo.</p>
+  <p class="touches">Touches: <code>js/ui.js onPhotoPick()</code> · <code>js/exif.js readExif()</code> (already shipped for bulk import) — no schema change, no new dependency</p>
+  <div class="ba">
+    <div class="col after" style="flex:0 0 auto"><h3>Before → After</h3><figure><img src="../shots/after-photo-date.png" alt="" style="width:100%;max-width:820px"/><figcaption>Add a photo → the date jumps from today (2026-07-21) to the photo’s capture date (2026-06-14), with an undo chip</figcaption></figure></div>
+  </div>
+</section>
+
 <section class="point" id="p5">
   <span class="crumb">Roadmap #5 · Ideas tab</span>
   <h2>Double-blind date match <span class="badge large">Large</span><span class="badge parked">Parked — needs sync adoption</span></h2>

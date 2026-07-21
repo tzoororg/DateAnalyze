@@ -288,6 +288,39 @@ popup (unreliable in installed iOS PWAs), and a real-device verification pass
 **Effort.** Small (icon + auth fallback) + one on-device test session.
 **Risk.** iOS PWA quirks can't be emulated — the device pass is the real gate.
 
+## 13. Auto-fill "When" from a photo's EXIF date
+
+**What.** When you add a photo to the log/edit form, read its EXIF capture date
+and set the form's "When" date to match — but only while the date is still the
+untouched default, so it never overwrites a date the user picked by hand. A
+small "📷 Date set from photo · undo" chip explains the change.
+
+**Why.** Logging a date days later from its photos means retyping the date every
+time; the photo already knows when it happened. Removes friction from the app's
+core loop (logging). Direct user ask
+(issue [#16](https://github.com/tzoororg/DateAnalyze/issues/16)).
+
+**Where it plugs in.**
+- `onPhotoPick()` in `js/ui.js` already handles form photo adds. After storing
+  the first added blob, call `readExif(file)` (from `js/exif.js` — already
+  shipped and used by the bulk photo-import triage).
+- If it returns a date **and** the form date is still the default (fresh entry,
+  user hasn't edited `#f-date`), set `draft.date` + the `#f-date` input value and
+  show the undo chip. Track an "auto-set" flag so a manual edit or undo disables
+  further auto-fill for that draft.
+- No schema change, no new dependency — the EXIF reader and its self-check
+  (`node js/exif.test.mjs`) already exist.
+
+**Effort.** Tiny (~10 lines in `onPhotoPick` + the chip). **Risk.** Clobbering a
+deliberately-set date — the "default-only" guard is the whole correctness story;
+keep it strict (only auto-fill when the date equals today's default and the user
+hasn't touched the field).
+
+**Priority.** **Not important × Not urgent** — a genuine friction-reducer on the
+core logging loop that matches a real user request, but a convenience rather than
+a needle-mover, and nobody's blocked. Tiny effort, so slot it in opportunistically
+alongside any other Log-form work.
+
 ## Wave-2 ranking
 
 1. **#6 import** — changes the adoption curve itself.

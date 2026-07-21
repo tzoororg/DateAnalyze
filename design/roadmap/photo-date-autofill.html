@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Us — Roadmap #16 photo-date auto-fill mock</title>
+<style>
+  /* Light theme values pulled from css/styles.css so the mock is faithful. */
+  :root {
+    --bg:#ffd9e4; --bg-soft:#ffe6ee; --card:#ffffff; --card-2:#ffeff4;
+    --accent:#e8577e; --accent-2:#ff8fb0; --text:#3a2b33; --muted:#9a7f8c;
+    --line:#f4c9d8; --warn:#e8a13a; --radius:20px;
+    --shadow:0 8px 24px rgba(180,60,110,.12);
+    --cursive:"Segoe Script","Bradley Hand",cursive;
+  }
+  * { box-sizing:border-box; }
+  body { font:14px/1.5 system-ui,sans-serif; color:var(--text);
+    background:radial-gradient(120% 60% at 50% 0%, var(--bg-soft), var(--bg)) fixed;
+    margin:0; padding:28px 16px 60px; }
+  .page { max-width:820px; margin:0 auto; }
+  h1 { font-size:22px; margin:0 0 4px; color:var(--text); }
+  h1 .heart { color:var(--accent); }
+  .sub { color:#7a5a68; max-width:70ch; margin:0 0 26px; }
+  .ba { display:flex; gap:26px; flex-wrap:wrap; align-items:flex-start; }
+  .col { flex:1 1 300px; }
+  .col h3 { font-size:12px; letter-spacing:1px; text-transform:uppercase; margin:0 0 10px; }
+  .col.before h3 { color:var(--muted); } .col.after h3 { color:var(--accent); }
+
+  /* --- faithful log-form fragment --- */
+  .logform { background:var(--card); border-radius:var(--radius); padding:16px; box-shadow:var(--shadow); }
+  .polaroid { background:#fdf6ee; border-radius:6px; padding:10px 10px 8px; box-shadow:var(--shadow); transform:rotate(-1.2deg); position:relative; margin:2px 4px 8px; }
+  .pshot { display:block; width:100%; height:150px; border-radius:3px; overflow:hidden; position:relative; background:var(--card-2); }
+  .pshot.empty { background:#efe4d8; border:2px dashed #cbb59f; color:#8d735c; }
+  .pshot-empty { display:grid; height:100%; text-align:center; align-content:center; justify-items:center; gap:2px; }
+  .pshot-empty .big { font-size:36px; }
+  .pshot-empty .hint { font-size:14px; font-weight:700; }
+  .pshot-empty .srcs { font-size:11px; color:#a98f76; }
+  .pshot .fill { width:100%; height:100%; object-fit:cover; display:block;
+    background:linear-gradient(135deg,#f6c8a8,#e88a9c 60%,#a86b8f); }
+  .count-badge { position:absolute; right:10px; bottom:10px; background:rgba(0,0,0,.55); color:#fff; border-radius:999px; padding:3px 10px; font-size:12px; font-weight:800; }
+  .pol-caption { margin-top:8px; width:100%; background:transparent; border:none; border-bottom:1.5px dashed #cbb59f; font:400 18px var(--cursive); color:#5a4636; padding:2px 4px; }
+  .qrow { display:flex; gap:8px; align-items:center; margin-top:12px; }
+  .datefield { position:relative; }
+  .qrow .date { width:150px; padding:9px 10px; font-size:13px; border-radius:999px; background:var(--card-2); border:1px solid var(--line); color:var(--text); }
+  .qrow .date.lit { outline:2px solid var(--accent); animation:pop .5s ease; }
+  @keyframes pop { 0%{transform:scale(1)} 40%{transform:scale(1.05)} 100%{transform:scale(1)} }
+  .cat-current { flex:1; padding-left:6px; font:700 15px var(--cursive); color:var(--accent-2); }
+  /* the one net-new element: a subtle "from photo" hint chip */
+  .from-photo { display:inline-flex; align-items:center; gap:5px; margin-top:9px;
+    background:var(--card-2); color:var(--accent); border:1px solid var(--line);
+    border-radius:999px; padding:4px 11px; font-size:12px; font-weight:700; }
+
+  .note { margin-top:22px; font-size:13px; color:#7a5a68; background:#fff; border-radius:14px; padding:14px 16px; box-shadow:var(--shadow); }
+  .note code { background:var(--card-2); border-radius:4px; padding:1px 5px; }
+  .badge { display:inline-block; font-size:12px; font-weight:600; border-radius:20px; padding:2px 10px; margin-left:6px; background:#e3f6e8; color:#2e7d4f; }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Us <span class="heart">♥</span> — #16 · auto-fill “When” from a photo <span class="badge">Tiny</span></h1>
+  <p class="sub">Adding a photo to the log/edit form reads its EXIF capture date
+  (<code>js/exif.js</code> already does this for bulk import) and sets the “When” date to match —
+  only while the date is still the untouched default, so it never clobbers a date you picked by hand.
+  A small chip explains what happened and lets you undo.</p>
+
+  <div class="ba">
+    <div class="col before">
+      <h3>Before — add photo, date stays “today”</h3>
+      <div class="logform">
+        <div class="polaroid">
+          <div class="pshot fill"><span class="count-badge">1</span></div>
+          <input class="pol-caption" value="write a caption…" readonly/>
+        </div>
+        <div class="qrow">
+          <input class="date" value="2026-07-21" readonly/>
+          <span class="cat-current">Dining</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="col after">
+      <h3>After — date jumps to when the photo was taken</h3>
+      <div class="logform">
+        <div class="polaroid">
+          <div class="pshot fill"><span class="count-badge">1</span></div>
+          <input class="pol-caption" value="write a caption…" readonly/>
+        </div>
+        <div class="qrow">
+          <input class="date lit" value="2026-06-14" readonly/>
+          <span class="cat-current">Dining</span>
+        </div>
+        <span class="from-photo">📷 Date set from photo · <span style="text-decoration:underline">undo</span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>Where it plugs in.</b> <code>onPhotoPick()</code> in <code>js/ui.js</code> already handles
+    photo adds; after storing the blob, call <code>readExif(file)</code> (from <code>js/exif.js</code>)
+    on the first added photo. If it returns a date <em>and</em> the form date is still the default
+    (fresh entry, user hasn’t edited it), set <code>draft.date</code> + the <code>#f-date</code> input
+    and show the chip. No schema change, no new dependency — the EXIF reader is already shipped.
+  </div>
+</div>
+</body>
+</html>
