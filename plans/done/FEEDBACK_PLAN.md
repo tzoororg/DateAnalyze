@@ -44,6 +44,20 @@ comment via a GitHub Action + the Anthropic API; that was dropped as redundant.)
 Say **"implement feedback #N"**. Claude reads the public issue (title + body) and
 produces the technical rewording, plan, and implementation with full repo context.
 
+**Feature requests must clear the design critic.** When the issue is a feature request
+(not a pure bug/logic fix), the design-first workflow applies — build the mock in
+`design/`, then run it through the **`taste-critic`** agent (`.claude/agents/taste-critic.md`)
+before showing the user. Fix the points it raises and re-critique. **Cap: two critic
+passes** — if it still objects after the second fix, stop and hand the remaining points
+to the user with the mock. Only then take the mock to the user for approval and implement.
+(For a genuinely new component/view this is the `design-duel` skill, which already wraps
+the same loop; for a tweak to an existing view, run the two-pass taste-critic loop by hand.)
+
+**Traceability.** The fix/feature commit references the issue as `(#N)` in its subject
+(features also cite `(roadmap #N)`); after it lands on dev, add the **`next-release`** label
+to the issue. The release process closes it on the production merge (see
+`.claude/skills/release/SKILL.md` Phase 6 and CLAUDE.md → *Finishing a task*).
+
 ## Notes / tradeoffs
 
 - The Worker is a public endpoint; `FEEDBACK_KEY` + Cloudflare rate limiting deter abuse.

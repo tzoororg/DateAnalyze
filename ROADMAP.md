@@ -290,6 +290,8 @@ popup (unreliable in installed iOS PWAs), and a real-device verification pass
 
 ## 13. Auto-fill "When" from a photo's EXIF date
 
+**Status.** ✅ Shipped on dev (commit 95e3b67, feedback [#16](https://github.com/tzoororg/DateAnalyze/issues/16), `next-release`) — closes at the next production release.
+
 **What.** When you add a photo to the log/edit form, read its EXIF capture date
 and set the form's "When" date to match — but only while the date is still the
 untouched default, so it never overwrites a date the user picked by hand. A

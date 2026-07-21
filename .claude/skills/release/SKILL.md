@@ -61,6 +61,17 @@ Show the user: the release notes, the triage summary (each reject and its classi
 
 ## Phase 6 — Ship
 
-1. On `dev`: bump `CACHE` in `sw.js` to the approved version; commit (include any triage fixes + ROADMAP.md updates) and push `dev`.
-2. Merge `dev` into `master` (fast-forward is fine — the version was hand-bumped), push `master`.
-3. Confirm both pushes succeeded and report the released version.
+1. **Collect the issues this release closes** (before merging, while `master..dev` is still the release set):
+   ```
+   git log master..dev --format='%s%n%b' | grep -oE '#[0-9]+' | sort -u
+   ```
+   These are the `(#N)` references from fix/feature commits — the issues that were carrying the `next-release` label.
+2. On `dev`: bump `CACHE` in `sw.js` to the approved version; commit (include any triage fixes + ROADMAP.md updates) and push `dev`.
+3. Merge `dev` into `master` (fast-forward is fine — the version was hand-bumped), push `master`.
+4. **Close the shipped issues.** For each `#N` from step 1 that is still open:
+   ```
+   gh issue close N -c "Shipped in production (vX.Y.Z). Commit <sha>." --repo tzoororg/DateAnalyze
+   gh issue edit N --remove-label next-release --repo tzoororg/DateAnalyze
+   ```
+   (Closing removes it from the open list; the label removal keeps `next-release` meaning "on dev, not yet released.")
+5. Confirm both pushes succeeded and report the released version + the issues closed.
