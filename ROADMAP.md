@@ -334,6 +334,9 @@ alongside any other Log-form work.
 - **low** — Wishlist "We did it! Log it →" CTA wraps to two lines at narrow width (mid-phrase, arrow on line 2). Shorten copy or widen the button. *(found preparing v2.2.0 release)*
 - **low** — Lightbox photo is not full-bleed: image sits in a rounded card with side margins instead of edge-to-edge with overlaid arrows/caption. *(found preparing v2.2.0 release)*
 - **low** — Ideas cards repeat identical rationale sentences verbatim across consecutive cards ("Something new in Travel — a category you rate 5.0★…", "…worth a comeback."). Collapse the rationale into the badge row to shed two lines per card. *(found preparing v2.2.0 release)*
+- **medium** — Home "It's been a while — back up your dates" tip bubble sits centered over the hero memory photo, obscuring the focal subject. Move to a dismissible banner above the photo strip, or anchor to a non-focal corner. *(found preparing v2.3.0 release)*
+- **low** — Log form: "ONE WORD FOR THE VIBE" caps-label is redundant above the vibe chips, whose placeholder ("magical? chaotic? cozy?") already self-explains. Drop the heading. *(found preparing v2.3.0 release)*
+- **low** — `deleteAccount` sole-member branch (js/sync.js ~155) deletes photo *Firestore docs* but not Cloud Storage blobs (now that `useStorage:true`), leaving orphaned E2EE-encrypted, unreachable bytes in the bucket after account deletion. No user-facing data loss (rules deny access post-delete); add `deleteObject` for a clean wipe. *(found preparing v2.3.0 release)*
 
 ## Explicitly NOT doing
 

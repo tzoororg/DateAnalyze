@@ -1920,7 +1920,10 @@ function setOn(nodes, active) { nodes.forEach(n => n.classList.toggle("on", n ==
 async function photoURL(id) {
   if (!id) return "";
   if (urlCache.has(id)) return urlCache.get(id);
-  const blob = await db.getPhoto(id);
+  // ponytail: a transient Cloud Storage/CORS read error must degrade to a missing
+  // thumbnail, not reject the caller's Promise.all and blank the whole view.
+  let blob;
+  try { blob = await db.getPhoto(id); } catch { return ""; }
   if (!blob) return "";
   const url = URL.createObjectURL(blob);
   urlCache.set(id, url);

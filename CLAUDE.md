@@ -48,7 +48,7 @@ node test/sync.mjs                # two-phone sync; needs the server AND the emu
 ```
 
 - **After any change:** run logic + smoke. Both must pass before commit.
-- **When touching `sync.js`, `store.js`, or `firestore.rules`:** also run the sync test. It simulates two phones as separate headless-Chrome profiles talking to the **Firebase Emulator Suite** — start it first with `firebase emulators:start --only auth,firestore --project us-date-tracker-c988b` (firebase-tools + Java runtime, both installed on this machine). The `?emu=1` URL param is a dev hook in `sync.js` that routes Auth/Firestore to the emulators and swaps the Google popup for anonymous sign-in.
+- **When touching `sync.js`, `store.js`, or `firestore.rules`:** also run the sync test. It simulates two phones as separate headless-Chrome profiles talking to the **Firebase Emulator Suite** — start it first with `firebase emulators:start --only auth,firestore,storage --project us-date-tracker-c988b` (firebase-tools + Java runtime, both installed on this machine; `storage` is required now that `useStorage:true` — the sync test exercises the Cloud Storage photo path). The `?emu=1` URL param is a dev hook in `sync.js` that routes Auth/Firestore/Storage to the emulators and swaps the Google popup for anonymous sign-in.
 - New feature with a genuinely new UI flow → add a check to `test/smoke.mjs` (plus a `?shot=` state in `js/dev-shots.js` if needed). New pure logic → a test in `test/logic.test.mjs`.
 - The shared headless-Chrome CDP client lives in `test/cdp.mjs` (also used by `design/capture.mjs`).
 
