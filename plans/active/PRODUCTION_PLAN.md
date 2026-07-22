@@ -321,7 +321,16 @@ Design (all WebCrypto, no dependencies, fits the no-build-step constraint):
       (2026-07-20) Tests: `test/sync.mjs` step 8 added (asserts non-last member keeps the
       space, last member's delete removes space + all member docs) — unrun in this sandbox
       (no outbound internet for the gstatic Firebase SDK); logic + smoke pass.
-- [ ] Play data-safety form / Apple privacy nutrition labels (answers fall out of 3.3).
+- [x] **Answer sheet prepared** — Play Data safety + Apple App Privacy answers,
+      grounded in the actual code with file citations, in
+      [STORE_DATA_SAFETY.md](STORE_DATA_SAFETY.md) (copy-paste tables + the
+      judgment calls to double-check). Answers fall out of 3.3.
+  - [ ] **Transcribe into each console** — depends on a live app listing, which
+        depends on packaging (§4 TWA/iOS below). Human step: paste the tables
+        from STORE_DATA_SAFETY.md into the Play Data safety form and Apple App
+        Privacy questionnaire; re-read §4 of that doc first (Location declared
+        NOT collected; E2EE content still counts as collected; Play "Shared" =
+        No).
 - [ ] Packaging: Android = TWA via Bubblewrap + `assetlinks.json` on the Pages domain;
       iOS = per ../done/IOS_PLAN.md. Verify Google sign-in, FCM push, camera/photo access, and the
       Google Photos picker inside each wrapper — webview behavior differs from Chrome.
