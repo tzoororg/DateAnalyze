@@ -33,13 +33,24 @@ Creating the account **today** starts every clock (identity verification alone c
 - [ ] **Create Google Play developer account** ($25). Start identity verification
       immediately. Note the 12-tester/14-day closed-test requirement; start recruiting
       testers now.
-- [ ] Create `tzoororg.github.io` User Pages repo; serve
+- [x] Create `tzoororg.github.io` User Pages repo; serve
       `/.well-known/assetlinks.json` (placeholder SHA-256 for now). This unblocks the
       TWA Digital Asset Links check — #1 technical launch risk. See `.well-known/README.md`.
-- [ ] **Google OAuth console** (PRODUCTION_PLAN §2 has exact URLs + form values):
-      confirm Testing status, fill Branding, check the photospicker scope label
-      (must say *Sensitive*, not Restricted), Publish app, submit verification with
-      scope justification + demo video.
+      DONE 2026-07-22: repo `tzoororg/tzoororg.github.io` (Option A), needed a `.nojekyll`
+      file or Jekyll skips the dot-dir; resolves 200 at the host root. Real SHA still TODO (Jul 28).
+- [~] **Google OAuth console** (PRODUCTION_PLAN §2 has exact URLs + form values).
+      DONE 2026-07-22 (Chrome MCP): **Branding filled + saved** — app name "Us Date Tracker",
+      support + developer contact `tzoorp@gmail.com`, home/privacy/terms URLs, authorized
+      domains `tzoororg.github.io` + firebaseapp. **State findings that revise the plan:**
+      (a) publishing status is already **"In production"** (not Testing) — Publish step is done;
+      (b) Data access shows **no sensitive/restricted scopes declared** — the photospicker
+      scope is NOT registered, so Verification centre says "verification not required." The app
+      is therefore on the **fast brand-verification-only path** (no demo video needed) *as long
+      as the Photos scope stays unregistered* — this is exactly the launch fallback (§decisions).
+      REMAINING (human decision, not filled): either (1) click **Verify branding** to submit the
+      fast brand verification and ship without the Photos scope, OR (2) go slow — Data access →
+      Add scopes → photospicker → submit sensitive-scope verification with justification + demo
+      video. Recommend (1) for the Aug 1 timeline.
 - [ ] **§1.7 deploy checklist** (PRODUCTION_PLAN): assets-only GitHub repo + scoped PAT,
       worker vars/secrets, `cd worker && npx wrangler deploy` (both workers),
       Cloudflare rate-limit rules (~5 req/min/IP) on both routes,
