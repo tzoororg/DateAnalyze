@@ -65,6 +65,8 @@ Creating the account **today** starts every clock (identity verification alone c
       decide legacy-data rendering (old enjoyment → hearts). Update smoke tests +
       `design/current.html` catalog.
 - [ ] Empty-state pass on all four tabs (a Play reviewer opens with zero data).
+      Includes **cold-start Suggest framing**: catalog-forward copy/UI for zero-history
+      users (competitor scan rec #3).
 - [ ] Run the full test suite **including `test/sync.mjs` against the emulators** —
       several steps (account deletion, Storage round-trip) are still marked unrun.
 
@@ -76,7 +78,9 @@ Creating the account **today** starts every clock (identity verification alone c
 - [ ] On-device wrapper checklist: Google sign-in (redirect path), FCM push
       (Android 13+ runtime permission), camera/gallery, Photos Picker (if scope kept).
 - [ ] Store listing: screenshots (use `design/capture.mjs`), feature graphic 1024×500,
-      short/full description, content rating questionnaire, paste
+      short/full description — **lead with "free, no ads, no subscription, works
+      offline, end-to-end encrypted"** (competitor scan rec #2: answers the field's
+      top review complaints), content rating questionnaire, paste
       [STORE_DATA_SAFETY.md](STORE_DATA_SAFETY.md) tables into the Data safety form.
 
 ### Thu Jul 30 — release
@@ -94,4 +98,7 @@ Review feedback, wrapper bugs, tester onboarding.
       access, then promote to production.
 - [ ] Re-enable Photos Picker scope if it was dropped for launch.
 - [ ] Ideas catalog upgrade path (remote `catalog.json`) — only if users ask.
-- [ ] Competitor scan follow-ups: see COMPETITOR_SCAN_2026.md (in progress).
+- [ ] Competitor scan follow-ups: see [COMPETITOR_SCAN_2026.md](COMPETITOR_SCAN_2026.md).
+      Product decision: **no daily hooks, streaks, or nudges** — the app stays a
+      genuinely useful tool, not an engagement treadmill. Widget = the one gap worth
+      closing (post-launch; needs a native path beyond plain Bubblewrap).
