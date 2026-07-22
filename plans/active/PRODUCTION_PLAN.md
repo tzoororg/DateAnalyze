@@ -129,6 +129,64 @@ but has production gaps:
 - [ ] **Google OAuth consent screen verification.** The project is almost certainly in
       "Testing" mode: 100-user cap and 7-day refresh-token expiry (users get silently signed
       out weekly). Must submit for verification before general users.
+
+  **Readiness findings (2026-07-22, from a repo audit).** The claude-in-chrome MCP was not
+  available in this session, so the live console state (Testing vs Production) was NOT read —
+  the human must confirm it on the Audience page below. Everything else is pinned from code:
+
+  - **Scopes the production app actually requests:**
+    1. Firebase Google sign-in (`GoogleAuthProvider` default, `sync.js`): `openid`,
+       `.../auth/userinfo.email`, `.../auth/userinfo.profile` — **non-sensitive** (basic).
+    2. Google Photos Picker (`js/gphotos.js`, wired live in `ui.js:583` "📸 Google Photos"):
+       `https://www.googleapis.com/auth/photospicker.mediaitems.readonly` — **SENSITIVE**.
+  - **Verification path = sensitive-scope verification, NOT restricted.** The Photos *Picker*
+    API scope is classified **sensitive** (Google created the Picker API precisely to keep
+    apps off the restricted `photoslibrary.*` path). So verification needs: consent-screen
+    branding + a **scope justification + a demo video** of the OAuth grant and how the picked
+    photos are used. **No third-party CASA security assessment** (that's restricted-only) and
+    **no annual re-audit**. Confirm the label in console: the Data-access page prints
+    "Sensitive"/"Restricted" next to each scope — if it unexpectedly says Restricted, the
+    timeline changes drastically (CASA, weeks-to-months). Fallback if verification drags: the
+    Photos Picker is optional and lazy-loaded — removing its scope leaves only basic sign-in
+    scopes, which need brand verification only (fast), and the app is fully functional
+    (device/gallery photo picker still works). Worth keeping in the back pocket as a
+    launch-unblocker.
+  - **Public policy URLs (project Pages site, repo `DateAnalyze` → served at `/DateAnalyze/`):**
+    - App home: `https://tzoororg.github.io/DateAnalyze/`
+    - Privacy policy: `https://tzoororg.github.io/DateAnalyze/privacy.html`
+    - Terms of service: `https://tzoororg.github.io/DateAnalyze/terms.html`
+    - (Verify these resolve on production/master — beta lives at `/DateAnalyze/beta/`.)
+  - **Authorized domain:** `tzoororg.github.io` (github.io is a public suffix, so this exact
+    host is the authorized domain). `us-date-tracker-c988b.firebaseapp.com` is auto-added by
+    Firebase Auth. Photos-Picker OAuth client (`769027499995-1g3ae4pshhs55aohcv2uh8dkbiocd311`)
+    needs Authorized JS origins `https://tzoororg.github.io` + `http://localhost:8000` (GIS
+    token client → origins only, no redirect URIs).
+  - **Consent-screen form values to paste:** App name `Us` (or "Us — Date Tracker"); user
+    support email `tzoorp@gmail.com`; developer contact `tzoorp@gmail.com`; app domain =
+    the three URLs above; user type **External**.
+
+  **Exact console pages (project `us-date-tracker-c988b`):**
+  - Branding / consent screen: `https://console.cloud.google.com/auth/branding?project=us-date-tracker-c988b`
+  - Audience (Testing↔Production, publishing status, test users): `https://console.cloud.google.com/auth/audience?project=us-date-tracker-c988b`
+  - Data access (scopes + Sensitive/Restricted labels): `https://console.cloud.google.com/auth/scopes?project=us-date-tracker-c988b`
+  - Verification center (submit + track): `https://console.cloud.google.com/auth/verification?project=us-date-tracker-c988b`
+  - Credentials (client IDs, JS origins): `https://console.cloud.google.com/apis/credentials?project=us-date-tracker-c988b`
+
+  **Remaining human steps (only the human can click these):**
+  1. Open the **Audience** page; confirm current status is "Testing" and User type "External".
+  2. On **Branding**, fill/confirm app name, support email, the privacy + terms + home URLs,
+     authorized domain `tzoororg.github.io`, developer contact email.
+  3. On **Data access**, confirm the two scope sets above are present and note the
+     Sensitive/Restricted label on the photospicker scope.
+  4. On **Audience**, click **Publish app** (Testing → In production). For an app with a
+     sensitive scope this starts the verification flow rather than going live instantly.
+  5. In the **Verification center**, complete the verification submission: scope
+     justification + record & upload the **demo video** (screen recording: the Google
+     consent screen granting the Photos Picker scope, then the in-app "📸 Google Photos" pick
+     landing photos into an entry). Then **Submit for verification**.
+  6. Do NOT expect instant approval — sensitive-scope review is typically days to a couple of
+     weeks. Until approved, keep the existing test users on the Testing allowlist so the one
+     real couple isn't affected.
 - `signInWithPopup` breaks in many webviews/wrapped contexts (TWA is OK, iOS wrappers
       often not). Add `signInWithRedirect` fallback; test inside the actual store wrappers.
   - [x] **Code fallback shipped** (2026-07-22). `sync.signIn()` tries `signInWithPopup`, and on
