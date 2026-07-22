@@ -159,7 +159,7 @@ but has production gaps:
       Suppressed under `?shot=` except `?shot=intro` (capture/smoke). Design ran through
       design-duel (3 rounds → SHIP); mock design/past/first-run.html, catalog design/current.html.
       Smoke-tested (shows + dismisses), verified in the real app. (2026-07-20)
-- [ ] `navigator.storage.persist()` on first run (see 3.1).
+- [x] `navigator.storage.persist()` on first run — done in §3.1 (`maybeRequestPersist()` in ui.js, once per install at first write).
 
 ## 3. Storage, hosting, and the admin question
 
