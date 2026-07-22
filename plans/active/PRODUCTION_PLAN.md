@@ -331,9 +331,29 @@ Design (all WebCrypto, no dependencies, fits the no-build-step constraint):
         Privacy questionnaire; re-read §4 of that doc first (Location declared
         NOT collected; E2EE content still counts as collected; Play "Shared" =
         No).
-- [ ] Packaging: Android = TWA via Bubblewrap + `assetlinks.json` on the Pages domain;
+- Packaging: Android = TWA via Bubblewrap + `assetlinks.json` on the Pages domain;
       iOS = per ../done/IOS_PLAN.md. Verify Google sign-in, FCM push, camera/photo access, and the
       Google Photos picker inside each wrapper — webview behavior differs from Chrome.
+  - [x] **Scaffolding + docs done (2026-07-22).** `twa-manifest.json` (Bubblewrap config,
+        pre-filled with real values), `icons/icon-512.png` (rendered launcher icon),
+        `.well-known/assetlinks.json` (placeholders for package + SHA-256) with
+        `.well-known/README.md`, and full step-by-step guides: **Android** in
+        `plans/active/ANDROID_PACKAGING.md`, **iOS** in `plans/active/IOS_PACKAGING.md`.
+        Each guide carries the wrapper-verification checklist (sign-in redirect / FCM push /
+        camera / Photos picker) and the webview-vs-Chrome pitfalls.
+  - [ ] **⚠️ Subpath blocker (human):** DAL must be served at
+        `https://tzoororg.github.io/.well-known/assetlinks.json` (host root), but this
+        project Pages site only owns `/DateAnalyze/`. Fix via a `tzoororg.github.io`
+        User Pages repo (recommended) or a custom domain — see `.well-known/README.md`.
+  - [ ] **Android (human):** install Bubblewrap, `bubblewrap init`/`build`, create + back up
+        the signing keystore, paste its SHA-256 into `assetlinks.json`, test the AAB on a
+        device, upload to Play. Steps in `plans/active/ANDROID_PACKAGING.md`.
+  - [ ] **iOS (human):** verify the home-screen PWA on a real iPhone (only open gate; no Mac
+        needed) — optional App Store wrapper (PWABuilder) needs Mac + Xcode + Apple Developer
+        account. Steps in `plans/active/IOS_PACKAGING.md`.
+  - [ ] **Wrapper checklist (human, on-device):** Google sign-in via redirect, FCM push
+        (Android 13+ runtime permission), camera/gallery, Google Photos Picker — in each
+        built wrapper.
 - [x] Support contact + terms of service page (short). — terms.html (2026-07-20)
 - [ ] Test push permission prompts in wrappers (Android 13+ runtime notification permission).
 
