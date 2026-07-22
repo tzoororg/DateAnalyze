@@ -129,8 +129,22 @@ but has production gaps:
 - [ ] **Google OAuth consent screen verification.** The project is almost certainly in
       "Testing" mode: 100-user cap and 7-day refresh-token expiry (users get silently signed
       out weekly). Must submit for verification before general users.
-- [ ] `signInWithPopup` breaks in many webviews/wrapped contexts (TWA is OK, iOS wrappers
+- `signInWithPopup` breaks in many webviews/wrapped contexts (TWA is OK, iOS wrappers
       often not). Add `signInWithRedirect` fallback; test inside the actual store wrappers.
+  - [x] **Code fallback shipped** (2026-07-22). `sync.signIn()` tries `signInWithPopup`, and on
+        any popup failure *other than* user cancellation (`auth/popup-closed-by-user` /
+        `auth/cancelled-popup-request`, which re-throw so a closed popup isn't a jarring redirect)
+        falls back to `signInWithRedirect`. A `pendingRedirectSignIn` localStorage flag is set
+        before navigating away; on next load `app.js` → `store.completeRedirectSignIn()` (no-op
+        unless the flag is set, so local-only users never load the cloud SDK) calls
+        `sync.completeRedirectSignIn()` → `getRedirectResult()` to finish auth. No cross-redirect
+        intent plumbing needed: sign-in is a discrete step, and create/join are separate taps the
+        user makes *after* landing back signed in. The `?emu=1` anonymous dev path is untouched
+        (it returns before the popup branch). Tests: logic + smoke pass; `test/sync.mjs` doesn't
+        cover this path (emulator uses anonymous sign-in, bypassing the popup/redirect branch).
+  - [ ] **Test inside the actual store wrappers** — depends on the packaging task (§4); can't be
+        exercised until the TWA / iOS wrappers are built. The `getRedirectResult` return-URL
+        behaviour in particular must be verified in each wrapper.
 - [x] Invite-code recovery: ⋯ menu → "🔁 New pairing code" mints a fresh 7-day code
       (`sync.regenerateInviteCode()` — same E2EE key, new server code, old invite
       best-effort retired) and copies it; the sync status line now shows remaining

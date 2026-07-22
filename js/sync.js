@@ -108,9 +108,15 @@ export async function signIn() {
     const { user } = await s.signInWithPopup(s.auth, provider);
     return { uid: user.uid, email: user.email, displayName: user.displayName };
   } catch (err) {
-    // Installed iOS PWAs can't reliably use popups (the popup opens detached and
-    // its result never returns). Fall back to a full-page redirect; the page
-    // navigates away here and completeRedirectSignIn() finishes it on next load.
+    // The user closing/cancelling the popup is intent, not an unsupported popup —
+    // surface it, don't bounce them through a full-page redirect.
+    if (err?.code === "auth/popup-closed-by-user" || err?.code === "auth/cancelled-popup-request") {
+      throw err;
+    }
+    // Installed iOS PWAs and many store webviews can't use popups (the popup opens
+    // detached and its result never returns, or is blocked outright). Fall back to
+    // a full-page redirect; the page navigates away here and completeRedirectSignIn()
+    // finishes it on next load.
     localStorage.setItem("pendingRedirectSignIn", "1");
     await s.signInWithRedirect(s.auth, provider);
     return new Promise(() => {}); // never resolves — the page is navigating away
