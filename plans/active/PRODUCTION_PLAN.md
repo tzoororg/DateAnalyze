@@ -355,7 +355,9 @@ Design (all WebCrypto, no dependencies, fits the no-build-step constraint):
         (Android 13+ runtime permission), camera/gallery, Google Photos Picker — in each
         built wrapper.
 - [x] Support contact + terms of service page (short). — terms.html (2026-07-20)
-- [ ] Test push permission prompts in wrappers (Android 13+ runtime notification permission).
+- [ ] Test push permission prompts in wrappers (Android 13+ runtime notification permission)
+      — folded into the on-device "Wrapper checklist (human)" above; can't be done without a
+      built wrapper.
 
 ## 5. Operations
 
