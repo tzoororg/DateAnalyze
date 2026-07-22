@@ -59,30 +59,6 @@ export function trendChart(points) {
     ${dots}${labels}</svg>`;
 }
 
-// Scatter of enjoyment (y, 0..5) vs cost (x, log-ish).
-export function scatterChart(pts) {
-  if (!pts.length) return emptySvg("Add cost to dates to see this");
-  const W = 320, H = 180, padL = 32, padR = 14, padT = 12, padB = 28;
-  const innerW = W - padL - padR, innerH = H - padT - padB;
-  const maxCost = Math.max(10, ...pts.map(p => p.x));
-  const xAt = c => padL + (Math.log10(c + 1) / Math.log10(maxCost + 1)) * innerW;
-  const yAt = v => padT + innerH - (v / 5) * innerH;
-  let grid = "";
-  for (let v = 1; v <= 5; v++) {
-    const y = yAt(v);
-    grid += `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="var(--line)" opacity=".5"/>
-      <text x="${padL - 6}" y="${y + 3}" text-anchor="end" font-size="9" fill="var(--muted)">${v}</text>`;
-  }
-  [0, maxCost / 2, maxCost].forEach(c => {
-    grid += `<text x="${xAt(c)}" y="${H - 8}" text-anchor="middle" font-size="9" fill="var(--muted)">$${Math.round(c)}</text>`;
-  });
-  const dots = pts.map(p =>
-    `<circle cx="${xAt(p.x).toFixed(1)}" cy="${yAt(p.y).toFixed(1)}" r="5" fill="url(#g1)" opacity=".85"><title>${esc(p.label)}</title></circle>`
-  ).join("");
-  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img">
-    ${defsGrad()}${grid}${dots}</svg>`;
-}
-
 // A small two-segment donut for the explore/exploit balance.
 export function balanceDonut(newCount, repeatCount) {
   const total = Math.max(1, newCount + repeatCount);
@@ -134,7 +110,8 @@ export function wrappedCard(stats) {
 
   const cols = [];
   if (stats.favCategory) cols.push({ emoji: stats.favCategory.emoji, label: "FAVORITE", value: stats.favCategory.label, sub: `${stats.favCategory.count} date${stats.favCategory.count === 1 ? "" : "s"}` });
-  if (stats.mostRepeated) cols.push({ emoji: stats.mostRepeated.emoji, label: "MOST REPEATED", value: stats.mostRepeated.title, sub: `★ ${stats.mostRepeated.avgEnjoyment.toFixed(1)}` });
+  if (stats.mostRepeated) cols.push({ emoji: stats.mostRepeated.emoji, label: "MOST REPEATED", value: stats.mostRepeated.title, sub: `♥ ${stats.mostRepeated.avgEnjoyment.toFixed(1)}` });
+  if (stats.usualTier) cols.push({ emoji: "💸", label: "OUR USUAL", value: `${stats.usualTier.label} dates`, sub: `${stats.usualTier.pct}% of them` });
   if (stats.bestMonth) cols.push({ emoji: "📅", label: "BEST MONTH", value: stats.bestMonth.label, sub: `${stats.bestMonth.count} date${stats.bestMonth.count === 1 ? "" : "s"}` });
   const colW = 900 / Math.max(1, cols.length);
   const colsSvg = cols.map((c, i) => {
@@ -152,7 +129,7 @@ export function wrappedCard(stats) {
     <text x="${W / 2}" y="170" text-anchor="middle" font-size="30" font-weight="700" letter-spacing="5" fill="#ff9fba">${esc(kicker)}</text>
     <text x="${W / 2}" y="340" text-anchor="middle" font-size="220" font-weight="800" fill="#fff">${stats.count}</text>
     <text x="${W / 2}" y="398" text-anchor="middle" font-size="42" font-weight="600" fill="#f5e6ee" opacity="0.85">dates together</text>
-    <text x="${W / 2}" y="466" text-anchor="middle" font-size="38" fill="#f5e6ee" opacity="0.9"><tspan font-weight="800" fill="#e8c97a">★ ${stats.avgEnjoyment.toFixed(1)}</tspan> average · ${esc(stats.totalCostFmt)} shared</text>
+    <text x="${W / 2}" y="466" text-anchor="middle" font-size="38" fill="#f5e6ee" opacity="0.9"><tspan font-weight="800" fill="#e8c97a">♥ ${stats.avgEnjoyment.toFixed(1)}</tspan> average</text>
     ${colsSvg}
     ${vibeLine ? `<line x1="90" y1="900" x2="990" y2="900" stroke="rgba(255,255,255,.12)" stroke-width="2"/>
     <text x="${W / 2}" y="950" text-anchor="middle" font-size="30" fill="#e9d5e0">${esc(vibeLine)}</text>` : ""}

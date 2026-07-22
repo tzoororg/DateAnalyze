@@ -3,7 +3,7 @@
 import * as db from "./store.js";
 import {
   CATEGORIES, MOOD_OPTIONS, COST_TIERS, METER, catLabel, catEmoji,
-  blankEntry, fmtMoney, fmtDate, entryTimeMs, tierLabel, tierForCost, repeatForEnjoyment,
+  blankEntry, fmtDate, entryTimeMs, tierLabel, tierForCost, repeatForEnjoyment,
   normTitle, todayISO, fmtDuration,
 } from "./model.js";
 import * as A from "./analytics.js";
@@ -1329,11 +1329,12 @@ function wrappedStats(period) {
   const bestMonth = A.monthlyTrend(list).reduce((a, b) => (b.count > a.count ? b : a));
   const repeats = A.repeatWorthy(list, list.length);
   const mostRepeated = repeats.length ? repeats.reduce((a, b) => (b.count > a.count ? b : a)) : null;
+  const td = A.tierDistribution(list);
   return {
     periodLabel,
     count: s.count,
     avgEnjoyment: s.avgEnjoyment,
-    totalCostFmt: fmtMoney(s.totalCost),
+    usualTier: td ? { label: tierLabel(td.usual), pct: td.pct } : null,
     favCategory: cats[0] ? { emoji: cats[0].emoji, label: cats[0].label, count: cats[0].count } : null,
     mostRepeated: mostRepeated && mostRepeated.count > 1
       ? { emoji: catEmoji(mostRepeated.category), title: mostRepeated.title, avgEnjoyment: mostRepeated.avgEnjoyment }
@@ -1398,6 +1399,7 @@ function renderInsights() {
   const moods = A.byMood(d);
   const trend = A.monthlyTrend(d);
   const vfm = A.valueForMoney(d, 5);
+  const td = A.tierDistribution(d);
   const rep = A.repeatWorthy(d, 5);
   const exp = A.explorationStats(d);
 
@@ -1430,8 +1432,8 @@ function renderInsights() {
 
     <div class="stat-grid">
       <div class="stat"><div class="num">${s.count}</div><div class="lbl">Dates logged</div></div>
-      <div class="stat"><div class="num">${s.avgEnjoyment.toFixed(1)}★</div><div class="lbl">Avg enjoyment</div></div>
-      <div class="stat"><div class="num">${fmtMoney(s.totalCost)}</div><div class="lbl">Total spent</div></div>
+      <div class="stat"><div class="num">${s.avgEnjoyment.toFixed(1)}♥</div><div class="lbl">Avg enjoyment</div></div>
+      <div class="stat"><div class="num">${td ? tierLabel(td.usual) : "—"}</div><div class="lbl">Typical date</div></div>
       <div class="stat"><div class="num">${s.distinctCategories}/${s.totalCategories}</div><div class="lbl">Categories tried</div></div>
     </div>
 
@@ -1443,16 +1445,17 @@ function renderInsights() {
     <div class="card chart-wrap">${C.trendChart(trend)}
       <div class="legend"><span style="color:var(--accent)">avg enjoyment</span><span style="color:var(--muted)">how many dates</span></div></div>
 
-    <h3 class="section-title">Enjoyment vs cost</h3>
-    <div class="card chart-wrap">${C.scatterChart(A.enjoymentVsCost(d))}
-      <p class="muted small" style="margin:8px 2px 0">Top-left = cheap & wonderful.</p></div>
-
     <h3 class="section-title">Best value for money</h3>
-    <div class="card tight">${vfm.length ? vfm.map(d => `
+    <div class="card tight">${vfm.length ? vfm.map(d => {
+      const tier = d.costTier || tierForCost(d.cost);
+      const pill = tier ? `<span class="tier-pill${tier === "free" ? " free" : ""}">${tierLabel(tier)}</span> · ` : "";
+      const hearts = `<span class="hearts">${"♥".repeat(d.enjoyment)}<span class="off">${"♡".repeat(5 - d.enjoyment)}</span></span>`;
+      return `
       <div class="entry" style="padding:6px 0">
         <div class="thumb">${catEmoji(d.category)}</div>
-        <div class="meta"><h4>${escHtml(d.title)}</h4><div class="sub">${fmtMoney(d.cost)} · ${"★".repeat(d.enjoyment)}</div></div>
-      </div>`).join("") : `<p class="muted small">Add cost to your dates to rank value.</p>`}</div>
+        <div class="meta"><h4>${escHtml(d.title)}</h4><div class="sub">${pill}${hearts}</div></div>
+      </div>`;
+    }).join("") : `<p class="muted small">Add cost to your dates to rank value.</p>`}</div>
 
     <h3 class="section-title">Most repeat-worthy</h3>
     <div class="card tight">${rep.map(r => `

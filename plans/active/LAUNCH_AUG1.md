@@ -60,14 +60,21 @@ Creating the account **today** starts every clock (identity verification alone c
 
 ### Fri–Sat Jul 24–25 — code sprint 1
 
-- [ ] **Stale-cost purge**: wrapped card total-spent → tier stat; Insights "Total spent"
+- [x] **Stale-cost purge**: wrapped card total-spent → tier stat; Insights "Total spent"
       tile → tier distribution; drop the "Enjoyment vs cost" $-axis scatter; fix
       best-value display (`fmtMoney` on representative tier values); audit remaining
       `fmtMoney` call sites; verify the existing currency setting ($ display) works.
       Mock only for the replaced Insights blocks.
-- [ ] **Unified date-card mock**: one HTML file in `design/`, 3 size/detail variants
+      DONE 2026-07-22 (mock `design/sprint1-cost-card.html`, 3 taste-critic rounds, user-approved).
+      New `analytics.tierDistribution()`; `fmtMoney` now UI-dead (model.js only). Currency-setting
+      finding: there IS no shipped currency display setting — `CURRENCIES`/`toILS`/`refreshRates`
+      in model.js are dead code from before the tier redesign; nothing to verify.
+- [x] **Unified date-card mock**: one HTML file in `design/`, 3 size/detail variants
       keyed off the home sticker card (hearts + costBadge + category chip), covering
       home / history list / wishlist / suggest / memory card → user approval.
+      DONE 2026-07-22: `design/sprint1-cost-card.html` frame 3 (L/M/S), approved. Sprint-2 notes:
+      hearts never ★, effort renders as ⚡ not dots, chevron on all tappable rows, wishlist
+      Remove → corner ✕ + compact "Log →" row pill, memory header one line.
 
 ### Sun–Mon Jul 26–27 — code sprint 2
 

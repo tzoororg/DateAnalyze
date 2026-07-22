@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>Sprint 1 — cost-tier purge + unified date card</title>
+<style>
+:root {
+  --bg: #2a1b26; --bg-soft: #33222e; --card: #3b2a37; --card-2: #4a3444;
+  --line: #54394c; --text: #f5e6ee; --muted: #c99bb0;
+  --accent: #ff7fa2; --accent-2: #ff9fba;
+  --good: #7ed3ab; --warn: #eec97a; --bad: #f08a8a;
+  --mint-bg: #2e4a3e; --mint-fg: #8fd6b5; --butter-bg: #4a3d22; --butter-fg: #eec97a;
+  --radius: 18px; --shadow: 0 6px 16px rgba(0,0,0,.35);
+  --cursive: "Segoe Script", "Comic Sans MS", cursive;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 24px; background: #1a1017; color: var(--text);
+  font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  display: flex; gap: 28px; flex-wrap: wrap; align-items: flex-start;
+}
+.frame { width: 390px; flex: none; }
+.frame-label { font: 700 15px var(--cursive); color: var(--accent); margin: 0 0 10px 4px; }
+.frame-note { font-size: 12px; color: #9a7f8e; margin: 4px 4px 12px; line-height: 1.5; }
+.phone { background: radial-gradient(120% 60% at 50% 0%, var(--bg-soft), var(--bg)); border-radius: 28px; padding: 16px; border: 1px solid #000; }
+.section-title { font-size: 12px; text-transform: uppercase; letter-spacing: .14em; font-weight: 800; color: var(--muted); margin: 18px 4px 10px; }
+.card { background: var(--card); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); margin-bottom: 14px; position: relative; }
+.card.tight { padding: 12px 14px; }
+.muted { color: var(--muted); } .small { font-size: 12px; }
+
+/* ---------- Insights: stat tiles ---------- */
+.stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.stat { background: var(--card); border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow); text-align: center; }
+.stat .num { font-size: 24px; font-weight: 800; color: var(--accent); }
+.stat .lbl { color: var(--muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+/* tier distribution bar inside the replacement tile — thin, fits the standard tile footprint */
+.tier-bar { display: flex; height: 5px; border-radius: 99px; overflow: hidden; margin: 6px 10px 5px; }
+.tier-bar i { height: 100%; }
+.tb-free { background: var(--good); } .tb-low { background: var(--warn); }
+.tb-mid { background: var(--accent); } .tb-high { background: var(--bad); }
+
+/* ---------- Wrapped card excerpt ---------- */
+.wrap { border-radius: 24px; padding: 20px 16px; background: linear-gradient(160deg, #4a2138, #2a1b26 55%, #1e1420); box-shadow: var(--shadow); }
+.wrap .kicker { text-align: center; font-size: 13px; font-weight: 700; letter-spacing: 3px; color: #ff9fba; margin-bottom: 12px; }
+.wrap .hero { text-align: center; margin: 8px 0 16px; }
+.wrap .hero .big { font-size: 44px; font-weight: 800; color: #fff; }
+.wrap .hero .sub { font-size: 13px; color: #c99bb0; }
+.wrap .cols { display: flex; text-align: center; }
+.wrap .col { flex: 1; }
+.wrap .col .emo { font-size: 26px; }
+.wrap .col .lbl { font-size: 9px; font-weight: 800; letter-spacing: 1px; color: #e79fc0; margin-top: 4px; }
+.wrap .col .val { font-size: 13px; font-weight: 800; color: #fff; }
+.wrap .col .s { font-size: 10px; color: #c99bb0; }
+
+/* ---------- entry rows (history/wishlist/best-value) ---------- */
+.entry { display: flex; gap: 12px; align-items: center; }
+.thumb { width: 44px; height: 44px; border-radius: 12px; background: var(--card-2); display: grid; place-items: center; font-size: 20px; flex: none; overflow: hidden; }
+.thumb.g1 { background: linear-gradient(130deg, #7a4a63, #4a3444); }
+.thumb.g2 { background: linear-gradient(130deg, #46618a, #2e3a54); }
+.meta { flex: 1; min-width: 0; }
+.meta h4 { margin: 0; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.meta .sub { color: var(--muted); font-size: 12.5px; }
+.hearts { color: var(--accent); font-weight: 800; letter-spacing: 1px; white-space: nowrap; }
+.hearts .off { color: var(--muted); opacity: .7; }
+.chev { color: var(--muted); font-size: 18px; flex: none; }
+/* cost tier pill used across all card sizes */
+.tier-pill { display: inline-block; background: var(--butter-bg); color: var(--butter-fg); font-size: 11px; font-weight: 800; padding: 1px 7px; border-radius: 8px; vertical-align: 1px; letter-spacing: .5px; }
+.tier-pill.free { background: var(--mint-bg); color: var(--mint-fg); }
+
+/* ---------- unified card L: home sticker card ---------- */
+.home-card { padding: 0; overflow: hidden; }
+/* faux photo (mock only — the shipped card keeps the real photo mosaic full-bleed) */
+.home-photos { height: 190px; background:
+  radial-gradient(60% 80% at 70% 20%, rgba(255,200,150,.55), transparent 70%),
+  radial-gradient(50% 60% at 20% 80%, rgba(70,97,138,.9), transparent 75%),
+  linear-gradient(160deg, #b06a5a 0%, #7a4a63 45%, #2e3a54 100%); }
+.home-card::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 74px; background: linear-gradient(180deg, transparent, rgba(15,6,12,.72)); }
+.stk { position: absolute; z-index: 2; }
+.stk.tape { top: 10px; left: 12px; transform: rotate(-2deg); background: rgba(253,246,238,.92); padding: 4px 12px; box-shadow: 0 3px 8px rgba(0,0,0,.3); font: 400 12.5px var(--cursive); color: #5a4636; }
+.stk.cat { top: 10px; right: 12px; transform: rotate(6deg); background: #fff; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-size: 20px; border: 2.5px solid var(--accent); box-shadow: 0 4px 10px rgba(0,0,0,.35); }
+.stk.hearts-stk { bottom: 12px; right: 12px; transform: rotate(-4deg); background: var(--accent); color: #fff; padding: 5px 11px; font-size: 12.5px; font-weight: 800; border-radius: 999px; box-shadow: 0 4px 10px rgba(0,0,0,.35); white-space: nowrap; letter-spacing: 1px; }
+.stk.caption { left: 14px; right: 96px; bottom: 10px; font: 600 18px var(--cursive); color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,.7); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stk.caption .sub { display: block; font: 400 11.5px -apple-system, "Segoe UI", sans-serif; color: rgba(255,255,255,.78); margin-top: 1px; }
+
+/* ---------- unified card M: row card ---------- */
+.row-hearts { font-size: 12.5px; }
+.btn-row { display: flex; gap: 10px; margin-top: 12px; }
+.btn { flex: 1; padding: 11px; font-size: 14px; border-radius: 13px; border: none; font-weight: 800; color: #fff; background: var(--accent); cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--muted); border: 1px solid var(--line); }
+.row-cta { flex: none; background: var(--accent); color: #fff; border: none; border-radius: 999px; font-size: 12.5px; font-weight: 800; padding: 8px 14px; cursor: pointer; margin-right: 14px; }
+.card-x { position: absolute; top: 8px; right: 10px; background: none; border: none; color: var(--muted); font-size: 14px; cursor: pointer; padding: 4px; }
+
+/* ---------- unified card S: memory mini ---------- */
+.memory-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.memory-title { font: 700 15px var(--cursive); color: var(--accent); }
+.memory-ago { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin: 6px 0 4px; }
+.mini { display: flex; gap: 10px; align-items: center; }
+.mini .thumb { width: 34px; height: 34px; border-radius: 10px; font-size: 16px; }
+.mini h4 { font-size: 14px; }
+.strike { text-decoration: line-through; opacity: .55; }
+</style>
+</head>
+<body>
+
+<!-- ============ FRAME 1: Insights cost purge ============ -->
+<div class="frame">
+  <p class="frame-label">Insights — cost-tier purge</p>
+  <p class="frame-note">"Total spent ₪" tile → "Typical date" tier tile with distribution bar. Best-value rows show the tier pill instead of ₪. The "Enjoyment vs cost" scatter section is removed entirely (nothing replaces it).</p>
+  <div class="phone">
+    <div class="stat-grid">
+      <div class="stat"><div class="num">47</div><div class="lbl">Dates logged</div></div>
+      <div class="stat"><div class="num">4.2♥</div><div class="lbl">Avg enjoyment</div></div>
+      <div class="stat">
+        <div class="num">$$</div>
+        <div class="lbl">Typical date</div>
+      </div>
+      <div class="stat"><div class="num">8/11</div><div class="lbl">Categories tried</div></div>
+    </div>
+
+    <h3 class="section-title">Best value for money</h3>
+    <div class="card tight">
+      <div class="entry" style="padding:6px 0">
+        <div class="thumb">🌅</div>
+        <div class="meta"><h4>Sunset picnic</h4><div class="sub"><span class="tier-pill free">Free</span> · <span class="hearts">♥♥♥♥♥</span></div></div>
+        <span class="chev">›</span>
+      </div>
+      <div class="entry" style="padding:6px 0">
+        <div class="thumb">🍜</div>
+        <div class="meta"><h4>Ramen night</h4><div class="sub"><span class="tier-pill">$</span> · <span class="hearts">♥♥♥♥<span class="off">♡</span></span></div></div>
+        <span class="chev">›</span>
+      </div>
+      <div class="entry" style="padding:6px 0">
+        <div class="thumb">🎳</div>
+        <div class="meta"><h4>Bowling</h4><div class="sub"><span class="tier-pill">$$</span> · <span class="hearts">♥♥♥♥<span class="off">♡</span></span></div></div>
+        <span class="chev">›</span>
+      </div>
+    </div>
+
+    <h3 class="section-title" class="strike">Enjoyment vs cost</h3>
+    <div class="card" style="text-align:center;color:var(--muted);font-size:13px;padding:22px">
+      <span class="strike">scatter chart</span><br/><span class="small">— section deleted —</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============ FRAME 2: Wrapped card stat swap ============ -->
+<div class="frame">
+  <p class="frame-label">Wrapped — money line swap</p>
+  <p class="frame-note">The "₪4,820 total spent" line becomes a tier stat: "OUR USUAL $$ · 38% of dates". Same hero-column treatment as Favorite / Best month.</p>
+  <div class="phone">
+    <div class="wrap">
+      <div class="kicker">US ♥ WRAPPED · 2026 SO FAR</div>
+      <div class="hero">
+        <div class="big">47</div>
+        <div class="sub">dates together · avg 4.2♥</div>
+      </div>
+      <div class="cols">
+        <div class="col"><div class="emo">🍜</div><div class="lbl">FAVORITE</div><div class="val">Food & drink</div><div class="s">14 dates</div></div>
+        <div class="col"><div class="emo">💸</div><div class="lbl">OUR USUAL</div><div class="val">$$ dates</div><div class="s">38% of them</div></div>
+        <div class="col"><div class="emo">📅</div><div class="lbl">BEST MONTH</div><div class="val">June</div><div class="s">9 dates</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ FRAME 3: unified date card — 3 sizes ============ -->
+<div class="frame">
+  <p class="frame-label">Unified date card — L / M / S</p>
+  <p class="frame-note">One card family, keyed off the home sticker card: hearts (never ★), tier pill, category chip. L = home/recent. M = history list, wishlist, suggest (with action row). S = memory card + compact inline uses.</p>
+  <div class="phone">
+    <h3 class="section-title">L — home / recent memories</h3>
+    <div class="card home-card">
+      <div class="home-photos"></div>
+      <span class="stk tape">Jul 18, 2026</span>
+      <span class="stk cat">🍜</span>
+      <span class="stk hearts-stk">♥♥♥♥♡</span>
+      <span class="stk caption">Ramen night<span class="sub">Food &amp; drink · <span class="tier-pill">$</span></span></span>
+    </div>
+
+    <h3 class="section-title">M — history / wishlist / suggest</h3>
+    <div class="card tight">
+      <div class="entry">
+        <div class="thumb g1">🍜</div>
+        <div class="meta">
+          <h4>Ramen night</h4>
+          <div class="sub">Jul 18 · Food &amp; drink · <span class="tier-pill">$</span></div>
+        </div>
+        <div class="hearts row-hearts">♥♥♥♥<span class="off">♡</span></div>
+        <span class="chev">›</span>
+      </div>
+    </div>
+    <div class="card tight" style="position:relative">
+      <button class="card-x" title="Remove">✕</button>
+      <div class="entry">
+        <div class="thumb g2">🛶</div>
+        <div class="meta">
+          <h4>Kayak the Yarkon</h4>
+          <div class="sub" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Outdoors · <span class="tier-pill">$$</span> · ⚡⚡⚡</div>
+        </div>
+        <button class="row-cta">Log →</button>
+      </div>
+    </div>
+
+    <h3 class="section-title">S — memory card</h3>
+    <div class="card">
+      <div class="memory-header"><span class="memory-title">On this day · 2 years ago ✨</span><span class="muted">✕</span></div>
+      <div class="mini">
+        <div class="thumb">🌅</div>
+        <div class="meta"><h4>Sunset picnic</h4><div class="sub">Jul 22, 2024 · <span class="hearts">♥♥♥♥♥</span></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+<!-- duel round 1:
+  1. tier tile taller than siblings -> ACCEPTED: thin 5px bar inside standard tile footprint (num / bar / lbl), legend dropped.
+  2. best-value rows lack tap affordance -> ACCEPTED: chevron added (rows will open the date detail).
+  3. Remove button too heavy on wishlist card -> ACCEPTED: corner ✕, primary CTA full width.
+  4. memory card 3 stacked header lines -> ACCEPTED: collapsed to "On this day · 2 years ago ✨".
+  5. unify heart treatment across L/M/S -> REFUSED for the L pill (it IS the shipped home-sticker identity the family is keyed off); ACCEPTED the contrast fix: unfilled hearts now use --muted, not --line.
+
+duel round 3:
+  1. chevron on best-value rows but not history M row -> ACCEPTED: chevron on all tappable M rows.
+  2. effort dots anonymous next to hearts -> ACCEPTED: effort renders as ⚡ bolts.
+  3. tier distribution bar colors map to nothing -> ACCEPTED (drop option): bar removed, "$$" carries the stat.
+  4. Wrapped OUR USUAL pill weak vs siblings -> ACCEPTED: plain bold "$$ dates" like sibling hero values (supersedes round-2 pill unification for this one spot).
+  5. collapse memory S header into the row -> REFUSED: "On this day" header is the feature's identity and its dismiss target; already collapsed 3 lines -> 2 in round 1.
+
+duel round 2:
+  1. wishlist card double height vs history row -> ACCEPTED: full-width button replaced by compact trailing "Log →" pill in the row + corner ✕.
+  2. tier pill not one component -> MOSTLY ACCEPTED: one pill (butter; mint for Free) reused in rows, cards, and now the Wrapped hero value. REFUSED for the "Typical date" stat tile — stat tiles render big accent numbers by shipped convention; making one a pill would break the tile set.
+  3. stars vs hearts split-brain -> ACCEPTED: aggregates now "4.2♥" (stat tile + Wrapped sub).
+  4. L card must show photo-hero state -> ACCEPTED in spirit: faux-photo gradient standing in for the real full-bleed mosaic (mock is standalone, no bundled photos); shipped card keeps the existing mosaic.
+  5. "mostly $$" copy dishonest at 38% -> ACCEPTED: label "OUR USUAL", value = tier pill, sub "38% of dates".
+-->
+</html>

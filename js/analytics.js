@@ -1,6 +1,6 @@
 // Aggregations over the date dataset. Pure functions -> easy to test.
 
-import { CATEGORIES, catLabel, catEmoji, normTitle, entryTimeMs, REPEAT_OPTIONS } from "./model.js";
+import { CATEGORIES, catLabel, catEmoji, normTitle, entryTimeMs, REPEAT_OPTIONS, COST_TIERS, tierForCost } from "./model.js";
 
 const repeatWeight = k => (REPEAT_OPTIONS.find(o => o.key === k)?.weight ?? 0.5);
 
@@ -68,11 +68,19 @@ export function valueForMoney(dates, topN = 5) {
     .slice(0, topN);
 }
 
-// Scatter points for enjoyment vs cost.
-export function enjoymentVsCost(dates) {
-  return dates
-    .filter(d => d.cost != null && !isNaN(d.cost))
-    .map(d => ({ x: Number(d.cost), y: d.enjoyment, label: d.title, category: d.category }));
+// Most common cost tier + its share of tiered entries. Null if nothing has a tier.
+export function tierDistribution(list) {
+  const counts = {};
+  let total = 0;
+  for (const e of list) {
+    const t = e.costTier || tierForCost(e.cost);
+    if (!t) continue;
+    counts[t] = (counts[t] || 0) + 1;
+    total++;
+  }
+  if (!total) return null;
+  const usual = COST_TIERS.map(t => t.key).reduce((a, b) => (counts[b] || 0) > (counts[a] || 0) ? b : a);
+  return { usual, pct: Math.round((counts[usual] / total) * 100), counts };
 }
 
 // Repeat-worthy activities: combine enjoyment + wouldRepeat, grouped by activity title.

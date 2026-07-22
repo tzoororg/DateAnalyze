@@ -10,7 +10,7 @@ import {
 } from "../js/model.js";
 import * as analytics from "../js/analytics.js";
 import { suggest } from "../js/suggest.js";
-import { barChart, trendChart, scatterChart, balanceDonut, wrappedCard } from "../js/charts.js";
+import { barChart, trendChart, balanceDonut, wrappedCard } from "../js/charts.js";
 import { SAMPLE_DATES } from "../js/sample.js";
 import { shouldReport } from "../js/crash-report.js";
 
@@ -141,7 +141,7 @@ test("every analytics function handles an empty array", () => {
   assert.deepEqual(analytics.byCategory([]), []);
   assert.deepEqual(analytics.monthlyTrend([]), []);
   assert.deepEqual(analytics.valueForMoney([]), []);
-  assert.deepEqual(analytics.enjoymentVsCost([]), []);
+  assert.equal(analytics.tierDistribution([]), null);
   assert.deepEqual(analytics.repeatWorthy([]), []);
   assert.deepEqual(analytics.byMood([]), []);
   assert.deepEqual(analytics.onThisDay([]), []);
@@ -197,24 +197,35 @@ test("chart functions return SVG strings for data and empty input", () => {
   for (const svg of [
     barChart(cat), barChart([]),
     trendChart(analytics.monthlyTrend(dates)), trendChart([]),
-    scatterChart(analytics.enjoymentVsCost(dates)), scatterChart([]),
     balanceDonut(3, 3),
   ]) {
     assert.ok(typeof svg === "string" && svg.trimStart().startsWith("<svg"), svg.slice(0, 60));
   }
 });
 
+test("tierDistribution finds the mode tier and its share, null when nothing is tiered", () => {
+  const list = [
+    { cost: 0 }, { cost: 0 }, { costTier: "low" }, { cost: 250 }, { cost: null },
+  ];
+  const td = analytics.tierDistribution(list);
+  assert.equal(td.usual, "free");
+  assert.equal(td.pct, 50); // 2 of 4 tiered entries
+  assert.equal(td.counts.free, 2);
+  assert.equal(analytics.tierDistribution([{ cost: null }, { cost: NaN }]), null);
+});
+
 test("wrappedCard renders stat strings for a fixture, and a graceful empty state", () => {
   const stats = {
-    periodLabel: "ALL TIME", count: 12, avgEnjoyment: 4.3, totalCostFmt: "₪2,046",
+    periodLabel: "ALL TIME", count: 12, avgEnjoyment: 4.3,
     favCategory: { emoji: "🌳", label: "Outdoors", count: 7 },
     mostRepeated: { emoji: "🍜", title: "Ramen night", avgEnjoyment: 4.8 },
+    usualTier: { label: "$$", pct: 38 },
     bestMonth: { label: "May '26", count: 5 },
     vibes: ["silly", "romantic", "chill"],
   };
   const svg = wrappedCard(stats);
   assert.ok(svg.startsWith("<svg"));
-  for (const needle of ["12", "4.3", "₪2,046", "Outdoors", "Ramen night", "May '26", "silly", "romantic", "chill"])
+  for (const needle of ["12", "4.3", "Outdoors", "Ramen night", "$$ dates", "38% of them", "May '26", "silly", "romantic", "chill"])
     assert.ok(svg.includes(needle), `missing "${needle}"`);
 
   const empty = wrappedCard({ periodLabel: "2026 SO FAR", count: 0 });
