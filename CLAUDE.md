@@ -20,16 +20,19 @@ There is no build or lint command.
 
 ### Physical phone testing
 
-A real Android phone (Xiaomi, `adb` device `5TYT6DDI4XLNJBFY`) is USB-connected for testing things the DevTools emulator can't prove — real touch/gesture behavior, the installed-PWA/service-worker lifecycle, camera/photo capture, push notifications, actual Chrome-on-Android rendering. Two ways in:
+A real Android phone (Xiaomi, `adb` device `5TYT6DDI4XLNJBFY`) is USB-connected for testing things the DevTools emulator can't prove — real touch/gesture behavior, the installed-PWA/service-worker lifecycle, camera/photo capture, push notifications, actual Chrome-on-Android rendering.
+
+**Prefer the real deployed beta app over a local copy.** Point the phone at the live beta at `https://tzoororg.github.io/DateAnalyze/beta/` — it's the actual PWA (real service worker, real origin, installable), served from whatever's on `dev`. Only fall back to a locally-hosted copy when you need to test changes that aren't pushed to `dev` yet; if you do, remember to shut the local server down afterward.
+
+Two ways in:
 
 - **`mobile` MCP** (`mcp__mobile__*`, from `@mobilenext/mobile-mcp`) — screenshot, tap, type, launch apps, read the view hierarchy. Configured in `~/.claude.json`; needs `ANDROID_HOME` pointing at a valid SDK (`C:\Users\tzoor\AppData\Local\Android\Sdk`). If `mobile_list_available_devices` returns `[]` while `adb devices` shows the phone, the MCP has a stale/bad env — fix `ANDROID_HOME` and restart Claude Code so the server reloads.
-- **Raw `adb`** (always works, no MCP restart needed) — load the dev server on the phone and screenshot it:
+- **Raw `adb`** (always works, no MCP restart needed) — open the beta app on the phone and screenshot it:
   ```bash
-  python -m http.server 8000 &          # dev server on the PC
-  adb reverse tcp:8000 tcp:8000         # phone's localhost:8000 → PC
-  adb shell am start -a android.intent.action.VIEW -d "http://localhost:8000/index.html"
+  adb shell am start -a android.intent.action.VIEW -d "https://tzoororg.github.io/DateAnalyze/beta/"
   adb exec-out screencap -p > shot.png  # capture what's on the phone
-  ``` To populate the app with demo data: **⋯ menu → Add sample dates**. Tests exist — see Testing below.
+  ```
+  For an unpushed local copy instead: `python -m http.server 8000 &`, `adb reverse tcp:8000 tcp:8000`, then open `http://localhost:8000/index.html`. To populate the app with demo data: **⋯ menu → Add sample dates**. Tests exist — see Testing below.
 
 ## Design-first workflow (required)
 
