@@ -472,7 +472,11 @@ export async function deletePhoto(id) {
       const st = await ensureStorage();
       await st.deleteObject(photoRef(st, id));
     } catch (err) {
-      if (err?.code !== "storage/object-not-found") throw err;
+      // best-effort: the photo may live only in the base64 Firestore doc (Spark
+      // plan) or Storage may deny/lack the object — never let cleanup block the
+      // date/photo delete. object-not-found is fully expected; anything else we
+      // note but still swallow.
+      if (err?.code !== "storage/object-not-found") console.warn("photo storage delete skipped:", err?.code || err);
     }
   }
   try { await sdk.deleteDoc(sdk.doc(sdk.fs, "spaces", spaceId, "photos", id)); } catch { /* may not exist */ }

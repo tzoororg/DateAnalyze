@@ -296,6 +296,7 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); bo
 .hist-row1 select { flex: none; width: auto; max-width: 42%; }
 .hist-row2 { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .hist-row2 .filter-group { flex: none; margin: 0; }
+.hist-row2 .filter-group[open] { flex-basis: 100%; }
 .hist-row2 .filter-group summary { padding: 8px 10px; font-size: 13px; }
 .hist-count { font-size: 13px; color: var(--muted); white-space: nowrap; margin-left: auto; }
 

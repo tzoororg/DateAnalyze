@@ -63,8 +63,8 @@ export async function init() {
   let swipeTarget = null;
   viewEl().addEventListener("touchstart", e => { swipeTarget = e.target; }, { passive: true, capture: true });
   attachSwipe(viewEl(),
-    () => { if (swipeTarget?.closest(".wrap-card")) return; show(TABS[Math.min(TABS.length - 1, TABS.indexOf(currentTab) + 1)]); },
-    () => { if (swipeTarget?.closest(".wrap-card")) return; show(TABS[Math.max(0, TABS.indexOf(currentTab) - 1)]); });
+    () => { if (swipeTarget?.closest('.wrap-card, input[type=range]')) return; show(TABS[Math.min(TABS.length - 1, TABS.indexOf(currentTab) + 1)]); },
+    () => { if (swipeTarget?.closest('.wrap-card, input[type=range]')) return; show(TABS[Math.max(0, TABS.indexOf(currentTab) - 1)]); });
 }
 
 async function onRemoteChange() {
