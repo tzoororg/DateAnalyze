@@ -12,6 +12,8 @@ A dependency-free Progressive Web App for tracking dates with a partner. Four ta
 python -m http.server 8000
 ```
 
+**Always shut down any server you start** (dev server, Firebase emulators, etc.) once the task that needed it is done — don't leave orphaned processes holding ports. On Windows: `taskkill //F //IM python.exe` for the dev server, or kill the specific PID from `netstat -ano | grep :8000`.
+
 Open http://localhost:8000 in Chrome. Use DevTools device toolbar for mobile preview. `file://` URLs won't work (ES modules and service worker require HTTP).
 
 There is no build or lint command.
