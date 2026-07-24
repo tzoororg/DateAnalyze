@@ -14,7 +14,20 @@ python -m http.server 8000
 
 Open http://localhost:8000 in Chrome. Use DevTools device toolbar for mobile preview. `file://` URLs won't work (ES modules and service worker require HTTP).
 
-There is no build or lint command. To populate the app with demo data: **⋯ menu → Add sample dates**. Tests exist — see Testing below.
+There is no build or lint command.
+
+### Physical phone testing
+
+A real Android phone (Xiaomi, `adb` device `5TYT6DDI4XLNJBFY`) is USB-connected for testing things the DevTools emulator can't prove — real touch/gesture behavior, the installed-PWA/service-worker lifecycle, camera/photo capture, push notifications, actual Chrome-on-Android rendering. Two ways in:
+
+- **`mobile` MCP** (`mcp__mobile__*`, from `@mobilenext/mobile-mcp`) — screenshot, tap, type, launch apps, read the view hierarchy. Configured in `~/.claude.json`; needs `ANDROID_HOME` pointing at a valid SDK (`C:\Users\tzoor\AppData\Local\Android\Sdk`). If `mobile_list_available_devices` returns `[]` while `adb devices` shows the phone, the MCP has a stale/bad env — fix `ANDROID_HOME` and restart Claude Code so the server reloads.
+- **Raw `adb`** (always works, no MCP restart needed) — load the dev server on the phone and screenshot it:
+  ```bash
+  python -m http.server 8000 &          # dev server on the PC
+  adb reverse tcp:8000 tcp:8000         # phone's localhost:8000 → PC
+  adb shell am start -a android.intent.action.VIEW -d "http://localhost:8000/index.html"
+  adb exec-out screencap -p > shot.png  # capture what's on the phone
+  ``` To populate the app with demo data: **⋯ menu → Add sample dates**. Tests exist — see Testing below.
 
 ## Design-first workflow (required)
 
@@ -48,6 +61,7 @@ node test/sync.mjs                # two-phone sync; needs the server AND the emu
 ```
 
 - **After any change:** run logic + smoke. Both must pass before commit.
+- **Phone-only features:** if a feature can only really be tested on a physical phone (touch gestures, installed-PWA/service-worker behavior, camera capture, push notifications), do not deliver it until you've validated it on the connected phone (see Physical phone testing above). Emulator/DevTools verification is not enough for these.
 - **When touching `sync.js`, `store.js`, or `firestore.rules`:** also run the sync test. It simulates two phones as separate headless-Chrome profiles talking to the **Firebase Emulator Suite** — start it first with `firebase emulators:start --only auth,firestore,storage --project us-date-tracker-c988b` (firebase-tools + Java runtime, both installed on this machine; `storage` is required now that `useStorage:true` — the sync test exercises the Cloud Storage photo path). The `?emu=1` URL param is a dev hook in `sync.js` that routes Auth/Firestore/Storage to the emulators and swaps the Google popup for anonymous sign-in.
 - New feature with a genuinely new UI flow → add a check to `test/smoke.mjs` (plus a `?shot=` state in `js/dev-shots.js` if needed). New pure logic → a test in `test/logic.test.mjs`.
 - The shared headless-Chrome CDP client lives in `test/cdp.mjs` (also used by `design/capture.mjs`).

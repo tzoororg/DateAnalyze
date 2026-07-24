@@ -55,6 +55,8 @@ node test/smoke.mjs   # needs the dev server running
 
 Both must pass. If a change touched `sync.js`, `store.js`, or `firestore.rules`, also run `node test/sync.mjs` with the Firebase emulators (see CLAUDE.md).
 
+**Physical phone pass.** Load the release build on the connected Android phone and exercise the new/changed functionality there — not just the emulator (see CLAUDE.md → Physical phone testing for the `mobile` MCP or the `adb reverse` path). Confirm each release-note feature actually works on the real device, screenshot the result, and treat a phone-only failure as a blocker (back to Phase 3). If no phone is attached (`adb devices` empty), note that the phone pass was skipped in the Phase 5 summary.
+
 ## Phase 5 — User approval gate
 
 Show the user: the release notes, the triage summary (each reject and its classification), and the proposed semver bump (major = redesign/data-model change, minor = new feature, patch = fixes only). **Wait for an explicit yes before continuing.**
