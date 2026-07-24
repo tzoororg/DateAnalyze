@@ -361,9 +361,6 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); bo
 .who { display: inline-grid; place-items: center; width: 17px; height: 17px; border-radius: 50%; font-size: 10px; font-weight: 800; margin-right: 4px; vertical-align: 1px; }
 .who.me { background: var(--accent); color: #fff; }
 .who.them { background: var(--mint-bg); color: var(--mint-fg); }
-.star-on { color: var(--warn); }
-.star-off { color: var(--line); }
-
 /* ---- Album kebab menu ---- */
 .kebab { width: 32px; height: 32px; border: none; flex: none; border-radius: 10px; background: var(--card-2); color: var(--muted); font-size: 17px; cursor: pointer; }
 .menu-pop { position: absolute; top: 46px; right: 10px; background: var(--card-2); border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,.5); padding: 6px; z-index: 5; font-size: 14px; }
@@ -442,6 +439,31 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); bo
 /* Empty state */
 .empty { text-align: center; color: var(--muted); padding: 40px 20px; }
 .empty .big { font-size: 46px; }
+
+/* Empty state v2: sticker emoji, cursive title, one CTA */
+.empty2 { text-align: center; padding: 34px 22px; }
+.empty2 .big {
+  width: 74px; height: 74px; margin: 0 auto 12px; border-radius: 50%;
+  display: grid; place-items: center; font-size: 36px;
+  background: var(--card); border: 2.5px solid var(--accent); box-shadow: var(--shadow);
+  transform: rotate(-6deg);
+}
+.empty2 h3 { margin: 8px 0 4px; font: 700 21px var(--cursive); color: var(--text); }
+.empty2 p { color: var(--text); opacity: .85; font-size: 14.5px; margin: 0 0 16px; }
+.empty2 .cta {
+  display: inline-flex; align-items: center; gap: 8px; border: none; cursor: pointer;
+  background: var(--accent); color: #fff; font-size: 14px; font-weight: 800;
+  padding: 12px 20px; border-radius: 999px; box-shadow: 0 6px 14px rgba(232,87,126,.3);
+}
+.empty2 .alt { display: block; margin-top: 12px; color: var(--muted); font-size: 13px; }
+.empty2 .alt b { color: var(--accent-2); }
+.fab-hint { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 15px; vertical-align: -5px; }
+
+/* Cold-start Suggest banner */
+.cold-banner { border: 1.5px dashed var(--accent); background: var(--card-2); }
+.cold-banner h3 { margin: 0 0 4px; font: 700 18px var(--cursive); color: var(--accent-2); }
+.cold-banner p { margin: 0; font-size: 13.5px; color: var(--text); }
+.banner-x { position: absolute; top: 8px; right: 10px; background: none; border: none; color: var(--muted); font-size: 13px; cursor: pointer; }
 
 /* ---- v2 log form: polaroid + vertical again-o-meter ---- */
 .logform .polaroid { background: #fdf6ee; border-radius: 6px; padding: 10px 10px 8px; box-shadow: var(--shadow); transform: rotate(-1.2deg); position: relative; margin: 2px 4px 8px; }

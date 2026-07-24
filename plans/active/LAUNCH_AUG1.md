@@ -78,15 +78,23 @@ Creating the account **today** starts every clock (identity verification alone c
 
 ### Sun–Mon Jul 26–27 — code sprint 2
 
-- [ ] Implement the unified date card everywhere; kill remaining legacy
+- [x] Implement the unified date card everywhere; kill remaining legacy
       `★.repeat(e.enjoyment)` render paths (memory card ui.js:518, history ui.js:1113);
       decide legacy-data rendering (old enjoyment → hearts). Update smoke tests +
       `design/current.html` catalog.
-- [ ] Empty-state pass on all four tabs (a Play reviewer opens with zero data).
+      DONE 2026-07-24: hearts/tier-pill/⚡/chevron everywhere; legacy enjoyment renders as
+      hearts. Rating INPUT widgets (Rate ★ pill, log form) intentionally keep stars.
+- [x] Empty-state pass on all four tabs (a Play reviewer opens with zero data).
       Includes **cold-start Suggest framing**: catalog-forward copy/UI for zero-history
       users (competitor scan rec #3).
-- [ ] Run the full test suite **including `test/sync.mjs` against the emulators** —
+      DONE 2026-07-24 (mock `design/sprint2-empty-states.html`, 3 critic rounds, approved):
+      `.empty2` pattern on Home/Album/Stats/Wishlist; dismissible cold-start banner on Ideas
+      with catalog descs as reasons.
+- [x] Run the full test suite **including `test/sync.mjs` against the emulators** —
       several steps (account deletion, Storage round-trip) are still marked unrun.
+      DONE 2026-07-24: ALL SYNC TESTS PASSED incl. account deletion + Storage round-trip +
+      rules checks. (First run after emulator boot flaked 2 rules checks with "client is
+      offline" — warm-up, not a rules bug; clean on rerun.)
 
 ### Tue–Wed Jul 28–29 — packaging (tzoor, guides ready)
 

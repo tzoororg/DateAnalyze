@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>Sprint 2 — empty states + cold-start Suggest</title>
+<style>
+:root {
+  --bg: #2a1b26; --bg-soft: #33222e; --card: #3b2a37; --card-2: #4a3444;
+  --line: #54394c; --text: #f5e6ee; --muted: #c99bb0;
+  --accent: #ff7fa2; --accent-2: #ff9fba;
+  --good: #7ed3ab; --warn: #eec97a;
+  --mint-bg: #2e4a3e; --mint-fg: #8fd6b5; --butter-bg: #4a3d22; --butter-fg: #eec97a;
+  --radius: 18px; --shadow: 0 6px 16px rgba(0,0,0,.35);
+  --cursive: "Segoe Script", "Comic Sans MS", cursive;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 24px; background: #1a1017; color: var(--text);
+  font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  display: flex; gap: 28px; flex-wrap: wrap; align-items: flex-start;
+}
+.frame { width: 390px; flex: none; }
+.frame-label { font: 700 15px var(--cursive); color: var(--accent); margin: 0 0 10px 4px; }
+.frame-note { font-size: 12px; color: #9a7f8e; margin: 4px 4px 12px; line-height: 1.5; }
+.phone { background: radial-gradient(120% 60% at 50% 0%, var(--bg-soft), var(--bg)); border-radius: 28px; padding: 16px; border: 1px solid #000; min-height: 380px; }
+.section-title { font-size: 12px; text-transform: uppercase; letter-spacing: .14em; font-weight: 800; color: var(--muted); margin: 18px 4px 10px; }
+.card { background: var(--card); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); margin-bottom: 14px; position: relative; }
+.muted { color: var(--muted); }
+
+/* upgraded empty state: sticker emoji, cursive title, one CTA */
+.empty2 { text-align: center; padding: 34px 22px; }
+.empty2 .big {
+  width: 74px; height: 74px; margin: 0 auto 12px; border-radius: 50%;
+  display: grid; place-items: center; font-size: 36px;
+  background: var(--card); border: 2.5px solid var(--accent); box-shadow: var(--shadow);
+  transform: rotate(-6deg);
+}
+.empty2 h3 { margin: 8px 0 4px; font: 700 21px var(--cursive); color: var(--text); }
+.empty2 p { color: var(--text); opacity: .85; font-size: 14.5px; margin: 0 0 16px; }
+.fab-hint { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 15px; vertical-align: -5px; }
+.banner-x { position: absolute; top: 8px; right: 10px; background: none; border: none; color: var(--muted); font-size: 13px; cursor: pointer; }
+.empty2 .cta {
+  display: inline-flex; align-items: center; gap: 8px; border: none; cursor: pointer;
+  background: var(--accent); color: #fff; font-size: 14px; font-weight: 800;
+  padding: 12px 20px; border-radius: 999px; box-shadow: 0 6px 14px rgba(232,87,126,.3);
+}
+.empty2 .alt { display: block; margin-top: 12px; color: var(--muted); font-size: 13px; }
+.empty2 .alt b { color: var(--accent-2); }
+
+/* cold-start suggest banner */
+.cold-banner { border: 1.5px dashed var(--accent); background: var(--pink-bg, #4a2a38); }
+.cold-banner h3 { margin: 0 0 4px; font: 700 18px var(--cursive); color: var(--accent-2); }
+.sug-actions { display: flex; gap: 8px; margin-top: 10px; }
+.mini-ghost { background: transparent; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; font-size: 12.5px; font-weight: 700; padding: 7px 14px; cursor: pointer; }
+.mini-solid { background: var(--accent); color: #fff; border: none; border-radius: 999px; font-size: 12.5px; font-weight: 800; padding: 7px 14px; cursor: pointer; }
+.cold-banner p { margin: 0; font-size: 13.5px; color: var(--text); }
+.cold-banner .sub { color: var(--muted); font-size: 12px; margin-top: 6px; }
+/* suggest card (existing look, condensed) */
+.sug-card { border-left: 4px solid var(--accent); }
+.sug-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.sug-head h3 { margin: 0; font-size: 17px; }
+.tag { font: 700 12px var(--cursive); padding: 3px 10px; border-radius: 10px; background: var(--butter-bg); color: var(--butter-fg); }
+.sug-reason { color: var(--muted); font-size: 13.5px; margin: 6px 0 8px; }
+.sug-meta { display: flex; gap: 12px; font-size: 12.5px; color: var(--muted); }
+.tier-pill { display: inline-block; background: var(--butter-bg); color: var(--butter-fg); font-size: 11px; font-weight: 800; padding: 1px 7px; border-radius: 8px; letter-spacing: .5px; }
+</style>
+</head>
+<body>
+
+<!-- FRAME 1: Home + Album empty -->
+<div class="frame">
+  <p class="frame-label">Home &amp; Album — empty</p>
+  <p class="frame-note">Same pattern both tabs: sticker-circle emoji (matches the home card's category sticker), cursive title, one primary CTA, quiet alt action. Replaces the flat "📭 No dates yet…" text block.</p>
+  <div class="phone">
+    <h3 class="section-title">Home</h3>
+    <div class="empty2">
+      <div class="big">💌</div>
+      <h3>Your story starts here</h3>
+      <span class="alt">tap <b class="fab-hint">＋</b> to log your first date ↘</span>
+      <span class="alt">just looking? <b>Add sample dates</b> from the ⋯ menu</span>
+    </div>
+    <h3 class="section-title">Album</h3>
+    <div class="empty2" style="padding-top:10px">
+      <div class="big">📸</div>
+      <h3>No memories yet</h3>
+      <span class="alt">tap <b class="fab-hint">＋</b> to log a date — photos welcome ↘</span>
+    </div>
+  </div>
+</div>
+
+<!-- FRAME 2: Stats empty + wishlist empty -->
+<div class="frame">
+  <p class="frame-label">Stats &amp; Wishlist — empty</p>
+  <p class="frame-note">Stats needs a few dates, so its CTA points at Ideas instead of the log form. Wishlist teaches the ♡ Save gesture.</p>
+  <div class="phone">
+    <h3 class="section-title">Stats</h3>
+    <div class="empty2">
+      <div class="big">📊</div>
+      <h3>Charts need a little fuel</h3>
+      <p>Find something to do, log it, and this fills with what you two love.</p>
+      <button class="cta">Find an idea →</button>
+    </div>
+    <h3 class="section-title">Wishlist (inside Album)</h3>
+    <div class="empty2" style="padding-top:10px">
+      <div class="big">☆</div>
+      <h3>Nothing saved yet</h3>
+      <p>Tap <b style="color:var(--accent)">♡ Wishlist</b> on any idea to keep it here.</p>
+      <button class="cta">Find an idea →</button>
+    </div>
+  </div>
+</div>
+
+<!-- FRAME 3: cold-start Suggest -->
+<div class="frame">
+  <p class="frame-label">Ideas — cold start</p>
+  <p class="frame-note">Zero-history framing (competitor scan rec #3): a warm banner explains the 49-idea catalog and that the tab learns; idea cards get honest "hand-picked" reasons instead of thin bandit copy. Slider and filters stay.</p>
+  <div class="phone">
+    <div class="card cold-banner">
+      <button class="banner-x">✕</button>
+      <h3>49 hand-picked ideas 🎁</h3>
+      <p>Log dates and this tab learns your taste.</p>
+    </div>
+    <div class="card sug-card">
+      <div class="sug-head"><h3>🌅 Sunset picnic</h3></div>
+      <p class="sug-reason">Golden hour, a blanket, and whatever's in the fridge.</p>
+      <div class="sug-meta"><span>Outdoors</span><span class="tier-pill">$</span><span>⚡</span></div>
+      <div class="sug-actions"><button class="mini-ghost">♡ Wishlist</button><button class="mini-solid">Log →</button></div>
+    </div>
+    <div class="card sug-card">
+      <div class="sug-head"><h3>🎨 Pottery class</h3></div>
+      <p class="sug-reason">Get your hands dirty and take home whatever you make.</p>
+      <div class="sug-meta"><span>Creative</span><span class="tier-pill">$$</span><span>⚡⚡⚡</span></div>
+      <div class="sug-actions"><button class="mini-ghost">♡ Wishlist</button><button class="mini-solid">Log →</button></div>
+    </div>
+  </div>
+</div>
+
+</body>
+<!-- duel round 1:
+  1. CTA pill duplicates the FAB on Home/Album -> ACCEPTED: inline "Tap ＋" hint pointing at the FAB; pills kept only where the CTA navigates (Stats/Wishlist).
+  2. four stacked rows of chrome -> ACCEPTED: body copy cut to one line each; Home keeps the sample-dates alt line (launch-critical demo-data discoverability).
+  3. "starter" badge redundant -> ACCEPTED: dropped.
+  4. banner too tall, never leaves -> ACCEPTED: one line + dismiss ✕, footnote cut.
+  5. legibility of body copy -> ACCEPTED: body copy now --text at .85 opacity, 14.5px.
+
+duel round 3:
+  1. Wishlist copy references a ♡ the Ideas mock doesn't show -> ACCEPTED: idea cards now carry the shipped ♡ Wishlist / Log → action row.
+  2. desc duplicates effort badge -> ACCEPTED in the example; implementation note: catalog descs are used verbatim, no 49-item copy edit.
+  3. three visual tiers on Home -> ACCEPTED: "tap ＋" line restyled to the same quiet-alt tier as the sample-dates line.
+  4. banner title contrast/off-palette -> ACCEPTED as verify: color is --accent-2 (raspberry), the "orange" was the 🎁 emoji; keep.
+  5. Album "make some" copy dishonest -> ACCEPTED: "log a date — photos welcome".
+
+duel round 2:
+  1. two CTA grammars / two labels for same destination -> ACCEPTED: single pill label "Find an idea →" for all Ideas-bound CTAs.
+  2. Stats copy contradicts CTA -> ACCEPTED: "Find something to do, log it, and this fills…".
+  3. generic reasons filler -> ACCEPTED: cold-start reasons use each idea's catalog `desc`.
+  4. drop category text labels on idea cards -> REFUSED: the meta line (category · tier · effort) is the shipped sug-card/unified-card pattern approved in sprint 1; diverging here would break the set.
+  5. Album lacks Home's alt line -> REFUSED, intentional: Home is the landing tab and carries the demo-data hint once; repeating it on siblings is noise.
+-->
+</html>

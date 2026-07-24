@@ -30,6 +30,7 @@ try {
   // 1. empty boot
   let t = await shotTab("empty");
   check("empty boot renders", (await t.evaluate(`document.querySelector("#view").innerText`)).length > 0);
+  check("empty home shows .empty2 state", await t.evaluate(`!!document.querySelector("#view .empty2")`));
 
   // 2. home (seeded)
   t = await shotTab("home");

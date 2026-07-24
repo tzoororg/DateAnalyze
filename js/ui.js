@@ -9,6 +9,7 @@ import {
 import * as A from "./analytics.js";
 import * as C from "./charts.js";
 import { suggest } from "./suggest.js";
+import { CATALOG } from "./catalog.js";
 import * as push from "./push.js";
 
 const viewEl = () => document.getElementById("view");
@@ -859,7 +860,9 @@ async function renderList() {
   if (!host) return;
   const logged = done();
   if (!logged.length) {
-    host.innerHTML = `<div class="empty"><div class="big">📭</div>No dates yet — tap ＋ to log your first one, or add demo data from the ⋯ menu.</div>`;
+    host.innerHTML = `<div class="empty2"><div class="big">💌</div><h3>Your story starts here</h3>
+      <span class="alt">tap <b class="fab-hint">＋</b> to log your first date ↘</span>
+      <span class="alt">just looking? <b>Add sample dates</b> from the ⋯ menu</span></div>`;
     return;
   }
   const sorted = [...logged].sort((a, b) => entryTimeMs(b) - entryTimeMs(a)).slice(0, 5);
@@ -926,7 +929,7 @@ async function fillMosaic(el, ids, cat, detail) {
 function renderHistory() {
   const v = viewEl();
   if (!dates.length) {
-    v.innerHTML = emptyState("📅", "No history yet", "Log a date and it will show up here.");
+    v.innerHTML = emptyState2("📸", "No memories yet", { alts: [`tap <b class="fab-hint">＋</b> to log a date — photos welcome ↘`] });
     return;
   }
 
@@ -1254,7 +1257,11 @@ function renderWishlist(host, countEl) {
     .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
   if (countEl) countEl.textContent = `${ideas.length} idea${ideas.length !== 1 ? "s" : ""}`;
   if (!ideas.length) {
-    host.innerHTML = `<div class="empty"><div class="big">☆</div>No saved ideas yet — tap “♡ Save” on a suggestion in the Suggest tab.</div>`;
+    host.innerHTML = emptyState2("☆", "Nothing saved yet", {
+      sub: `Tap <b style="color:var(--accent)">♡ Wishlist</b> on any idea to keep it here.`,
+      cta: "Find an idea →",
+    });
+    wireEmpty2Cta(host);
     return;
   }
   host.innerHTML = `<h3 class="section-title">Want to try (${ideas.length})</h3>` + ideas.map(e => `
@@ -1390,7 +1397,11 @@ function renderInsights() {
   const v = viewEl();
   const d = done();  // exclude wishlist ideas from every analytic below
   if (!d.length) {
-    v.innerHTML = emptyState("📊", "No insights yet", "Log a few dates and this fills with charts about what you two love.");
+    v.innerHTML = emptyState2("📊", "Charts need a little fuel", {
+      sub: "Find something to do, log it, and this fills with what you two love.",
+      cta: "Find an idea →",
+    });
+    wireEmpty2Cta(v);
     return;
   }
   const wStats = wrappedStats(wrapPeriod);
@@ -1538,12 +1549,22 @@ function renderSuggest() {
   loadSugPhotos();
 }
 
+let coldBannerDismissed = false; // ponytail: module-level, resets on reload — fine while user has zero dates
+
 function renderSugCards(results) {
-  if (!results.length) return emptyState("✨", "No ideas match", "Loosen your filters a little.");
+  const coldStart = done().length === 0;
+  const banner = (coldStart && !coldBannerDismissed) ? `
+    <div class="card cold-banner">
+      <button class="banner-x" data-dismiss-cold>✕</button>
+      <h3>${CATALOG.length} hand-picked ideas 🎁</h3>
+      <p>Log dates and this tab learns your taste.</p>
+    </div>` : "";
+  if (!results.length) return banner + emptyState("✨", "No ideas match", "Loosen your filters a little.");
   const saved = new Set(dates.filter(e => e.status === "idea").map(e => normTitle(e.title)));
-  return results.map(r => {
+  return banner + results.map(r => {
     const payload = escAttr(JSON.stringify({ title: r.title, category: r.category, cost: r.estCost ?? null, effort: r.effort }));
     const isSaved = saved.has(normTitle(r.title));
+    const reason = coldStart ? (r.desc || r.reason) : r.reason;
     return `
     <div class="card sug-card ${r.kind}">
       ${isSaved ? `<span class="sticker-tag butter">saved ♡</span>` : ""}
@@ -1552,7 +1573,7 @@ function renderSugCards(results) {
         <span class="tag ${r.kind}">${r.kind === "explore" ? "New" : "Favorite"}</span>
       </div>
       ${r.photos?.length ? `<div class="sug-photos" data-sug-photos="${escAttr(r.photos.join(","))}"></div>` : ""}
-      <p class="sug-reason">${escHtml(r.reason)}</p>
+      <p class="sug-reason">${escHtml(reason)}</p>
       <div class="sug-meta">
         <span>${catLabel(r.category)}</span>
         <span>${tierPill({ cost: r.estCost })}</span>
@@ -1656,6 +1677,10 @@ function wireSuggest() {
 
 function wireLogButtons() {
   const v = viewEl();
+  v.querySelector("[data-dismiss-cold]")?.addEventListener("click", e => {
+    coldBannerDismissed = true;
+    e.target.closest(".cold-banner").remove();
+  });
   v.querySelectorAll("[data-log]").forEach(b => b.addEventListener("click", () => {
     const seed = JSON.parse(b.dataset.log);
     draft = blankEntry();
@@ -2065,6 +2090,16 @@ export function toast(msg) {
 
 function emptyState(big, title, sub) {
   return `<div class="empty"><div class="big">${big}</div><h3 style="margin:8px 0 4px">${title}</h3><p class="muted">${sub}</p></div>`;
+}
+// v2 empty state: sticker emoji, cursive title, quiet alt line(s) or a pill CTA to Suggest.
+function emptyState2(big, title, { alts, sub, cta } = {}) {
+  const altHtml = (alts || []).map(a => `<span class="alt">${a}</span>`).join("");
+  const subHtml = sub ? `<p>${sub}</p>` : "";
+  const ctaHtml = cta ? `<button class="cta" data-empty2-cta="suggest">${cta}</button>` : "";
+  return `<div class="empty2"><div class="big">${big}</div><h3>${title}</h3>${subHtml}${ctaHtml}${altHtml}</div>`;
+}
+function wireEmpty2Cta(root) {
+  root.querySelector("[data-empty2-cta]")?.addEventListener("click", () => show("suggest"));
 }
 function escHtml(s) { return String(s ?? "").replace(/[<>&]/g, c => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c])); }
 const catShort = k => catLabel(k).split("/")[0].trim();
