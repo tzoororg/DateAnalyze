@@ -502,20 +502,22 @@ function renderHome() {
   const v = viewEl();
   const top = suggest(done(), { explore: 0.5 })[0];
   const memories = !memoryDismissed ? A.onThisDay(done()) : [];
+  const singleAgo = memories.length === 1
+    ? new Date().getFullYear() - new Date(entryTimeMs(memories[0])).getFullYear() : null;
   const memoryCard = memories.length ? `
     <section class="card memory-card">
       <div class="memory-header">
-        <span class="memory-title">On this day ✨</span>
+        <span class="memory-title">On this day${singleAgo !== null ? ` · ${singleAgo} year${singleAgo !== 1 ? "s" : ""} ago` : ""} ✨</span>
         <button class="memory-dismiss" id="memory-dismiss">✕</button>
       </div>
       ${memories.map(e => {
         const yearsAgo = new Date().getFullYear() - new Date(entryTimeMs(e)).getFullYear();
         return `<div class="memory-item">
-          <div class="memory-ago">${yearsAgo} year${yearsAgo !== 1 ? "s" : ""} ago</div>
+          ${singleAgo === null ? `<div class="memory-ago">${yearsAgo} year${yearsAgo !== 1 ? "s" : ""} ago</div>` : ""}
           <div class="entry" style="pointer-events:none">
             <div class="thumb">${catEmoji(e.category)}</div>
             <div class="meta"><h4>${escHtml(e.title)}</h4>
-              <div class="sub">${fmtDate(e.date)} · ${"★".repeat(e.enjoyment)}</div>
+              <div class="sub">${fmtDate(e.date)} · ${heartsHtml(e.enjoyment)}</div>
             </div>
           </div>
           ${e.capsule ? `<div class="capsule-memory">
@@ -865,7 +867,7 @@ async function renderList() {
     // one hearts sticker: my rating, else partner's, else the legacy enjoyment score
     const { lines } = resolveRatings(e);
     const r = lines.find(l => l.mine) || lines.find(l => !l.mine && l.name) || lines.find(l => l.key === null);
-    const cost = costBadge(e);
+    const cost = tierPill(e);
     return `
     <div class="card home-card" data-open="${escAttr(e.id)}">
       <div class="home-photos" data-photos="${escAttr((e.photos || []).join(","))}" data-cat="${escAttr(e.category)}"></div>
@@ -1106,11 +1108,11 @@ async function renderHistoryList() {
         <div class="thumb" data-thumb="${escAttr(e.photos?.[0] || "")}">${catEmoji(e.category)}</div>
         <div class="meta">
           <h4>${escHtml(e.title)}</h4>
-          <div class="sub">${fmtDate(e.date)} · ${catLabel(e.category)}${costBadge(e) ? " · " + costBadge(e) : ""}${isOpen && e.location ? " · 📍 " + escHtml(e.location) : ""}${e.durationMin ? " · " + fmtDuration(e.durationMin) : ""}</div>
+          <div class="sub">${fmtDate(e.date)} · ${catLabel(e.category)}${tierPill(e) ? " · " + tierPill(e) : ""}${isOpen && e.location ? " · 📍 " + escHtml(e.location) : ""}${e.durationMin ? " · " + fmtDuration(e.durationMin) : ""}</div>
         </div>
         ${isOpen
           ? `<button class="kebab" data-kebab="${escAttr(e.id)}">⋯</button>`
-          : `<div class="score">${"★".repeat(e.enjoyment)}</div>`}
+          : `<div class="score">${heartsHtml(e.enjoyment)}</div><span class="chev">›</span>`}
       </div>
       ${isOpen ? histDetail(e) : ""}
     </div>`;
@@ -1138,7 +1140,7 @@ function histDetail(e) {
     <div class="rate-line">
       ${l.initial === "★" ? "" : `<span class="who ${l.mine ? "me" : "them"}">${escHtml(l.initial)}</span>`}
       ${l.name ? `<span class="name">${escHtml(l.name)}</span>` : ""}
-      <span class="stars">${starStr(l.value)}</span>
+      <span class="stars">${heartsHtml(l.value)}</span>
     </div>`).join("");
   const rateInput = mineRated ? "" : `
     <div class="rate-line">
@@ -1256,18 +1258,16 @@ function renderWishlist(host, countEl) {
     return;
   }
   host.innerHTML = `<h3 class="section-title">Want to try (${ideas.length})</h3>` + ideas.map(e => `
-    <div class="card tight">
+    <div class="card tight" style="position:relative">
+      <button class="card-x" title="Remove" data-rmidea="${escAttr(e.id)}">✕</button>
       <div class="entry">
         <div class="thumb">${catEmoji(e.category)}</div>
         <div class="meta">
           <h4>${escHtml(e.title)}</h4>
-          <div class="sub">${catLabel(e.category)}${costBadge(e) ? " · " + costBadge(e) : ""}${e.effort ? " · effort " + "●".repeat(e.effort) + "○".repeat(5 - e.effort) : ""}</div>
+          <div class="sub">${catLabel(e.category)}${tierPill(e) ? " · " + tierPill(e) : ""}${e.effort ? " · " + "⚡".repeat(e.effort) : ""}</div>
           ${e.url ? `<a class="url-link" href="${escAttr(safeUrl(e.url))}" target="_blank" rel="noopener">🔗 ${escHtml(prettyUrl(e.url))}</a>` : ""}
         </div>
-      </div>
-      <div class="btn-row">
-        <button class="btn small" data-didit="${escAttr(e.id)}">We did it! Log it →</button>
-        <button class="btn ghost small" data-rmidea="${escAttr(e.id)}">Remove</button>
+        <button class="row-cta" data-didit="${escAttr(e.id)}">Log →</button>
       </div>
     </div>`).join("");
   host.querySelectorAll("[data-didit]").forEach(b => b.addEventListener("click", () => logIdea(b.dataset.didit)));
@@ -1412,7 +1412,7 @@ function renderInsights() {
       const topCat = m.topCategory ? catEmoji(m.topCategory) : "";
       return `<div class="vibe-row">
         <div class="emo">${opt?.emoji ?? "🎭"}</div>
-        <div class="meta2"><h4>${opt?.label ?? m.key}</h4><div class="sub">avg ${m.avgEnjoyment.toFixed(1)}★${topCat ? ` · ${topCat}` : ""}</div></div>
+        <div class="meta2"><h4>${opt?.label ?? m.key}</h4><div class="sub">avg ${m.avgEnjoyment.toFixed(1)}♥${topCat ? ` · ${topCat}` : ""}</div></div>
         <div class="bar"><div class="track"><div class="fill" style="width:${(m.count / maxCount) * 100}%"></div></div></div>
         <div class="n">${m.count}</div>
       </div>`;
@@ -1461,7 +1461,7 @@ function renderInsights() {
     <div class="card tight">${rep.map(r => `
       <div class="entry" style="padding:6px 0">
         <div class="thumb">${catEmoji(r.category)}</div>
-        <div class="meta"><h4>${escHtml(r.title)}</h4><div class="sub">${r.avgEnjoyment.toFixed(1)}★ · done ${r.count}×</div></div>
+        <div class="meta"><h4>${escHtml(r.title)}</h4><div class="sub">${r.avgEnjoyment.toFixed(1)}♥ · done ${r.count}×</div></div>
       </div>`).join("")}</div>
 
     <h3 class="section-title">Adventure balance</h3>
@@ -1555,8 +1555,8 @@ function renderSugCards(results) {
       <p class="sug-reason">${escHtml(r.reason)}</p>
       <div class="sug-meta">
         <span>${catLabel(r.category)}</span>
-        <span>${tierLabel(tierForCost(r.estCost))}</span>
-        <span>effort ${"●".repeat(r.effort)}${"○".repeat(5 - r.effort)}</span>
+        <span>${tierPill({ cost: r.estCost })}</span>
+        <span>${"⚡".repeat(r.effort)}</span>
       </div>
       <div class="sug-actions">
         ${isSaved
@@ -1907,8 +1907,6 @@ function relTime(ts) {
   return `${Math.floor(s / 86400)}d ago`;
 }
 
-function starStr(n) { return `<span class="star-on">${"★".repeat(n)}</span><span class="star-off">${"★".repeat(5 - n)}</span>`; }
-
 // ---------- small helpers ----------
 // ids are unique app-wide (form ids live in the log sheet, tab ids in #view)
 function bind(id, ev, fn) { const el = document.getElementById(id); if (el) el.addEventListener(ev, fn); }
@@ -1917,6 +1915,15 @@ function bind(id, ev, fn) { const el = document.getElementById(id); if (el) el.a
 function costBadge(e) {
   const key = e.costTier || tierForCost(e.cost);
   return key ? tierLabel(key) : "";
+}
+// cost tier as the pill component (design/sprint1-cost-card.html frame 3)
+function tierPill(e) {
+  const key = e.costTier || tierForCost(e.cost);
+  return key ? `<span class="tier-pill${key === "free" ? " free" : ""}">${tierLabel(key)}</span>` : "";
+}
+// rating as hearts (♥ filled, ♡ unfilled) — never ★
+function heartsHtml(n) {
+  return `<span class="hearts">${"♥".repeat(n)}<span class="off">${"♡".repeat(5 - n)}</span></span>`;
 }
 function setOn(nodes, active) { nodes.forEach(n => n.classList.toggle("on", n === active)); }
 

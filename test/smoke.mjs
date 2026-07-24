@@ -58,6 +58,8 @@ try {
   check(`history list shows all ${SEEDED} entries`, histCount === SEEDED, `got ${histCount}`);
   const countLabel = await t.evaluate(`document.querySelector("#h-count")?.innerText || ""`);
   check("history count label matches", countLabel.startsWith(String(SEEDED)), countLabel);
+  check("history row renders unified hearts + tier pill", await t.evaluate(
+    `!!document.querySelector(".hist-entry .hearts") && !!document.querySelector(".hist-entry .tier-pill")`));
 
   // 4. history detail / gallery / lightbox
   t = await shotTab("history-detail");
