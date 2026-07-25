@@ -1148,8 +1148,8 @@ function histDetail(e) {
   const rateInput = mineRated ? "" : `
     <div class="rate-line">
       <span class="who me">${escHtml(myInitial())}</span><span class="name">You</span>
-      <button class="btn rate-cta" style="width:auto;padding:5px 14px;font-size:13px" data-rate-cta="${escAttr(e.id)}">Rate ★</button>
-      <span class="big-stars hidden" data-rate="${escAttr(e.id)}">${[1, 2, 3, 4, 5].map(n => `<span class="rk off" data-k="${n}">★</span>`).join("")}</span>
+      <button class="btn rate-cta" style="width:auto;padding:5px 14px;font-size:13px" data-rate-cta="${escAttr(e.id)}">Rate ♥</button>
+      <span class="big-stars hidden" data-rate="${escAttr(e.id)}">${[1, 2, 3, 4, 5].map(n => `<span class="rk off" data-k="${n}">♥</span>`).join("")}</span>
     </div>`;
 
   // only mood chips + would-repeat flow below the photo; effort/location moved elsewhere
@@ -1206,7 +1206,7 @@ function wireHistDetail(host) {
     setTimeout(() => document.addEventListener("click", close), 0);
   }));
 
-  // "Rate ★" pill swaps inline into the 5-star input
+  // "Rate ♥" pill swaps inline into the 5-heart input
   host.querySelectorAll("[data-rate-cta]").forEach(btn => btn.addEventListener("click", ev => {
     ev.stopPropagation();
     const stars = btn.nextElementSibling;

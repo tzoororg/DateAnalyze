@@ -103,6 +103,7 @@ body {
 .card {
   background: var(--card); border: none; border-radius: var(--radius);
   padding: 16px; box-shadow: var(--shadow); margin-bottom: 14px;
+  position: relative; /* ponytail: anchors .banner-x / .sticker-tag, which were falling through to the page */
 }
 .card.tight { padding: 12px 14px; }
 

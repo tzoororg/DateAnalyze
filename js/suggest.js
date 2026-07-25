@@ -159,12 +159,12 @@ function buildCandidate({ title, category, estCost, effort, desc, isPast, acts, 
 
 function reasonFor({ kind, avgEnj, catAvg, category, catTimes, daysSince, actTimes }) {
   if (kind === "exploit") {
-    if (daysSince > 21) return `You rated this ${avgEnj.toFixed(1)}★ and haven't done it in ${humanGap(daysSince)} — worth a comeback.`;
-    return `A reliable favorite you've enjoyed ${actTimes} time${actTimes > 1 ? "s" : ""} (${avgEnj.toFixed(1)}★).`;
+    if (daysSince > 21) return `You rated this ${avgEnj.toFixed(1)}♥ and haven't done it in ${humanGap(daysSince)} — worth a comeback.`;
+    return `A reliable favorite you've enjoyed ${actTimes} time${actTimes > 1 ? "s" : ""} (${avgEnj.toFixed(1)}♥).`;
   }
   // explore
   if (catTimes > 0 && catAvg != null)
-    return `Something new in ${catLabel(category)} — a category you rate ${catAvg.toFixed(1)}★ on average.`;
+    return `Something new in ${catLabel(category)} — a category you rate ${catAvg.toFixed(1)}♥ on average.`;
   return `A whole new kind of date for the two of you — pure adventure.`;
 }
 
