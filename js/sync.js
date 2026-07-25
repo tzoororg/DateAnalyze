@@ -275,25 +275,40 @@ export async function joinSpace(codeRaw) {
   const inviteSnap = await s.getDoc(inviteRef);
   if (!inviteSnap.exists()) throw new Error("That code isn't valid");
   const invite = inviteSnap.data();
+  if (invite.usedBy && invite.usedBy !== user.uid) {
+    throw new Error("That code was already used — ask your partner for a new one");
+  }
   if (invite.expiresAt?.toDate?.() < new Date()) throw new Error("That code has expired");
 
-  // Batched so the invite is consumed atomically with membership creation — the
-  // security rules require both writes to land together (see firestore.rules).
-  const batch = s.writeBatch(s.fs);
-  batch.update(inviteRef, { usedBy: user.uid });
-  batch.set(s.doc(s.fs, "spaces", invite.spaceId, "members", user.uid),
-    { joinedAt: s.serverTimestamp(), joinedVia: "code", code });
-  try {
-    await batch.commit();
-  } catch (err) {
-    if (err?.code === "permission-denied") {
-      throw new Error("That code was already used or has expired");
+  // An invite is one-time: re-consuming it is denied by the rules. If THIS device
+  // already consumed it, an earlier attempt got past the batch and then failed
+  // (dead snapshot, connection drop) — membership already exists, so skip the
+  // batch and just attach, instead of telling the user their fresh code is spent.
+  if (invite.usedBy !== user.uid) {
+    // Batched so the invite is consumed atomically with membership creation — the
+    // security rules require both writes to land together (see firestore.rules).
+    const batch = s.writeBatch(s.fs);
+    batch.update(inviteRef, { usedBy: user.uid });
+    batch.set(s.doc(s.fs, "spaces", invite.spaceId, "members", user.uid),
+      { joinedAt: s.serverTimestamp(), joinedVia: "code", code });
+    try {
+      await batch.commit();
+    } catch (err) {
+      if (err?.code === "permission-denied") {
+        throw new Error("That code was already used or has expired");
+      }
+      throw err;
     }
-    throw err;
   }
-  try { await s.deleteDoc(inviteRef); } catch { /* best-effort cleanup */ }
+  // Membership is durable from here, so record the space before attaching: if the
+  // first snapshot fails, the next launch still auto-restores (store.autoEnableSync)
+  // rather than leaving this device local-only holding a spent code.
+  await local.setSetting("spaceId", invite.spaceId);
 
   await attachSpace(invite.spaceId);
+  // Retire the invite only after the join fully succeeded — a failure above leaves
+  // it re-consumable by this same device (the usedBy check above handles the retry).
+  try { await s.deleteDoc(inviteRef); } catch { /* best-effort cleanup */ }
   return invite.spaceId;
 }
 

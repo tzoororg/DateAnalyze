@@ -77,6 +77,20 @@ try {
   );
   check("new invite doc exists in Firestore", newInviteDoc.status === 200, String(newInviteDoc.status));
 
+  // 2c. join is idempotent: an attempt that consumed the invite but then failed
+  // (dead snapshot / dropped connection) must be retryable, not "already used".
+  // Simulated by stamping usedBy=B on the fresh invite — B is already a member,
+  // exactly the state the failed batch would have left behind.
+  const uidB = await b.evaluate(`import("./js/sync.js").then(s => s.getCurrentUser().uid)`);
+  await fetch(
+    `http://127.0.0.1:8080/v1/projects/us-date-tracker-c988b/databases/(default)/documents/invites/${newServerCode}?updateMask.fieldPaths=usedBy`,
+    { method: "PATCH", headers: { Authorization: "Bearer owner", "Content-Type": "application/json" },
+      body: JSON.stringify({ fields: { usedBy: { stringValue: uidB } } }) }
+  );
+  const retry = await b.evaluate(`import("./js/sync.js").then(s => s.joinSpace(${JSON.stringify(newCode)}))
+    .then(id => id).catch(e => "ERR " + (e.message || e))`);
+  check("re-join with a self-consumed invite recovers", retry === spaceId, `got=${retry} expected=${spaceId}`);
+
   // 3. date logged on A appears on B with fields intact
   const entryId = await a.evaluate(`Promise.all([import("./js/store.js"), import("./js/model.js")])
     .then(async ([s, m]) => {
