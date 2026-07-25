@@ -14,6 +14,10 @@ const CDN = `https://www.gstatic.com/firebasejs/${SDK_VERSION}`;
 // Test-only: ?emu=1 routes Auth+Firestore to the local Firebase Emulator Suite
 // and swaps the Google popup for anonymous sign-in (see test/sync.test.mjs).
 const EMU = typeof location !== "undefined" && new URLSearchParams(location.search).has("emu");
+// Test-only: ?anon=1 keeps the real (production) backends but swaps the Google
+// popup for anonymous sign-in, so the release sync test can run headless
+// against the deployed project (see test/sync.mjs --prod).
+const ANON = typeof location !== "undefined" && new URLSearchParams(location.search).has("anon");
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O/1/I
 const INVITE_TTL_MS = 7 * 24 * 3600 * 1000;
 
@@ -99,7 +103,7 @@ export function getCurrentUser() {
 
 export async function signIn() {
   const s = await ensureFirebase();
-  if (EMU) { // the emulator has no Google popup; anonymous gives a real uid
+  if (EMU || ANON) { // headless tests can't drive the Google popup; anonymous gives a real uid
     const { user } = await s.signInAnonymously(s.auth);
     return { uid: user.uid, email: null, displayName: "Emulator user" };
   }

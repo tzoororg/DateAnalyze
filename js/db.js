@@ -1,7 +1,11 @@
 // Tiny IndexedDB wrapper. Three object stores: dates, photos (blobs), settings.
 // Everything stays on-device; nothing is sent anywhere.
 
-const DB_NAME = "us-date-tracker";
+// Beta deploys share the origin (github.io) with production, so the beta app
+// gets its own database — otherwise beta testing would read/write real data
+// (including the spaceId setting that attaches to the real couple space).
+const DB_NAME = (typeof location !== "undefined" && location.pathname.includes("/beta"))
+  ? "us-date-tracker-beta" : "us-date-tracker";
 const DB_VERSION = 1;
 let _db = null;
 

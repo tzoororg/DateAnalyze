@@ -13,6 +13,10 @@ export async function launchChrome({ port = 9224, profileName = "cdp-test-profil
   rmSync(profile, { recursive: true, force: true });
   const chrome = spawn(CHROME, [
     "--headless=new", "--disable-gpu", "--no-first-run",
+    // QUIC/HTTP3 to googleapis is flaky in headless on some networks and
+    // surfaces as random auth/network-request-failed / client-is-offline
+    // errors in the --prod sync run; TCP is reliable.
+    "--disable-quic",
     `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, "about:blank",
   ], { stdio: "ignore" });
 

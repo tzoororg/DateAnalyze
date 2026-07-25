@@ -63,6 +63,7 @@ Three layers, all dependency-free, all text output. **Assert in text — never v
 node --test test/logic.test.mjs   # pure logic: model/analytics/suggest/charts (~1s)
 node test/smoke.mjs               # UI smoke in headless Chrome; needs python -m http.server 8000
 node test/sync.mjs                # two-phone sync; needs the server AND the emulators (below)
+node test/sync.mjs --prod         # same flow against the REAL Firebase backend (release gate; needs only the server)
 ```
 
 - **After any change:** run logic + smoke. Both must pass before commit.

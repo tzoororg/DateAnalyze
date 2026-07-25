@@ -8,10 +8,21 @@
 // Run: node test/sync.test.mjs [baseUrl]
 import { launchChrome, openTab, sleep } from "./cdp.mjs";
 
-const BASE = process.argv[2] || "http://127.0.0.1:8000";
-const URL = `${BASE}/index.html?shot=empty&emu=1`; // no seed, no SW, emulator backends
+// --prod runs the same flow against the real Firebase project (anonymous auth,
+// deployed rules) instead of the emulators. Emulator-REST-only assertions are
+// skipped; the throwaway space is cleaned up by the deleteAccount steps.
+const PROD = process.argv.includes("--prod");
+// --prod must run from localhost, not 127.0.0.1: the Storage bucket's CORS
+// config whitelists http://localhost:8000 (plus the github.io origins), and the
+// media GET for photo bytes honors bucket CORS — from any other origin the
+// download is blocked and surfaces as storage/retry-limit-exceeded.
+const BASE = process.argv.slice(2).find(a => !a.startsWith("--")) ||
+  (PROD ? "http://localhost:8000" : "http://127.0.0.1:8000");
+const URL = `${BASE}/index.html?shot=empty&${PROD ? "anon=1" : "emu=1"}`; // no seed, no SW
 
-for (const [what, probe, fix] of [
+for (const [what, probe, fix] of PROD ? [
+  ["app server", BASE, "python -m http.server 8000"],
+] : [
   ["app server", BASE, "python -m http.server 8000"],
   ["auth emulator", "http://127.0.0.1:9099", "firebase emulators:start --only auth,firestore"],
   ["firestore emulator", "http://127.0.0.1:8080", "firebase emulators:start --only auth,firestore"],
@@ -28,8 +39,12 @@ const check = (name, ok, detail = "") => {
 // Poll an in-page expression on a tab until truthy (sync propagation is async).
 const until = async (tab, expr, timeout = 15000) => {
   const t0 = Date.now();
+  until.lastError = null;
   while (Date.now() - t0 < timeout) {
-    if (await tab.evaluate(expr)) return true;
+    // An in-page rejection (e.g. a transient backend error) shouldn't abort the
+    // whole run — remember it and keep polling; report it if we time out.
+    try { if (await tab.evaluate(expr)) return true; }
+    catch (e) { until.lastError = e.message; }
     await sleep(300);
   }
   return false;
@@ -71,6 +86,7 @@ try {
     `old=${oldKeySuffix} new=${newKeySuffix}`);
   const storedCode = await a.evaluate(`import("./js/store.js").then(s => s.getInviteCode())`);
   check("regenerated code persisted to spaceInviteCode setting", storedCode === newCode, `stored=${storedCode} new=${newCode}`);
+  if (!PROD) {
   const newInviteDoc = await fetch(
     `http://127.0.0.1:8080/v1/projects/us-date-tracker-c988b/databases/(default)/documents/invites/${newServerCode}`,
     { headers: { Authorization: "Bearer owner" } }
@@ -90,6 +106,7 @@ try {
   const retry = await b.evaluate(`import("./js/sync.js").then(s => s.joinSpace(${JSON.stringify(newCode)}))
     .then(id => id).catch(e => "ERR " + (e.message || e))`);
   check("re-join with a self-consumed invite recovers", retry === spaceId, `got=${retry} expected=${spaceId}`);
+  } // !PROD (2b/2c need the emulator's owner-bypass REST API)
 
   // 3. date logged on A appears on B with fields intact
   const entryId = await a.evaluate(`Promise.all([import("./js/store.js"), import("./js/model.js")])
@@ -107,12 +124,14 @@ try {
     JSON.stringify(fields));
 
   // 3b. E2EE: the raw Firestore doc is ciphertext (emulator REST API bypasses the app)
+  if (!PROD) {
   const rawDoc = await fetch(
     `http://127.0.0.1:8080/v1/projects/us-date-tracker-c988b/databases/(default)/documents/spaces/${spaceId}/dates/${entryId}`,
     { headers: { Authorization: "Bearer owner" } } // emulator accepts the owner bypass token
   ).then(r => r.text());
   check("raw doc has enc field", rawDoc.includes('"enc"'), rawDoc.slice(0, 300));
   check("raw doc does not leak plaintext title", !rawDoc.includes("Sync Test Date"), rawDoc.slice(0, 300));
+  }
 
   // 4. photo syncs as a base64 Firestore doc
   const photoId = await a.evaluate(`import("./js/store.js").then(async s => {
@@ -123,7 +142,7 @@ try {
     return pid;
   })`);
   check("photo B fetch", await until(b, `import("./js/store.js")
-    .then(s => s.getPhoto(${JSON.stringify(photoId)})).then(bl => !!bl && bl.size > 0)`));
+    .then(s => s.getPhoto(${JSON.stringify(photoId)})).then(bl => !!bl && bl.size > 0)`), until.lastError || "timeout");
 
   // 4b. Cloud Storage photo path (Blaze). Flip firebaseConfig.useStorage on both
   // phones at runtime, then: (i) a new photo written on A rides Cloud Storage and
@@ -189,24 +208,30 @@ try {
   // 8. account deletion: non-last member just loses membership; last member
   // deleting takes the whole space (dates already emptied by step 5) with it.
   const spaceDocUrl = `http://127.0.0.1:8080/v1/projects/us-date-tracker-c988b/databases/(default)/documents/spaces/${spaceId}`;
-  const membersBefore = await fetch(`${spaceDocUrl}/members`, { headers: { Authorization: "Bearer owner" } }).then(r => r.json());
-  check("space has 2 members before any deletion", (membersBefore.documents || []).length === 2, JSON.stringify(membersBefore));
+  if (!PROD) {
+    const membersBefore = await fetch(`${spaceDocUrl}/members`, { headers: { Authorization: "Bearer owner" } }).then(r => r.json());
+    check("space has 2 members before any deletion", (membersBefore.documents || []).length === 2, JSON.stringify(membersBefore));
+  }
 
   await b.evaluate(`import("./js/store.js").then(s => s.deleteAccount())`);
   check("B back to local mode after delete",
     await b.evaluate(`import("./js/store.js").then(s => s.getMode())`) === "local");
-  const membersAfterB = await fetch(`${spaceDocUrl}/members`, { headers: { Authorization: "Bearer owner" } }).then(r => r.json());
-  check("B's member doc removed, space still exists (not last member)",
-    (membersAfterB.documents || []).length === 1, JSON.stringify(membersAfterB));
+  if (!PROD) {
+    const membersAfterB = await fetch(`${spaceDocUrl}/members`, { headers: { Authorization: "Bearer owner" } }).then(r => r.json());
+    check("B's member doc removed, space still exists (not last member)",
+      (membersAfterB.documents || []).length === 1, JSON.stringify(membersAfterB));
+  }
 
   await a.evaluate(`import("./js/store.js").then(s => s.deleteAccount())`);
   check("A back to local mode after delete",
     await a.evaluate(`import("./js/store.js").then(s => s.getMode())`) === "local");
-  const spaceAfterA = await fetch(spaceDocUrl, { headers: { Authorization: "Bearer owner" } });
-  check("space doc deleted after last member deletes account", spaceAfterA.status === 404, String(spaceAfterA.status));
-  const membersAfterA = await fetch(`${spaceDocUrl}/members`, { headers: { Authorization: "Bearer owner" } }).then(r => r.json());
-  check("no member docs left after last member deletes account",
-    !(membersAfterA.documents || []).length, JSON.stringify(membersAfterA));
+  if (!PROD) {
+    const spaceAfterA = await fetch(spaceDocUrl, { headers: { Authorization: "Bearer owner" } });
+    check("space doc deleted after last member deletes account", spaceAfterA.status === 404, String(spaceAfterA.status));
+    const membersAfterA = await fetch(`${spaceDocUrl}/members`, { headers: { Authorization: "Bearer owner" } }).then(r => r.json());
+    check("no member docs left after last member deletes account",
+      !(membersAfterA.documents || []).length, JSON.stringify(membersAfterA));
+  }
 } catch (err) {
   check("sync run completed", false, err.message);
 } finally {
