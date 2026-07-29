@@ -25,7 +25,7 @@
     "alias": "android"
   },
   "appVersionName": "2.4.0",
-  "appVersionCode": 1,
+  "appVersionCode": 2,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
   "enableSiteSettingsShortcut": true,

@@ -69,8 +69,20 @@ prompts and no keystore** — much better for scripting:
 ```bash
 mkdir -p ../DateAnalyze-android
 cp twa-manifest.json ../DateAnalyze-android/
-cd ../DateAnalyze-android && bubblewrap update
+cd ../DateAnalyze-android && bubblewrap update --appVersionName 2.4.0
 ```
+
+**⚠️ Pass `--appVersionName`, never `--skipVersionUpgrade`.** Both suppress the
+interactive version prompt, but `--skipVersionUpgrade` writes `versionName ""`
+into `app/build.gradle`, and the installed app then reports `versionName=null`
+— which is the string Play shows users. Bubblewrap's own help says
+`--appVersionName` is *"Ignored if --skipVersionUpgrade is used"*. Verify before
+building:
+```bash
+grep -E "versionName|versionCode" app/build.gradle   # → versionName "2.4.0"
+```
+`update` also auto-increments `appVersionCode` in the local `twa-manifest.json`;
+copy that number back into the repo's copy so the two don't drift.
 Verify it produced the right app: `app/src/main/AndroidManifest.xml` should carry
 `package="io.github.tzoororg.us"` and `POST_NOTIFICATIONS` (the Android 13+ push
 permission — without it the notification prompt never appears).
