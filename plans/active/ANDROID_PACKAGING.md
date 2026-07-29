@@ -134,6 +134,25 @@ keytool -printcert -jarfile app-release-signed.apk | grep SHA256
 ```
 
 ### 5. Test the built APK on a device
+
+> **DONE 2026-07-29 on the Xiaomi (`5TYT6DDI4XLNJBFY`).** `pm get-app-links` reports
+> **`tzoororg.github.io: verified`** with the signature matching the published
+> fingerprint, and the app launches into Chrome's `TranslucentCustomTabActivity`
+> in `mode=fullscreen` with no crashes. The DAL chain is proven end to end.
+>
+> **MIUI blocks `adb install`.** It fails with
+> `INSTALL_FAILED_USER_RESTRICTED: Install canceled by user` even with
+> "Install via USB" enabled in Developer options — MIUI gates adb-initiated
+> installs behind a separate check. Workaround that works without changing any
+> device setting: push the APK and install it from the device shell instead.
+> ```bash
+> adb push app-release-signed.apk /data/local/tmp/us.apk
+> adb shell pm install -r -t /data/local/tmp/us.apk   # → Success
+> adb shell rm -f /data/local/tmp/us.apk
+> ```
+> Also note: **git-bash rewrites device paths** (`/sdcard/...` becomes
+> `T:/apps/Git/sdcard/...`). Prefix adb commands with `MSYS_NO_PATHCONV=1`.
+
 ```bash
 adb install -r app-release-signed.apk
 # Launch "Us" from the launcher. Then verify app-links resolved:
