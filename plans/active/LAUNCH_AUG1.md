@@ -103,9 +103,20 @@ Creating the account **today** starts every clock (identity verification alone c
 
 ### Tue–Wed Jul 28–29 — packaging (tzoor, guides ready)
 
-- [ ] Bubblewrap init/build per [ANDROID_PACKAGING.md](ANDROID_PACKAGING.md);
-      create + **back up** the signing keystore; paste real SHA-256 into
-      `assetlinks.json`; install AAB on a device.
+- [~] Bubblewrap per [ANDROID_PACKAGING.md](ANDROID_PACKAGING.md).
+      **DONE 2026-07-29:** toolchain installed and validated (`bubblewrap doctor` clean —
+      needed JDK 17 exactly, an empty `tools/` dir in the Android SDK, and forward slashes
+      in `~/.bubblewrap/config.json`; all three documented in the guide). Android project
+      generated at `../DateAnalyze-android` via `bubblewrap update` (no interactive init
+      needed — the repo's `twa-manifest.json` is already complete). `appVersionName` was
+      stale at 2.1.1, bumped to 2.4.0 to match `sw.js`.
+      **Unsigned build succeeds** — `app-release.aab` + `app-release-unsigned.apk`
+      produced, so the whole toolchain is proven before the keystore exists.
+      ⚠️ `bubblewrap build` invokes `gradlew.bat` with no `./` prefix and cmd will not
+      resolve it from the cwd here — prepend the project dir to `PATH` first.
+      **REMAINING (human):** create + **back up** the signing keystore, then re-run
+      `bubblewrap build` signed; paste the real SHA-256 into `assetlinks.json`; install
+      on a device.
 - [ ] On-device wrapper checklist: Google sign-in (redirect path), FCM push
       (Android 13+ runtime permission), camera/gallery, Photos Picker (if scope kept).
 - [x] Store listing **assets prepared** 2026-07-29 in `store/` (upload still pending the

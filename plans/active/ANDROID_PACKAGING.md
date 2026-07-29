@@ -33,25 +33,51 @@ whichever repo serves the host root.
 
 ## Steps (on your machine)
 
+> **This environment is already set up (2026-07-29).** Steps 1–2 are done; the
+> generated project lives at `../DateAnalyze-android`. Skip to step 3 (keystore).
+> The subsections below record what was needed on *this* Windows machine, because
+> none of it is in Bubblewrap's docs and all of it fails confusingly.
+
 ### 1. Install Bubblewrap
 ```bash
 npm install -g @bubblewrap/cli
-# First run installs the JDK + Android SDK it needs; accept the prompts.
-# Requires Node 14+ and, if not auto-installed, JDK 17.
 ```
 
-### 2. Initialize the Android project from the committed config
-Run from the repo root. `--manifest` points at the *deployed* web manifest so
-Bubblewrap fetches the icon; `--directory` keeps the Android project out of the
-web repo (don't commit the generated Gradle project).
+Three Windows gotchas, all resolved here — re-read this if you ever set up a new machine:
+
+- **JDK 17 exactly.** Bubblewrap greps the JDK's `release` file for
+  `JAVA_VERSION="17.0` and rejects anything else — JDK 21 is *not* accepted.
+  `winget install --id EclipseAdoptium.Temurin.17.JDK -e --silent --accept-package-agreements --accept-source-agreements`
+  (it can take several minutes and report success late; check
+  `ls "/c/Program Files/Eclipse Adoptium/"` rather than trusting the exit).
+- **Android SDK layout.** `AndroidSdkTools.validatePath` requires a `tools` *or*
+  `bin` folder at the SDK root. A modern SDK only has `cmdline-tools/latest/bin`,
+  so validation fails with a misleading "androidSdkPath isn't correct". An empty
+  `%LOCALAPPDATA%\Android\Sdk\tools` directory satisfies it. (A junction to
+  `cmdline-tools/latest/bin` looks right but Node's `fs.existsSync` cannot
+  traverse it — don't bother.) Bubblewrap wants **build-tools 34.0.0**
+  specifically; if that's already installed it never invokes `sdkmanager`.
+- Both paths go in `~/.bubblewrap/config.json` as `jdkPath` / `androidSdkPath`,
+  **with forward slashes** — writing Windows backslashes there yields
+  `Bad escaped character in JSON`. Verify with `bubblewrap doctor`.
+
+### 2. Generate the Android project from the committed config
+`bubblewrap init` is interactive (it prompts for every manifest value and offers
+to make a keystore). Since `twa-manifest.json` in this repo is already fully
+filled in, **`bubblewrap update` regenerates the same Gradle project with no
+prompts and no keystore** — much better for scripting:
 ```bash
-bubblewrap init \
-  --manifest https://tzoororg.github.io/DateAnalyze/manifest.webmanifest \
-  --directory ../DateAnalyze-android
-cd ../DateAnalyze-android
-# When prompted, replace the generated twa-manifest.json with the repo's:
-cp ../DateAnalyze/twa-manifest.json ./twa-manifest.json
+mkdir -p ../DateAnalyze-android
+cp twa-manifest.json ../DateAnalyze-android/
+cd ../DateAnalyze-android && bubblewrap update
 ```
+Verify it produced the right app: `app/src/main/AndroidManifest.xml` should carry
+`package="io.github.tzoororg.us"` and `POST_NOTIFICATIONS` (the Android 13+ push
+permission — without it the notification prompt never appears).
+
+> Keep `appVersionName` in `twa-manifest.json` in sync with the `CACHE` version in
+> `sw.js` before building — they drifted once already (manifest said 2.1.1 while
+> the app shipped 2.4.0). Re-copy the manifest and re-run `update` after a release bump.
 > Package the **production** deployment (master, `/DateAnalyze/`), not beta.
 > If you want to test-wrap beta first, temporarily point `startUrl`,
 > `iconUrl`, `webManifestUrl`, `fullScopeUrl` at `/DateAnalyze/beta/…` — but

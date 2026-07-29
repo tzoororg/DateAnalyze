@@ -105,16 +105,27 @@ this is live in production:
       `download_url` in the issue, and that only renders if publicly readable; filenames are
       random UUIDs, so unguessable but not access-controlled — disclosed in privacy.html
       "Feedback" and in the repo README).
-- [~] Worker vars/secrets on `dateanalyze-feedback`. **Done:** `ASSET_REPO` and
-      `FIREBASE_PROJECT_ID` set as plaintext `[vars]` in `worker/wrangler.toml`.
-      **Pending (human — token values must not pass through the agent):** create the
-      fine-grained PAT scoped to the assets repo with Contents RW only, then
-      `cd worker && npx wrangler secret put ASSET_TOKEN`; and re-scope `GITHUB_TOKEN`
-      to Issues-only (drop Contents).
-- [ ] Both workers now import `worker/verify-token.js`, so they must be deployed with
-      `cd worker && npx wrangler deploy` instead of the dashboard paste-in-editor flow.
-      `PUSH_KEY` secret can be removed from `dateanalyze-push` (no longer read).
-      Deliberately deferred until `ASSET_TOKEN` exists so production is touched once.
+- [x] Worker vars/secrets on `dateanalyze-feedback`: `ASSET_REPO` + `FIREBASE_PROJECT_ID`
+      as plaintext `[vars]`, `ASSET_TOKEN` set as a secret 2026-07-29.
+      - ⚠️ **`wrangler` commands in `worker/` MUST pass `--config`.** The directory holds
+        both `wrangler.toml` (feedback) and `wrangler.jsonc` (push), and wrangler prefers
+        the `.jsonc` — so a bare `wrangler secret put ASSET_TOKEN` silently targets the
+        **push** worker, which never reads that variable.
+      - ⚠️ **Incident 2026-07-29:** the first PAT was set with the token in the *name*
+        position (`wrangler secret put <token>`), creating a secret whose **name** was the
+        token. Secret names are not secret — they are returned by `wrangler secret list`
+        and shown in the dashboard. Token was revoked and reissued, junk secrets deleted,
+        nothing had been deployed with it. If this recurs: revoke at GitHub first; deleting
+        the Cloudflare secret does not un-leak it.
+      - [ ] Still open: re-scope `GITHUB_TOKEN` to Issues-only (drop Contents).
+- [x] Both workers deployed via `wrangler deploy` 2026-07-29 (they import
+      `worker/verify-token.js`, so the dashboard paste-in-editor flow no longer works).
+      Deploy output confirmed `env.RATE_LIMITER (5 requests/60s)` bound on both, plus
+      `ASSET_REPO`/`FIREBASE_PROJECT_ID` on feedback. **Verified live in production:**
+      7 POSTs → 403×6 then **429**, and an OPTIONS preflight still returned **204** while
+      limited. (The limiter allowed 6 before tripping, not exactly 5 — Cloudflare's
+      window is approximate; fine for abuse control.)
+      - [ ] Still open: remove the now-unread `PUSH_KEY` secret from `dateanalyze-push`.
 - [x] Rate-limit both worker routes (5 req/min/IP) — see §1.2; implemented as a Rate
       Limiting **binding** in code, not a WAF rule (workers.dev has no zone).
 - [ ] Enable Firebase **App Check** (still open from 1.6) — biggest remaining lever against
