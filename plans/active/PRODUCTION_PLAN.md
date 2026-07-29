@@ -255,9 +255,28 @@ but has production gaps:
         user makes *after* landing back signed in. The `?emu=1` anonymous dev path is untouched
         (it returns before the popup branch). Tests: logic + smoke pass; `test/sync.mjs` doesn't
         cover this path (emulator uses anonymous sign-in, bypassing the popup/redirect branch).
-  - [ ] **Test inside the actual store wrappers** — depends on the packaging task (§4); can't be
-        exercised until the TWA / iOS wrappers are built. The `getRedirectResult` return-URL
-        behaviour in particular must be verified in each wrapper.
+  - [x] **Tested inside the actual TWA 2026-07-29 — PASSES.** Exercised on the physical
+        Xiaomi via a **beta-wrapped TWA** (`io.github.tzoororg.us.beta`, DAL-verified,
+        pointing at `/DateAnalyze/beta/` whose isolated IndexedDB means the real couple's
+        pairing was never at risk). Sign-in completed and the session **persisted across an
+        app restart** — `firebase:authUser:…` present in `firebaseLocalStorageDb` with a live
+        refresh token, expiry actively advancing. Creating a space then reloading returned
+        `mode: "cloud"` with `spaceId`/`spaceKey` intact and zero console output, so
+        `autoEnableSync()` → `restoreSession()` works in the wrapper.
+        > Method worth reusing: `adb forward tcp:9222 localabstract:chrome_devtools_remote`
+        > attaches Chrome DevTools to the running TWA, so the live app's IndexedDB and module
+        > state can be read over CDP instead of guessed at from screenshots.
+        >
+        > Note Firebase Auth v9+ persists to **IndexedDB** (`firebaseLocalStorageDb`), not
+        > localStorage — checking localStorage shows nothing and looks like a lost session.
+  - [ ] **Found while testing: a live session renders as "signed out" until a space exists.**
+        `getUser()` (`js/store.js:36`) returns null unless `cloud` is loaded, and
+        `autoEnableSync()` returns early when there is no `spaceId`, so the module never
+        loads and `renderSyncStatus()` falls to its signed-out branch — even with a valid
+        refreshing session. The correct UI already exists (`js/ui.js` `else if (user)` →
+        "Signed in as … — set up a shared space:"); it is merely unreachable. Boot-path fix
+        only, no design change. Matters because sign-in and space-creation are two taps with
+        an app-close-shaped gap between them, and closed testers will land here constantly.
 - [x] Invite-code recovery: ⋯ menu → "🔁 New pairing code" mints a fresh 7-day code
       (`sync.regenerateInviteCode()` — same E2EE key, new server code, old invite
       best-effort retired) and copies it; the sync status line now shows remaining

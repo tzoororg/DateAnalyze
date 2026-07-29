@@ -41,12 +41,26 @@ export async function regenerateInviteCode() { return mode === "cloud" && cloud 
 // straight in their shared space instead of flashing local-only data first.
 export async function autoEnableSync() {
   const spaceId = await local.getSetting("spaceId", null);
-  if (!spaceId) return;
+  if (spaceId) {
+    try {
+      await loadCloud();
+      await cloud.restoreSession(spaceId);
+      backend = cloud;
+      mode = "cloud";
+    } catch (err) {
+      console.warn("Cloud sync unavailable, staying local:", err);
+    }
+    return;
+  }
+  // Signed in but never created/joined a space: there's no spaceId to restore,
+  // but Firebase still has a live session in IndexedDB. getUser() reads
+  // sdk.auth.currentUser, which is null until the SDK is loaded and the async
+  // session restore completes — invisible unless we load it and wait here.
+  const everSignedIn = await local.getSetting("everSignedIn", false);
+  if (!everSignedIn) return;
   try {
     await loadCloud();
-    await cloud.restoreSession(spaceId);
-    backend = cloud;
-    mode = "cloud";
+    await cloud.waitForAuthUser();
   } catch (err) {
     console.warn("Cloud sync unavailable, staying local:", err);
   }
@@ -54,7 +68,9 @@ export async function autoEnableSync() {
 
 export async function signIn() {
   await loadCloud();
-  return cloud.signIn();
+  const user = await cloud.signIn();
+  await local.setSetting("everSignedIn", true);
+  return user;
 }
 
 // Completes an iOS redirect sign-in on the next page load. No-op (and no cloud
@@ -89,6 +105,7 @@ export async function joinSpace(code) {
 export async function signOut() {
   if (cloud) await cloud.signOut();
   await local.setSetting("spaceId", null);
+  await local.setSetting("everSignedIn", null);
   backend = local;
   mode = "local";
   notify();
@@ -101,7 +118,7 @@ export async function signOut() {
 export async function deleteAccount() {
   if (cloud) await cloud.deleteAccount();
   await local.wipeAll();
-  for (const k of ["spaceId", "spaceKey", "spaceInviteCode", "activeDate"]) {
+  for (const k of ["spaceId", "spaceKey", "spaceInviteCode", "activeDate", "everSignedIn"]) {
     await local.setSetting(k, null);
   }
   backend = local;

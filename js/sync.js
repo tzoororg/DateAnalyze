@@ -94,6 +94,11 @@ function waitForAuthUser() {
   }));
 }
 
+// Exported so store.js can wait for Firebase's async session restore to land
+// before the first render (getCurrentUser() reads a currentUser that starts
+// null even when a valid refresh token is sitting in IndexedDB).
+export { waitForAuthUser };
+
 export function setRemoteChangeHandler(cb) { remoteChangeCb = cb; }
 
 export function getCurrentUser() {
