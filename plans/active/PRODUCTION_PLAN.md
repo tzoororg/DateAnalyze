@@ -36,8 +36,12 @@ branch — i.e. host arbitrary content on the app's own domain — and spam issu
 - [x] Drop Contents scope from the app-repo PAT (`GITHUB_TOKEN`); Issues-only now.
 - [x] Optional Firebase Auth ID token path (JWKS verify via `worker/verify-token.js`, no SDK)
       — bypasses `FEEDBACK_KEY` for signed-in users and tags the issue with their uid.
-- [ ] Add a Cloudflare rate-limiting rule on the worker route (e.g. 5 req/min/IP) — console-only,
-      see deploy checklist below.
+- [x] Rate-limit the worker route (5 req/min/IP). **Not** a WAF rule as originally planned —
+      these workers run on `*.workers.dev`, which has no Cloudflare zone, and WAF
+      rate-limiting rules are zone-scoped. Done in code instead via the Workers **Rate
+      Limiting binding** (`[[ratelimits]]` in `wrangler.toml` → `rateLimited()` in the
+      worker; keyed on `CF-Connecting-IP`, 429 on exceed, OPTIONS preflight exempt,
+      fails open if the binding is missing). Activates on the next `wrangler deploy`.
 - [x] Validate `photoBase64` is a JPEG (magic-byte check) and cap decoded size at 1.5 MB.
 
 ### 1.3 Push worker is an open FCM relay — MEDIUM
@@ -51,7 +55,8 @@ worker already names the upgrade path.
 - [x] Look up partner tokens server-side from the members subcollection instead of trusting
       client-supplied tokens; notification text is now fixed server-side (title/body/link).
       `PUSH_KEY` removed entirely (client and worker).
-- [ ] Rate-limit the route — console-only, see deploy checklist below.
+- [x] Rate-limit the route — same Rate Limiting binding as §1.2, configured in
+      `worker/wrangler.jsonc` (`namespace_id` 1002). Activates on the next `wrangler deploy`.
 
 ### 1.4 Firestore write validation — MEDIUM
 `dates` and `photos` writes have no schema/size validation: a compromised or buggy member
@@ -95,16 +100,23 @@ The rules and worker code for 1.1–1.4 are implemented and test-covered (`test/
 `worker/push-worker.test.js`, `worker/verify-token.test.js`). Still needed by hand before
 this is live in production:
 
-- [ ] Create the assets-only GitHub repo (e.g. `tzoororg/DateAnalyze-feedback-assets`) and a
-      fine-grained PAT scoped to it with Contents RW only.
-- [ ] Set worker vars/secrets on `dateanalyze-feedback`: `ASSET_REPO` (plaintext),
-      `ASSET_TOKEN` (secret, the new PAT above), `FIREBASE_PROJECT_ID` (plaintext, enables
-      the ID-token path). Re-scope `GITHUB_TOKEN` to Issues-only (drop Contents).
+- [x] Create the assets-only GitHub repo — `tzoororg/DateAnalyze-feedback-assets` created
+      2026-07-29, **public** (deliberate: the worker embeds the raw.githubusercontent
+      `download_url` in the issue, and that only renders if publicly readable; filenames are
+      random UUIDs, so unguessable but not access-controlled — disclosed in privacy.html
+      "Feedback" and in the repo README).
+- [~] Worker vars/secrets on `dateanalyze-feedback`. **Done:** `ASSET_REPO` and
+      `FIREBASE_PROJECT_ID` set as plaintext `[vars]` in `worker/wrangler.toml`.
+      **Pending (human — token values must not pass through the agent):** create the
+      fine-grained PAT scoped to the assets repo with Contents RW only, then
+      `cd worker && npx wrangler secret put ASSET_TOKEN`; and re-scope `GITHUB_TOKEN`
+      to Issues-only (drop Contents).
 - [ ] Both workers now import `worker/verify-token.js`, so they must be deployed with
       `cd worker && npx wrangler deploy` instead of the dashboard paste-in-editor flow.
       `PUSH_KEY` secret can be removed from `dateanalyze-push` (no longer read).
-- [ ] Add a Cloudflare rate-limiting rule on both worker routes (e.g. 5 req/min/IP) —
-      not implemented in code, console/WAF-level control.
+      Deliberately deferred until `ASSET_TOKEN` exists so production is touched once.
+- [x] Rate-limit both worker routes (5 req/min/IP) — see §1.2; implemented as a Rate
+      Limiting **binding** in code, not a WAF rule (workers.dev has no zone).
 - [ ] Enable Firebase **App Check** (still open from 1.6) — biggest remaining lever against
       non-app traffic hitting Firestore/Auth directly.
 - [ ] Deploy the updated `firestore.rules` (`firebase deploy --only firestore:rules`) and

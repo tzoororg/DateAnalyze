@@ -9,5 +9,10 @@
   "name": "dateanalyze-push",
   "main": "push-worker.js",
   "compatibility_date": "2025-01-01",
-  "vars": { "ALLOWED_ORIGIN": "https://tzoororg.github.io" }
+  "vars": { "ALLOWED_ORIGIN": "https://tzoororg.github.io" },
+  // ~5 req/min per client IP (see rateLimited() in push-worker.js).
+  // namespace_id is just an account-unique integer picked by us, not looked up.
+  "ratelimits": [
+    { "name": "RATE_LIMITER", "namespace_id": "1002", "simple": { "limit": 5, "period": 60 } }
+  ]
 }

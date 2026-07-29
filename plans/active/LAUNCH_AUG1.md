@@ -30,15 +30,15 @@ Creating the account **today** starts every clock (identity verification alone c
 
 ### Wed–Thu Jul 22–23 — human/console day (tzoor)
 
-- [ ] **Create Google Play developer account** ($25). Start identity verification
+- [x] **Create Google Play developer account** ($25). Start identity verification
       immediately. Note the 12-tester/14-day closed-test requirement; start recruiting
-      testers now.
+      testers now. DONE 2026-07-29.
 - [x] Create `tzoororg.github.io` User Pages repo; serve
       `/.well-known/assetlinks.json` (placeholder SHA-256 for now). This unblocks the
       TWA Digital Asset Links check — #1 technical launch risk. See `.well-known/README.md`.
       DONE 2026-07-22: repo `tzoororg/tzoororg.github.io` (Option A), needed a `.nojekyll`
       file or Jekyll skips the dot-dir; resolves 200 at the host root. Real SHA still TODO (Jul 28).
-- [~] **Google OAuth console** (PRODUCTION_PLAN §2 has exact URLs + form values).
+- [x] **Google OAuth console** (PRODUCTION_PLAN §2 has exact URLs + form values).
       DONE 2026-07-22 (Chrome MCP): **Branding filled + saved** — app name "Us Date Tracker",
       support + developer contact `tzoorp@gmail.com`, home/privacy/terms URLs, authorized
       domains `tzoororg.github.io` + firebaseapp. **State findings that revise the plan:**
@@ -47,15 +47,20 @@ Creating the account **today** starts every clock (identity verification alone c
       scope is NOT registered, so Verification centre says "verification not required." The app
       is therefore on the **fast brand-verification-only path** (no demo video needed) *as long
       as the Photos scope stays unregistered* — this is exactly the launch fallback (§decisions).
-      REMAINING (human decision, not filled): either (1) click **Verify branding** to submit the
-      fast brand verification and ship without the Photos scope, OR (2) go slow — Data access →
-      Add scopes → photospicker → submit sensitive-scope verification with justification + demo
-      video. Recommend (1) for the Aug 1 timeline.
-- [ ] **§1.7 deploy checklist** (PRODUCTION_PLAN): assets-only GitHub repo + scoped PAT,
-      worker vars/secrets, `cd worker && npx wrangler deploy` (both workers),
-      Cloudflare rate-limit rules (~5 req/min/IP) on both routes,
-      `firebase deploy --only firestore:rules`, enable **App Check**,
-      restrict the web API key (referrer allowlist), disable anonymous auth in prod.
+      VERIFICATION COMPLETED 2026-07-29: Brand verification submitted (fast path, no Photos scope).
+- [~] **§1.7 deploy checklist** (PRODUCTION_PLAN). Progress 2026-07-29:
+      **DONE** — assets repo `tzoororg/DateAnalyze-feedback-assets` created (public, see
+      §1.7 for why); `ASSET_REPO` + `FIREBASE_PROJECT_ID` set as plaintext vars in
+      `worker/wrangler.toml`; rate limiting (5 req/min/IP) implemented on both workers.
+      **Plan correction:** the rate limit is a Workers **Rate Limiting binding**, not a
+      Cloudflare WAF rule — WAF rules are zone-scoped and these workers are on
+      `*.workers.dev`, which has no zone. Config-driven, no dashboard step.
+      **BLOCKED ON HUMAN** — fine-grained PAT → `wrangler secret put ASSET_TOKEN`;
+      re-scope `GITHUB_TOKEN` to Issues-only; `firebase login` (CLI has no authorized
+      account, which blocks both the rules deploy and backups).
+      **QUEUED** — `wrangler deploy` (both workers) once `ASSET_TOKEN` exists, so prod
+      is touched once; `firebase deploy --only firestore:rules`; App Check, web API key
+      referrer allowlist, disable anonymous auth (console-only, to be driven in Chrome).
 - [ ] Enable Firestore backups (scheduled export or PITR) — Blaze is on, ~10 min.
 
 ### Fri–Sat Jul 24–25 — code sprint 1
@@ -103,11 +108,16 @@ Creating the account **today** starts every clock (identity verification alone c
       `assetlinks.json`; install AAB on a device.
 - [ ] On-device wrapper checklist: Google sign-in (redirect path), FCM push
       (Android 13+ runtime permission), camera/gallery, Photos Picker (if scope kept).
-- [ ] Store listing: screenshots (use `design/capture.mjs`), feature graphic 1024×500,
-      short/full description — **lead with "free, no ads, no subscription, works
-      offline, end-to-end encrypted"** (competitor scan rec #2: answers the field's
-      top review complaints), content rating questionnaire, paste
-      [STORE_DATA_SAFETY.md](STORE_DATA_SAFETY.md) tables into the Data safety form.
+- [x] Store listing **assets prepared** 2026-07-29 in `store/` (upload still pending the
+      Play Console app existing): 6 phone screenshots at 1080×1919 (real seeded data, not
+      empty states), `feature-graphic.png` at exactly 1024×500 built from the app's own
+      Plum-theme tokens, and `store/listing.md` with app name (17/30), short description
+      (73/80), full description (2868/4000, leading with "free, no ads, no subscription,
+      works offline, end-to-end encrypted" per competitor scan rec #2), content-rating
+      answers with reasoning, and category/contact. Capture scripts
+      (`store/capture-store-shots.mjs`, `store/capture-feature-graphic.mjs`) reuse
+      `test/cdp.mjs` — no new dependencies. Data safety still transcribed by hand from
+      [STORE_DATA_SAFETY.md](STORE_DATA_SAFETY.md) §2.
 
 ### Thu Jul 30 — release
 

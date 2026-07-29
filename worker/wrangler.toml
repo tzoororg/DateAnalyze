@@ -7,3 +7,18 @@ compatibility_date = "2025-01-01"
 
 [vars]
 ALLOWED_ORIGIN = "https://tzoororg.github.io"
+# Photos go to a separate public repo so GITHUB_TOKEN never needs Contents on the
+# app repo (which is also the Pages deployment) — PRODUCTION_PLAN §1.2.
+ASSET_REPO = "tzoororg/DateAnalyze-feedback-assets"
+# Enables the Firebase ID-token auth path in verify-token.js.
+FIREBASE_PROJECT_ID = "us-date-tracker-c988b"
+
+# ~5 req/min per client IP (see rateLimited() in feedback-worker.js).
+# namespace_id is just an account-unique integer picked by us, not looked up.
+[[ratelimits]]
+name = "RATE_LIMITER"
+namespace_id = "1001"
+
+  [ratelimits.simple]
+  limit = 5
+  period = 60

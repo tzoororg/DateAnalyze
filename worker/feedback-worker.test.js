@@ -101,4 +101,23 @@ function req(body) {
   } finally { globalThis.fetch = realFetch; }
 }
 
+// 4) rate limiting: OPTIONS preflight is exempt, POST over the limit gets 429
+{
+  const limiterEnv = {
+    ...env,
+    RATE_LIMITER: { limit: async () => ({ success: false }) },
+  };
+
+  const preflight = await worker.fetch(
+    new Request("https://worker.example/", { method: "OPTIONS" }),
+    limiterEnv
+  );
+  assert.equal(preflight.status, 204, "OPTIONS preflight exempt from rate limiting");
+
+  const res = await worker.fetch(req({ text: "hello" }), limiterEnv);
+  assert.equal(res.status, 429, "over-limit request rejected");
+  const data = await res.json();
+  assert.ok(data.error, "429 has an error body");
+}
+
 console.log("feedback-worker: ok");

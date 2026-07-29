@@ -43,6 +43,8 @@ export default {
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
     if (request.method !== "POST") return json({ error: "method not allowed" }, 405, cors);
 
+    if (await rateLimited(env, request)) return json({ error: "rate limited" }, 429, cors);
+
     // Optional auth upgrade: a valid Firebase ID token bypasses FEEDBACK_KEY and
     // tags the issue with the caller's uid. Invalid token (present but bad) is a
     // hard 403; no token at all falls back to the FEEDBACK_KEY gate below.
@@ -194,6 +196,16 @@ function ghFetch(token) {
         ...(init.headers || {}),
       },
     });
+}
+
+// ~5 req/min per client IP via the Workers Rate Limiting binding (see wrangler.toml).
+// ponytail: no binding (e.g. local dev without it configured) fails open — the
+// Cloudflare-side WAF/abuse defenses still apply at the edge.
+async function rateLimited(env, request) {
+  if (!env.RATE_LIMITER) return false;
+  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+  const { success } = await env.RATE_LIMITER.limit({ key: ip });
+  return !success;
 }
 
 function json(obj, status, cors) {

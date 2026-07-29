@@ -36,6 +36,8 @@ export default {
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
     if (request.method !== "POST") return json({ error: "method not allowed" }, 405, cors);
 
+    if (await rateLimited(env, request)) return json({ error: "rate limited" }, 429, cors);
+
     const sa = JSON.parse(env.FCM_SERVICE_ACCOUNT);
 
     const authHeader = request.headers.get("Authorization") || "";
@@ -150,6 +152,16 @@ function importPrivateKey(pem) {
 
 function b64url(bytes) {
   return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+// ~5 req/min per client IP via the Workers Rate Limiting binding (see wrangler.jsonc).
+// ponytail: no binding (e.g. local dev without it configured) fails open — the
+// Cloudflare-side WAF/abuse defenses still apply at the edge.
+async function rateLimited(env, request) {
+  if (!env.RATE_LIMITER) return false;
+  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+  const { success } = await env.RATE_LIMITER.limit({ key: ip });
+  return !success;
 }
 
 function json(obj, status, cors) {
