@@ -130,8 +130,18 @@ this is live in production:
       Limiting **binding** in code, not a WAF rule (workers.dev has no zone).
 - [ ] Enable Firebase **App Check** (still open from 1.6) — biggest remaining lever against
       non-app traffic hitting Firestore/Auth directly.
-- [ ] Deploy the updated `firestore.rules` (`firebase deploy --only firestore:rules`) and
-      both workers to production.
+- [x] Deployed `firestore.rules` to production 2026-07-29 (`firebase deploy --only
+      firestore:rules`), and both workers (above). **Validated against real Firebase** with
+      `node test/sync.mjs --prod`: ALL PASSED, including `non-member read denied by rules`
+      and `invalid invite rejected` — i.e. the newly-released rules were exercised, not just
+      uploaded. Storage rules deliberately **not** redeployed: they were already published
+      via the console (§3.2) and the plan only calls for firestore rules; leaving a working
+      live config alone.
+      > Flaky-network note: two earlier `--prod` runs failed at step 6 with
+      > `Failed to fetch dynamically imported module: .../firebase-app.js`. That step
+      > launches a *third* Chrome with a cold profile that must fetch the SDK from gstatic
+      > with no cache; phones A and B had it warm. Not a rules failure — the third run was
+      > clean once the network recovered. Retry before investigating.
 
 ### 1.6 Firebase project hardening — MEDIUM
 
@@ -413,8 +423,12 @@ Design (all WebCrypto, no dependencies, fits the no-build-step constraint):
       one; opt-out via `localStorage.crashReports = "off"`; payload carries no user
       content (message/stack/filename only). No Sentry needed. Worker deploy still
       pending the §1.7 checklist.
-- [ ] **Backups**: Spark has no Firestore backups. On Blaze, enable scheduled Firestore
-      exports to a GCS bucket (or point-in-time recovery).
+- [x] **Backups**: scheduled Firestore backups enabled 2026-07-29 —
+      `firebase firestore:backups:schedules:create --database "(default)" --recurrence DAILY
+      --retention 14d`. Schedule id `86822742-b581-4880-9ed3-46e3a883a6bd`, verified via
+      `firestore:backups:schedules:list` (DAILY, retention 1209600s). Note the backups hold
+      **ciphertext** — restoring content also needs the couple's device-held `spaceKey`, so
+      the plaintext JSON export (§3.1) remains the user-facing recovery path.
 - [ ] **Uptime/abuse visibility**: Cloudflare worker analytics are already there; add a
       Firebase usage-alert (reads/writes) so quota exhaustion doesn't look like an outage.
 - [x] **Kill switch / min-version**: `version.json` at repo root (never cached by the SW,

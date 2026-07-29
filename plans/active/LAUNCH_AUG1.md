@@ -61,7 +61,8 @@ Creating the account **today** starts every clock (identity verification alone c
       **QUEUED** — `wrangler deploy` (both workers) once `ASSET_TOKEN` exists, so prod
       is touched once; `firebase deploy --only firestore:rules`; App Check, web API key
       referrer allowlist, disable anonymous auth (console-only, to be driven in Chrome).
-- [ ] Enable Firestore backups (scheduled export or PITR) — Blaze is on, ~10 min.
+- [x] Enable Firestore backups — DONE 2026-07-29, DAILY with 14-day retention
+      (`firebase firestore:backups:schedules:create`). See PRODUCTION_PLAN §5.
 
 ### Fri–Sat Jul 24–25 — code sprint 1
 
