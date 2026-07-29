@@ -107,6 +107,32 @@ bubblewrap build
 #     and app-release-bundle.aab (for Play upload)
 ```
 
+**Two traps hit on 2026-07-29, both resolved — read before rebuilding on a new machine:**
+
+- **The JDK path must contain no spaces.** Bubblewrap builds the `apksigner`
+  invocation without quoting `jdkPath`, so a winget-default
+  `C:\Program Files\Eclipse Adoptium\...` fails the *signing* step with
+  `'C:\Program' is not recognized`. Confusingly the **unsigned** build succeeds,
+  because it never calls `apksigner`. Fixed by copying the JDK to
+  `C:\Users\tzoor\jdk17` and pointing `~/.bubblewrap/config.json` there.
+- **⚠️ Bubblewrap prints your keystore password in cleartext when signing fails.**
+  Its error message echoes the whole command line, including
+  `--ks-pass pass:"…" --key-pass pass:"…"`. Never paste raw `bubblewrap build`
+  output anywhere, and never capture it to a log you'll share. `finish-build.ps1`
+  in the Android project scrubs `pass:"…"` from its transcript for this reason.
+  If a password does leak, rotate it — this does **not** change the certificate,
+  so the published `assetlinks.json` fingerprint stays valid:
+  ```bash
+  keytool -storepasswd -keystore android.keystore
+  keytool -keypasswd  -keystore android.keystore -alias android
+  ```
+
+**Verify the built APK carries the fingerprint you published** (no password needed):
+```bash
+keytool -printcert -jarfile app-release-signed.apk | grep SHA256
+#   → must equal the value in .well-known/assetlinks.json on the host-root repo
+```
+
 ### 5. Test the built APK on a device
 ```bash
 adb install -r app-release-signed.apk
