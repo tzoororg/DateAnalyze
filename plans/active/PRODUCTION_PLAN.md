@@ -123,11 +123,33 @@ this is live in production:
       both workers to production.
 
 ### 1.6 Firebase project hardening — MEDIUM
+
+> **⚠️ Audit 2026-07-29: none of these three is a safe console toggle.** Each one breaks
+> something live if flipped as written. Details per item.
+
 - [ ] Enable **App Check** (reCAPTCHA v3 / Play Integrity / App Attest per platform) on
       Firestore + Auth — the single biggest lever against non-app abuse of the public config.
+      **BLOCKED ON CLIENT CODE.** The App Check SDK is *not wired into the app at all* —
+      no `firebase-app-check.js` import in `sync.js`, no `initializeAppCheck()`, no
+      reCAPTCHA site key anywhere in `js/` or `index.html`. Turning on **enforcement**
+      today would reject every request the real couple's app makes → immediate outage.
+      Correct sequence: (1) register a reCAPTCHA v3 site key, (2) add the App Check SDK
+      + `initializeAppCheck()` to `sync.js`, (3) **add `https://www.google.com/recaptcha/`
+      and `https://www.gstatic.com/recaptcha/` to the CSP `script-src`/`frame-src`** — a
+      CSP miss already broke Google sign-in once (§1.5), this is the same failure mode,
+      (4) ship the client, (5) watch App Check metrics until verified requests dominate,
+      (6) only then enable enforcement. Multi-day because of the soak, not the code.
 - [ ] Restrict the web API key (HTTP referrer allowlist) in Google Cloud console.
-- [ ] Lock Auth to the Google provider only; disable anonymous sign-in in production
-      (it's only needed under `?emu=1`, which the emulator handles).
+      **Allowlist must include `http://localhost:8000`**, not just `tzoororg.github.io` —
+      `test/sync.mjs --prod` (the production release gate) runs against real Firebase from
+      localhost, and is already pinned to `localhost` rather than `127.0.0.1` by the
+      Storage bucket's CORS config. A github.io-only allowlist silently breaks that gate.
+- [ ] Lock Auth to the Google provider only; disable anonymous sign-in in production.
+      **The parenthetical previously here — "it's only needed under `?emu=1`, which the
+      emulator handles" — is wrong.** `test/sync.mjs --prod` signs in **anonymously against
+      the real project** (`anon=1`, see `test/sync.mjs:11,21`). Disabling anonymous auth in
+      prod breaks the release gate. Either keep anonymous sign-in enabled, or first port the
+      `--prod` gate to a dedicated test account.
 - [ ] Review that `?emu=1` is harmless in prod (it points at localhost — it is, but confirm
       it can't be combined with anything).
 
