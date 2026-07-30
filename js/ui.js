@@ -21,6 +21,10 @@ let dates = [];
 const done = () => dates.filter(e => e.status !== "idea");
 let draft = blankEntry();        // the entry currently being composed/edited
 let editingId = null;
+// True once the "When" date is deliberately set (manual edit, editing an entry,
+// a date-night session) — blocks the EXIF auto-fill so it only ever replaces the
+// untouched default. Also set by the auto-fill itself, so it fires at most once.
+let dateTouched = false;
 let currentTab = "home";
 const sug = { explore: 0.5, budget: null, budgetTier: null, maxEffort: null, category: null, moods: [] };
 // Upper $ bound per cost tier (mirrors tierForCost's own boundaries) — "$$$" has no cap.
@@ -492,6 +496,7 @@ async function onDnEnd() {
 
   draft = blankEntry();
   draft.date = todayISO(startedAt);
+  dateTouched = true;              // the session knows when it happened
   draft.photos = photoIds;
   draft.durationMin = elapsedMin;
   editingId = null;
@@ -597,6 +602,7 @@ function renderLog() {
             <input id="f-date" type="date" value="${draft.date}"/>
             <span class="cat-current" id="f-cat-current">${draft.category ? catShort(draft.category) : ""}</span>
           </div>
+          <span class="from-photo hidden" id="f-from-photo">📷 Date set from photo · <button type="button">undo</button></span>
           <div class="cat-grid" id="f-category">
             ${CATEGORIES.map(c => `<button class="cat-dot ${draft.category === c.key ? "on" : ""}" data-cat="${c.key}" title="${c.label}" aria-label="${c.label}">${c.emoji}</button>`).join("")}
           </div>
@@ -687,7 +693,7 @@ function wireForm() {
   const v = formEl();
   // text-ish inputs update the draft without re-rendering (keeps focus/caret)
   bind("f-title", "input", e => draft.title = e.target.value);
-  bind("f-date", "change", e => draft.date = e.target.value);
+  bind("f-date", "change", e => { draft.date = e.target.value; dateTouched = true; });
   bind("f-vibe", "input", e => draft.vibe = e.target.value);
   bind("f-notes", "input", e => draft.notes = e.target.value);
   bind("f-url", "input", e => draft.url = e.target.value);
@@ -796,10 +802,34 @@ async function onPhotoPick(e) {
   const files = [...e.target.files];
   e.target.value = "";
   for (const file of files) {
-    try { await addPhotoBlob(file); }
+    try { await addPhotoBlob(file); await dateFromPhoto(file); }
     catch (err) { console.error(err); toast("Couldn't add photo"); }
     await renderPhotoStrip(); // per photo, so the first thumb shows while the rest encode
   }
+}
+
+// Set "When" from the photo's EXIF capture date, but only while the date is still
+// the untouched default — never clobber a date the user picked.
+async function dateFromPhoto(file) {
+  if (dateTouched) return;
+  const { readExif } = await import("./exif.js");
+  const { date } = await readExif(file);
+  if (!date || date === draft.date) return;
+  const was = draft.date;
+  draft.date = date;
+  dateTouched = true;               // one shot: undo or a later photo won't re-fire
+  const v = formEl();
+  const input = v.querySelector("#f-date");
+  input.value = date;
+  input.classList.add("lit");
+  setTimeout(() => input.classList.remove("lit"), 600);
+  const chip = v.querySelector("#f-from-photo");
+  chip.classList.remove("hidden");
+  chip.querySelector("button").onclick = () => {
+    draft.date = was;
+    input.value = was;
+    chip.classList.add("hidden");
+  };
 }
 
 // Google Photos Picker — cloud photos the file input can't see. Lazy-loaded.
@@ -836,13 +866,14 @@ async function saveDraft() {
   show(currentTab);
 }
 
-function resetDraft() { draft = blankEntry(); editingId = null; }
+function resetDraft() { draft = blankEntry(); editingId = null; dateTouched = false; }
 
 async function editEntry(id) {
   const e = await db.getDate(id);
   if (!e) return;
   draft = structuredClone(e);
   editingId = id;
+  dateTouched = true;
   openLogSheet();
 }
 

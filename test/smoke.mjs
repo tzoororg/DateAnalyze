@@ -192,6 +192,59 @@ try {
   check("closing edit via X then + opens a blank form (#11)", newFormTitle === "" && editedTitle !== "", `edited="${editedTitle}" new="${newFormTitle}"`);
   await t.evaluate(`document.getElementById("logCloseBtn").click()`);
 
+  // 8c. photo EXIF auto-fills "When" (roadmap #13 / #16). Builds a real canvas JPEG
+  // with an APP1/EXIF segment (DateTimeOriginal 2021-06-15) spliced in after SOI.
+  const exifPick = `{
+    window.__pickExif = async () => {
+      const c = document.createElement("canvas"); c.width = c.height = 8;
+      c.getContext("2d").fillRect(0, 0, 8, 8);
+      const base = new Uint8Array(await (await new Promise(r => c.toBlob(r, "image/jpeg"))).arrayBuffer());
+      const tiff = [];
+      const w8 = b => tiff.push(b & 255);
+      const w16 = v => { w8(v >> 8); w8(v); };
+      const w32 = v => { w16(v >>> 16); w16(v); };
+      w8(0x4D); w8(0x4D); w16(0x2A); w32(8);              // "MM", magic, IFD0 @8
+      w16(1); w16(0x8769); w16(4); w32(1); w32(26); w32(0); // ExifIFDPointer -> @26
+      w16(1); w16(0x9003); w16(2); w32(20); w32(44); w32(0); // DateTimeOriginal -> @44
+      for (const ch of "2021:06:15 09:30:00\\0") w8(ch.charCodeAt(0));
+      const app1 = [0x45, 0x78, 0x69, 0x66, 0, 0, ...tiff];
+      const seg = [0xFF, 0xE1, (app1.length + 2) >> 8, (app1.length + 2) & 255, ...app1];
+      const file = new File([new Uint8Array([0xFF, 0xD8, ...seg, ...base.slice(2)])], "exif.jpg", { type: "image/jpeg" });
+      const dt = new DataTransfer(); dt.items.add(file);
+      const inp = document.getElementById("f-photo-gallery");
+      inp.files = dt.files; inp.dispatchEvent(new Event("change"));
+    };
+  }`;
+  t = await shotTab("home");
+  await t.evaluate(`document.querySelector("#fab").click()`);
+  await t.waitFor(`!document.getElementById("logSheet").classList.contains("hidden")`);
+  const todayVal = await t.evaluate(`document.getElementById("f-date").value`);
+  await t.evaluate(exifPick);
+  await t.evaluate(`window.__pickExif()`);
+  await t.waitFor(`document.getElementById("f-date").value === "2021-06-15"`);
+  check("photo EXIF date auto-fills the untouched When date (#16)", true);
+  check("undo chip shows after auto-fill",
+    await t.evaluate(`!document.getElementById("f-from-photo").classList.contains("hidden")`));
+  await t.evaluate(`document.querySelector("#f-from-photo button").click()`);
+  check("undo restores the default date",
+    await t.evaluate(`document.getElementById("f-date").value`) === todayVal);
+  await t.evaluate(`document.getElementById("logCloseBtn").click()`);
+
+  // ...and a hand-picked date is never clobbered by a later photo.
+  t = await shotTab("home");
+  await t.evaluate(`document.querySelector("#fab").click()`);
+  await t.waitFor(`!document.getElementById("logSheet").classList.contains("hidden")`);
+  await t.evaluate(`{
+    const d = document.getElementById("f-date");
+    d.value = "2024-02-02"; d.dispatchEvent(new Event("change"));
+  }`);
+  await t.evaluate(exifPick);
+  await t.evaluate(`window.__pickExif()`);
+  await t.waitFor(`document.querySelectorAll("#f-photos .photo-thumb").length === 1`);
+  check("hand-set date survives an EXIF photo",
+    await t.evaluate(`document.getElementById("f-date").value`) === "2024-02-02");
+  await t.evaluate(`document.getElementById("logCloseBtn").click()`);
+
   // 9. Google Photos pick, fully mocked: stub GIS + the picker/proxy endpoints,
   // click the menu item, and assert a photo lands in the strip. Exercises
   // token → session → poll → list → proxy download → downscale → IDB → render.

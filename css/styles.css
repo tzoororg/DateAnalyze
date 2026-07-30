@@ -488,6 +488,10 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); bo
 .qrow { display: flex; gap: 8px; align-items: center; }
 .qrow input[type=date] { width: 150px; flex: none; padding: 9px 8px; font-size: 13px; border-radius: 999px; }
 .cat-current { flex: 1; min-width: 0; padding-left: 6px; font: 700 15px var(--cursive); color: var(--accent-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.qrow input[type=date].lit { outline: 2px solid var(--accent); animation: datepop .5s ease; }
+@keyframes datepop { 0%, 100% { transform: scale(1); } 40% { transform: scale(1.05); } }
+.from-photo { align-self: flex-start; display: inline-flex; align-items: center; gap: 5px; margin: 8px 0 -2px; background: var(--card-2); color: var(--accent); border: 1px solid var(--line); border-radius: 999px; padding: 4px 11px; font-size: 12px; font-weight: 700; }
+.from-photo button { background: none; border: none; padding: 0; font: inherit; color: inherit; text-decoration: underline; cursor: pointer; }
 .cat-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 7px; margin: 10px 0; justify-items: center; }
 .cat-dot { width: 34px; height: 34px; flex: none; border-radius: 50%; border: none; background: var(--card-2); display: grid; place-items: center; font-size: 17px; cursor: pointer; }
 .cat-dot.on { background: var(--accent); box-shadow: 0 0 0 3px rgba(255, 127, 162, .35); }

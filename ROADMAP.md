@@ -290,7 +290,7 @@ popup (unreliable in installed iOS PWAs), and a real-device verification pass
 
 ## 13. Auto-fill "When" from a photo's EXIF date
 
-**Status.** 📐 Mock only (commit 95e3b67, feedback [#16](https://github.com/tzoororg/DateAnalyze/issues/16)) — `design/roadmap/photo-date-autofill.html`. Not yet implemented; `js/exif.js readExif` infra exists, still needs wiring into `onPhotoPick()`.
+**Status.** ✅ Shipped (feedback [#16](https://github.com/tzoororg/DateAnalyze/issues/16)) — mock `design/roadmap/photo-date-autofill.html`, implemented in `onPhotoPick()` → `dateFromPhoto()` (`js/ui.js`) with the undo chip; smoke-tested (auto-fill, undo, hand-set date not clobbered).
 
 **What.** When you add a photo to the log/edit form, read its EXIF capture date
 and set the form's "When" date to match — but only while the date is still the
