@@ -481,8 +481,16 @@ export async function getPhoto(id) {
       await local.cachePhoto(id, blob);
       return blob;
     } catch (err) {
-      if (err?.code !== "storage/object-not-found") throw err;
-      // fall through to the base64 fallback
+      // object-not-found is expected pre-migration: fall through to the base64 doc.
+      // Any other Storage read failure (a transient storage/unauthorized from an
+      // auth blip, CORS, network) must NOT crash the caller as an unhandledrejection
+      // — a photo that can't be fetched right now degrades to a missing thumbnail.
+      // The base64 fallback below would fail the same way on an auth issue, so bail
+      // to null here rather than fall through. Mirrors deletePhoto's best-effort catch.
+      if (err?.code !== "storage/object-not-found") {
+        console.warn("photo storage read failed, treating as unavailable:", err?.code || err);
+        return null;
+      }
     }
   }
   const snap = await sdk.getDoc(sdk.doc(sdk.fs, "spaces", spaceId, "photos", id));
