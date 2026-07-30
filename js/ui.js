@@ -798,8 +798,8 @@ async function onPhotoPick(e) {
   for (const file of files) {
     try { await addPhotoBlob(file); }
     catch (err) { console.error(err); toast("Couldn't add photo"); }
+    await renderPhotoStrip(); // per photo, so the first thumb shows while the rest encode
   }
-  renderPhotoStrip();
 }
 
 // Google Photos Picker — cloud photos the file input can't see. Lazy-loaded.
@@ -2062,21 +2062,19 @@ function wireIdle() {
   resetIdle();
 }
 
-export function downscale(file, maxDim, quality) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
-      const w = Math.round(img.width * scale), h = Math.round(img.height * scale);
-      const canvas = document.createElement("canvas");
-      canvas.width = w; canvas.height = h;
-      canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-      canvas.toBlob(b => b ? resolve(b) : reject(new Error("encode failed")), "image/jpeg", quality);
-      URL.revokeObjectURL(img.src);
-    };
-    img.onerror = reject;
-    img.src = URL.createObjectURL(file);
-  });
+// createImageBitmap decodes off the main thread (an <img> + drawImage decodes on
+// it, freezing the UI on a 12MP phone photo). imageOrientation keeps EXIF-rotated
+// phone shots upright, which <img> did for us for free.
+export async function downscale(file, maxDim, quality) {
+  const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+  const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
+  const w = Math.round(bitmap.width * scale), h = Math.round(bitmap.height * scale);
+  const canvas = document.createElement("canvas");
+  canvas.width = w; canvas.height = h;
+  canvas.getContext("2d").drawImage(bitmap, 0, 0, w, h);
+  bitmap.close?.();
+  return new Promise((resolve, reject) =>
+    canvas.toBlob(b => b ? resolve(b) : reject(new Error("encode failed")), "image/jpeg", quality));
 }
 
 let toastTimer = null;

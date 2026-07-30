@@ -448,9 +448,19 @@ async function uploadPhoto(id, blob) {
   await local.cachePhoto(id, fitted); // warm local cache (plaintext) so the uploader sees it instantly
 }
 
+// Local-first: return as soon as the blob is in IndexedDB and upload in the
+// background, so picking photos costs a canvas encode instead of a canvas
+// encode + a mobile upload. A failed upload leaves the photo device-local and
+// the ⋯ menu's photo backfill re-pushes it; the partner just sees it late.
+const pendingUploads = new Map(); // id -> in-flight upload, so deletePhoto can't race it
+
 export async function putPhoto(blob) {
   const id = crypto.randomUUID();
-  await uploadPhoto(id, blob);
+  await local.cachePhoto(id, blob);
+  const job = uploadPhoto(id, blob)
+    .catch(err => console.error("photo upload failed (kept on this device):", err))
+    .finally(() => pendingUploads.delete(id));
+  pendingUploads.set(id, job);
   return id;
 }
 
@@ -489,6 +499,7 @@ export async function getPhoto(id) {
 }
 
 export async function deletePhoto(id) {
+  await pendingUploads.get(id); // let an in-flight upload land, else we'd orphan its bytes
   // Delete from both backends best-effort: a photo may live in Storage, the
   // base64 Firestore doc, or (mid-migration) leftovers of both.
   if (firebaseConfig.useStorage) {
