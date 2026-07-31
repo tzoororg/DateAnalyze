@@ -1,0 +1,213 @@
+<meta charset="utf-8">
+<title>Redesign C - Scrapbook</title>
+<style>
+  body { margin:0; background:#2a2226; font:14px/1.4 "Segoe UI",system-ui,sans-serif; color:#8a7a80; }
+  .stage { display:flex; gap:28px; padding:28px; align-items:flex-start; }
+  .lbl { font:700 11px/1 "Segoe UI"; letter-spacing:.16em; text-transform:uppercase; margin:0 0 8px 4px; color:#7b6a72; }
+  .phone { width:390px; height:844px; overflow:hidden; border-radius:34px; position:relative;
+           box-shadow:0 20px 60px rgba(0,0,0,.55); }
+
+  /* ---- Scrapbook: paper ground, gingham binding, raspberry accent, taped photos ---- */
+  .sb {
+    --paper:#fdf5f2; --paper-2:#fbe9ec; --mat:#ffffff; --line:#f0cfd8; --field:#ffffff;
+    --ink:#4a2c37; --ink-dim:#946f7d;
+    --cherry:#d1395c; --tape:rgba(230,170,190,.55); --gingham:rgba(209,57,92,.16);
+    --script:"Segoe Script","Comic Sans MS",cursive;
+    background:var(--paper); color:var(--ink);
+    font:15px/1.45 "Segoe UI",system-ui,sans-serif; display:flex; flex-direction:column;
+  }
+  /* same skin after dark: the paper is dyed, the raspberry survives */
+  .sb.dark {
+    --paper:#2a1b26; --paper-2:#3a2532; --mat:#432d3b; --line:#553a49; --field:#3a2532;
+    --ink:#f7e8ee; --ink-dim:#c39fb0;
+    --cherry:#ff7fa2; --tape:rgba(255,150,180,.28); --gingham:rgba(255,127,162,.12);
+  }
+  .sb .binding { height:64px; position:relative;
+    background:
+      repeating-linear-gradient(90deg, var(--gingham) 0 13px, transparent 13px 26px),
+      repeating-linear-gradient(0deg,  var(--gingham) 0 13px, transparent 13px 26px),
+      var(--paper-2);
+    display:flex; align-items:flex-end; justify-content:space-between; padding:0 16px 8px;
+    border-bottom:1px solid var(--line); }
+  .sb .wordmark { font:700 27px/1 var(--script); color:var(--cherry); transform:rotate(-2deg); }
+  .sb .dots { width:34px; height:34px; border-radius:11px; background:var(--field); border:1px solid var(--line);
+              display:grid; place-items:center; color:var(--ink-dim); }
+
+  /* notebook divider tabs */
+  .sb .tabs { display:flex; gap:5px; padding:0 12px; margin-top:-1px; position:relative; z-index:2; }
+  .sb .tabs a { flex:1; text-align:center; font:700 12px/1 "Segoe UI"; color:var(--ink-dim);
+    background:var(--paper-2); border:1px solid var(--line); border-top:0; border-radius:0 0 11px 11px;
+    padding:9px 0 10px; text-decoration:none; }
+  .sb .tabs a.on { background:var(--cherry); border-color:var(--cherry); color:#fff; }
+  .sb.dark .tabs a.on { color:#3a1524; }
+
+  /* taped photo: the mat is a hairline, the photo keeps the width */
+  .sb .taped { position:relative; margin:20px 16px 0; background:var(--mat); padding:4px;
+    box-shadow:0 4px 14px rgba(80,30,50,.22); transform:rotate(-1deg); }
+  .sb .taped img { width:100%; height:318px; object-fit:cover; display:block; }
+  /* the caption rides on the photo: nothing pushes the image smaller */
+  .sb .taped figcaption { position:absolute; left:4px; right:4px; bottom:0; z-index:2;
+    padding:26px 12px 10px; color:#fff;
+    background:linear-gradient(180deg,rgba(30,12,22,0),rgba(30,12,22,.86)); }
+  .sb .taped figcaption b { font:600 17px/1.2 "Segoe UI"; display:block; }
+  .sb .taped figcaption .row { display:flex; align-items:baseline; gap:8px; margin-top:3px; }
+  .sb .taped figcaption span { font:12px "Segoe UI"; color:#e8cfd8; }
+  .sb .taped figcaption .hearts { color:#ff9dba; }
+  .sb .hearts { margin-left:auto; color:var(--cherry); font-size:14px; letter-spacing:2px; }
+  .sb .tape { position:absolute; width:86px; height:24px; background:var(--tape); top:-11px;
+    box-shadow:0 1px 3px rgba(120,60,80,.18); }
+  .sb .tape.l { left:-14px; transform:rotate(-26deg); }
+  .sb .tape.r { right:-14px; transform:rotate(26deg); }
+
+  /* torn note = tonight's suggestion, one line and a button */
+  .sb .note { margin:16px 16px 0; background:var(--field); border:1px solid var(--line); border-radius:3px;
+    padding:11px 13px; position:relative; transform:rotate(.6deg);
+    box-shadow:0 3px 10px rgba(120,70,90,.16); display:flex; align-items:center; gap:10px; }
+  .sb .note::before { content:""; position:absolute; left:22px; top:-9px; width:12px; height:26px;
+    border:2px solid #b9a58c; border-bottom:0; border-radius:7px 7px 0 0; }
+  .sb .note h3 { margin:0; font:600 17px/1.2 "Segoe UI"; }
+  .sb .note p { margin:1px 0 0; font-size:12.5px; color:var(--ink-dim); }
+  .sb .note .go { margin-left:auto; flex:none; background:var(--cherry); color:#fff; border:0;
+    font:700 13px/1 "Segoe UI"; padding:10px 14px; border-radius:999px; }
+  .sb.dark .note .go { color:#3a1524; }
+
+  /* photo-corner mounted memory: the one place the handwriting belongs */
+  .sb .corners { margin:16px 16px 0; display:flex; gap:11px; align-items:center;
+                 border-top:1px dashed var(--line); padding-top:13px; }
+  .sb .corners .mount { position:relative; flex:none; }
+  .sb .corners img { width:58px; height:58px; object-fit:cover; display:block; }
+  .sb .corners .c { position:absolute; width:0; height:0; border:8px solid transparent; }
+  .sb .corners .c1 { top:0; left:0; border-top-color:#e4b7c4; border-left-color:#e4b7c4; }
+  .sb .corners .c2 { bottom:0; right:0; border-bottom-color:#e4b7c4; border-right-color:#e4b7c4; }
+  .sb .corners .k { font:700 10.5px/1 "Segoe UI"; letter-spacing:.15em; text-transform:uppercase; color:var(--cherry); }
+  .sb .corners p { margin:4px 0 0; font:16px/1.3 var(--script); }
+
+  .sb .strip { display:flex; gap:9px; padding:16px 0 0 16px; overflow:hidden;
+    -webkit-mask-image:linear-gradient(90deg,#000 78%,transparent);
+    mask-image:linear-gradient(90deg,#000 78%,transparent); }
+  .sb .strip .mini { flex:none; width:106px; background:var(--mat); padding:4px 4px 0;
+    box-shadow:0 3px 9px rgba(120,60,80,.18); }
+  .sb .strip .mini:nth-child(odd) { transform:rotate(-1.5deg); }
+  .sb .strip .mini:nth-child(even) { transform:rotate(1.5deg); }
+  .sb .strip .mini img { width:98px; height:114px; object-fit:cover; display:block; }
+  .sb .strip .mini b { display:block; font:600 12px/1.2 "Segoe UI"; padding:5px 2px 6px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+  .sb .fab { position:absolute; right:18px; bottom:20px; width:58px; height:58px; border-radius:50%;
+    background:var(--cherry); color:#fff; font-size:28px; display:grid; place-items:center;
+    box-shadow:0 8px 18px rgba(209,57,92,.4); border:3px solid var(--paper); }
+  .sb.dark .fab { color:#3a1524; }
+
+  /* Album: one uniform grid, every card the same height */
+  .sb .search { display:flex; gap:8px; padding:14px 16px 4px; }
+  .sb .search input { flex:1; background:var(--field); border:1px solid var(--line); color:var(--ink);
+    border-radius:999px; padding:9px 14px; font:14px "Segoe UI"; }
+  .sb .search input::placeholder { color:var(--ink-dim); }
+  .sb .search .chip { background:var(--field); border:1px solid var(--line); color:var(--ink-dim);
+    border-radius:999px; padding:9px 14px; font:15px "Segoe UI"; }
+  .sb .wall { display:grid; grid-template-columns:1fr 1fr; gap:12px 10px; padding:14px 16px 0;
+    -webkit-mask-image:linear-gradient(180deg,#000 93%,transparent 100%);
+    mask-image:linear-gradient(180deg,#000 93%,transparent 100%); }
+  .sb .pin { background:var(--mat); padding:4px 4px 0; position:relative;
+             box-shadow:0 4px 12px rgba(120,60,80,.2); }
+  .sb .pin:nth-child(4n+1) { transform:rotate(-1.2deg); }
+  .sb .pin:nth-child(4n+2) { transform:rotate(1.2deg); }
+  .sb .pin:nth-child(4n+3) { transform:rotate(1deg); }
+  .sb .pin:nth-child(4n)   { transform:rotate(-1deg); }
+  .sb .pin img { width:100%; height:142px; object-fit:cover; display:block; }
+  .sb .pin .cap { padding:5px 3px 7px; }
+  .sb .pin .cap b { display:block; font:600 13.5px/1.25 "Segoe UI";
+                    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .sb .pin .cap .row { display:flex; align-items:baseline; }
+  .sb .pin .cap i { font:11.5px "Segoe UI"; font-style:normal; color:var(--ink-dim); }
+  .sb .pin .cap .hearts { font-size:12px; letter-spacing:1px; }
+  .sb .pin .washi { position:absolute; top:-8px; left:50%; margin-left:-30px; width:60px; height:18px;
+    background:var(--tape); }
+  /* unfilled hearts stay visible so 3/5 and 5/5 are tellable apart */
+  .hearts em { font-style:normal; opacity:.42; }
+</style>
+
+<div class="stage">
+  <div>
+    <p class="lbl">C - Scrapbook / Home (day)</p>
+    <div class="phone sb">
+      <div class="binding"><div class="wordmark">Us &hearts;</div><div class="dots">&#8943;</div></div>
+      <nav class="tabs"><a class="on">Home</a><a>Album</a><a>Ideas</a><a>Stats</a></nav>
+
+      <figure class="taped">
+        <i class="tape l"></i><i class="tape r"></i>
+        <img src="../inspiration/date-analyzer/swing-chair-field-ocean-sunset.png" alt="">
+        <figcaption><b>The swing at Rosh Hanikra</b>
+          <div class="row"><span>Jul 22 &middot; Outdoors</span>
+            <span class="hearts">&hearts;&hearts;&hearts;&hearts;&hearts;<em></em></span></div></figcaption>
+      </figure>
+
+      <div class="note">
+        <div>
+          <h3>Day trip to the coast</h3>
+          <p>Five stars last time, not since April</p>
+        </div>
+        <button class="go">Plan it</button>
+      </div>
+
+      <div class="corners">
+        <div class="mount">
+          <img src="../inspiration/date-analyzer/two-people-bench-sky-candles.png" alt="">
+          <i class="c c1"></i><i class="c c2"></i>
+        </div>
+        <div>
+          <div class="k">One year ago tonight</div>
+          <p>"If you are reading this, book the rooftop again."</p>
+        </div>
+      </div>
+
+      <div class="strip">
+        <div class="mini"><img src="../inspiration/date-analyzer/pink-scooter-parked-by-flowers.jpg" alt=""><b>Jaffa ride</b></div>
+        <div class="mini"><img src="../inspiration/date-analyzer/i-love-you-written-in-sand.jpg" alt=""><b>Beach morning</b></div>
+        <div class="mini"><img src="../inspiration/date-analyzer/books-cherries-pink-gingham.jpg" alt=""><b>Bookshop</b></div>
+      </div>
+
+      <div class="fab">+</div>
+    </div>
+  </div>
+
+  <div>
+    <p class="lbl">C - Scrapbook / Album (night)</p>
+    <div class="phone sb dark">
+      <div class="binding"><div class="wordmark">Album</div><div class="dots">&#8943;</div></div>
+      <nav class="tabs"><a>Home</a><a class="on">Album</a><a>Ideas</a><a>Stats</a></nav>
+      <div class="search">
+        <input placeholder="Search 19 dates"><div class="chip">&#8645;</div>
+      </div>
+
+      <div class="wall">
+        <div class="pin"><i class="washi"></i>
+          <img src="../inspiration/date-analyzer/swing-chair-field-ocean-sunset.png" alt="">
+          <div class="cap"><b>The swing</b><div class="row"><i>Jul 22</i>
+            <span class="hearts">&hearts;&hearts;&hearts;&hearts;&hearts;<em></em></span></div></div></div>
+        <div class="pin">
+          <img src="../inspiration/date-analyzer/two-people-bench-sky-candles.png" alt="">
+          <div class="cap"><b>Rooftop dinner</b><div class="row"><i>Jul 10</i>
+            <span class="hearts">&hearts;&hearts;&hearts;&hearts;&hearts;<em></em></span></div></div></div>
+        <div class="pin">
+          <img src="../inspiration/date-analyzer/pink-scooter-parked-by-flowers.jpg" alt="">
+          <div class="cap"><b>Jaffa ride</b><div class="row"><i>Jul 18</i>
+            <span class="hearts">&hearts;&hearts;&hearts;&hearts;<em>&#9825;</em></span></div></div></div>
+        <div class="pin"><i class="washi"></i>
+          <img src="../inspiration/date-analyzer/books-cherries-pink-gingham.jpg" alt="">
+          <div class="cap"><b>Bookshop crawl</b><div class="row"><i>Jul 6</i>
+            <span class="hearts">&hearts;&hearts;&hearts;<em>&#9825;&#9825;</em></span></div></div></div>
+        <div class="pin">
+          <img src="../inspiration/date-analyzer/i-love-you-written-in-sand.jpg" alt="">
+          <div class="cap"><b>Beach morning</b><div class="row"><i>Jul 15</i>
+            <span class="hearts">&hearts;&hearts;&hearts;&hearts;&hearts;<em></em></span></div></div></div>
+        <div class="pin">
+          <img src="../inspiration/date-analyzer/painted-shelf-books-plants-teapots.jpg" alt="">
+          <div class="cap"><b>Plant market</b><div class="row"><i>Jul 1</i>
+            <span class="hearts">&hearts;&hearts;&hearts;&hearts;<em>&#9825;</em></span></div></div></div>
+      </div>
+
+      <div class="fab">+</div>
+    </div>
+  </div>
+</div>

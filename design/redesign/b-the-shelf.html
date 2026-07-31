@@ -1,0 +1,201 @@
+<meta charset="utf-8">
+<title>Redesign B - The Shelf</title>
+<style>
+  body { margin:0; background:#161018; font:14px/1.4 "Segoe UI",system-ui,sans-serif; color:#7d6f78; }
+  .stage { display:flex; gap:28px; padding:28px; align-items:flex-start; }
+  .lbl { font:700 11px/1 "Segoe UI"; letter-spacing:.16em; text-transform:uppercase; margin:0 0 8px 4px; color:#6a5d67; }
+  .phone { width:390px; height:844px; overflow:hidden; border-radius:34px; position:relative;
+           box-shadow:0 20px 60px rgba(0,0,0,.55); }
+
+  /* ---- The Shelf: plum-stained walnut, gilt edges, raspberry accent ---- */
+  .sh {
+    --cream:#f6e9ee; --cream-dim:#c0a5b2;
+    --wood:#2a1b26; --wood-2:#38253180; --grain:#4a3040;
+    --gilt:#d3ad63; --cherry:#ff7fa2;
+    background:linear-gradient(180deg,#3a2634,#2a1b26 55%,#20141d);
+    color:var(--cream); font:15px/1.45 "Segoe UI",system-ui,sans-serif;
+    display:flex; flex-direction:column;
+  }
+  .sh .bar { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 6px; }
+  .sh .wordmark { font:600 21px/1 "Palatino Linotype",Georgia,serif; letter-spacing:.03em; }
+  .sh .wordmark i { color:var(--cherry); font-style:normal; }
+  .sh .dots { width:34px; height:34px; border-radius:11px; background:#3a2735;
+              border:1px solid var(--grain); display:grid; place-items:center; color:var(--cream-dim); }
+
+  /* the photo leans on the top shelf, edge to edge */
+  .sh .frame { position:relative; margin-top:4px; }
+  .sh .frame img { width:100%; height:290px; object-fit:cover; display:block; }
+  .sh .frame::after { content:""; position:absolute; inset:0;
+    background:linear-gradient(180deg,rgba(30,19,28,.32) 0 10%,rgba(30,19,28,0) 34%,rgba(30,19,28,.92) 92%); }
+  .sh .frame .plate { position:absolute; left:16px; right:16px; bottom:10px; z-index:2;
+                      display:flex; align-items:baseline; gap:8px; }
+  .sh .frame .plate h2 { margin:0; font:600 20px/1.15 "Palatino Linotype",Georgia,serif; }
+  .sh .frame .plate span { font-size:12px; color:#dcc4ce; }
+  .sh .frame .plate .hearts { margin-left:auto; }
+  .sh .hearts { color:#ffb3c8; font-size:14px; letter-spacing:2px; text-shadow:0 1px 3px rgba(0,0,0,.6); }
+  .sh .ledge { height:14px; border-top:2px solid #6b4a5e;
+    background:linear-gradient(180deg,#57394b 0 5px,#3a2532 5px,#241722);
+    box-shadow:0 9px 18px rgba(0,0,0,.6); }
+
+  /* the pulled-out book = tonight's suggestion. one line, no eyebrow */
+  .sh .pull { margin:16px 16px 0 8px; display:flex; align-items:stretch; }
+  .sh .pull .spine { flex:1; background:linear-gradient(180deg,#7a3550,#57243a);
+    border-radius:4px 9px 9px 4px; padding:11px 14px; box-shadow:0 4px 10px rgba(0,0,0,.42);
+    border-left:5px solid var(--gilt); }
+  .sh .pull h3 { margin:0; font:600 19px/1.2 "Palatino Linotype",Georgia,serif; color:#fdeef3; }
+  .sh .pull p { margin:2px 0 0; font-size:12.5px; color:#e0b1c1; }
+  .sh .pull .go { align-self:center; margin-left:10px; flex:none; background:var(--cherry); color:#3a1524;
+    border:0; font:700 13px/1 "Segoe UI"; padding:11px 15px; border-radius:9px; }
+
+  /* the stack: each date is a book laid flat, its cover photo is the visible edge */
+  .sh .sect { display:flex; align-items:baseline; font:700 10.5px/1 "Segoe UI"; letter-spacing:.18em;
+              text-transform:uppercase; color:var(--cream-dim); margin:20px 16px 9px; }
+  .sh .sect span { margin-left:auto; letter-spacing:0; text-transform:none; font-weight:400; font-size:12px; }
+  .sh .stack { margin:0 8px; }
+  .sh .book { display:flex; align-items:center; gap:0; height:68px; margin-bottom:5px; overflow:hidden;
+    border-radius:4px 10px 10px 4px; border-left:5px solid var(--edge-col,var(--gilt));
+    background:linear-gradient(180deg,var(--top),var(--bot)); box-shadow:0 3px 0 rgba(0,0,0,.34);
+    --top:#432c3c; --bot:#33212e; }
+  .sh .book:nth-child(even) { --top:#3b2634; --bot:#2c1c28; }
+  .sh .book img { width:92px; height:68px; object-fit:cover; display:block; flex:none; }
+  .sh .book .t { min-width:0; padding:0 10px 0 12px; }
+  .sh .book h4 { margin:0; font:600 16px/1.2 "Palatino Linotype",Georgia,serif; color:#f9eff3;
+                 white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .sh .book small { color:#c9b3bf; font-size:11.5px; }
+  .sh .book .hearts { margin-left:auto; padding-right:12px; flex:none; }
+  .sh .book.b2 { --edge-col:#8fb08e; }   /* outdoors */
+  .sh .book.b3 { --edge-col:#d2765f; }   /* dining */
+  .sh .book.b4 { --edge-col:#8f93c8; }   /* culture */
+  .sh .book.b5 { --edge-col:#d3ad63; }   /* at home */
+
+  .sh .more { margin:2px 16px 0; display:flex; align-items:center; gap:8px;
+              color:var(--cream-dim); font-size:13px; }
+  .sh .more::after { content:"\203A"; margin-left:auto; font-size:19px; color:var(--gilt); }
+  .sh .shelfline { height:12px; margin:8px 8px 0; border-radius:3px;
+    background:linear-gradient(180deg,#57394b,#241722); box-shadow:0 8px 16px rgba(0,0,0,.55); }
+
+  .sh .scroll { flex:1; overflow:hidden;
+    -webkit-mask-image:linear-gradient(180deg,#000 85%,transparent 97%);
+    mask-image:linear-gradient(180deg,#000 85%,transparent 97%); }
+
+  /* bottom rail sits on the lowest shelf */
+  .sh .dock { position:absolute; left:0; right:0; bottom:0; height:70px; padding:0 10px;
+    background:linear-gradient(180deg,#3b2735,#241722); border-top:2px solid #5d3f51;
+    display:flex; align-items:center; gap:4px; }
+  .sh .dock a { flex:1; text-align:center; font:600 12px/1 "Segoe UI"; color:var(--cream-dim);
+                text-decoration:none; padding:10px 0; border-radius:9px; }
+  .sh .dock a.on { color:#3a1524; background:var(--cherry); }
+  .sh .dock .plus { flex:none; width:46px; height:46px; margin-left:6px; border-radius:12px;
+    background:var(--cherry); color:#3a1524; font-size:25px; display:grid; place-items:center;
+    box-shadow:0 4px 0 #b45472; }
+
+  /* Album */
+  .sh .searchrow { display:flex; gap:8px; padding:4px 16px 10px; }
+  .sh .searchrow input { flex:1; background:#3a2735; border:1px solid var(--grain); color:var(--cream);
+    border-radius:9px; padding:9px 11px; font:14px "Segoe UI"; }
+  .sh .searchrow input::placeholder { color:#a08c99; }
+  .sh .searchrow .chip { background:#3a2735; border:1px solid var(--grain); color:var(--cream-dim);
+    border-radius:9px; padding:9px 12px; font:15px "Segoe UI"; }
+  .sh .yeartag { font:600 13px/1 "Palatino Linotype",Georgia,serif; color:var(--gilt);
+                 margin:12px 16px 8px; letter-spacing:.08em; }
+  /* unfilled hearts stay visible so 3/5 and 5/5 are tellable apart */
+  .hearts em { font-style:normal; opacity:.42; }
+</style>
+
+<div class="stage">
+  <div>
+    <p class="lbl">B - The Shelf / Home</p>
+    <div class="phone sh">
+      <div class="bar"><div class="wordmark">Us <i>&hearts;</i></div><div class="dots">&#8943;</div></div>
+
+      <div class="frame">
+        <img src="../inspiration/date-analyzer/swing-chair-field-ocean-sunset.png" alt="">
+        <div class="plate">
+          <h2>The swing at Rosh Hanikra</h2><span>Jul 22</span>
+          <span class="hearts">&hearts;&hearts;&hearts;&hearts;&hearts;<em></em></span>
+        </div>
+      </div>
+      <div class="ledge"></div>
+
+      <div class="pull">
+        <div class="spine">
+          <h3>Day trip to the coast</h3>
+          <p>Five stars last time, not since April</p>
+        </div>
+        <button class="go">Plan it</button>
+      </div>
+
+      <div class="sect">This month <span>3 dates</span></div>
+      <div class="stack">
+        <div class="book b2"><img src="../inspiration/date-analyzer/pink-scooter-parked-by-flowers.jpg" alt="">
+          <div class="t"><h4>Scooter ride to Jaffa</h4><small>Jul 18 &middot; Outdoors</small></div>
+          <span class="hearts">&hearts;&hearts;&hearts;&hearts;<em>&#9825;</em></span></div>
+        <div class="book b2"><img src="../inspiration/date-analyzer/i-love-you-written-in-sand.jpg" alt="">
+          <div class="t"><h4>Beach morning, no phones</h4><small>Jul 15 &middot; Outdoors</small></div>
+          <span class="hearts">&hearts;&hearts;&hearts;&hearts;&hearts;<em></em></span></div>
+        <div class="book b3"><img src="../inspiration/date-analyzer/two-people-bench-sky-candles.png" alt="">
+          <div class="t"><h4>Rooftop dinner</h4><small>Jul 10 &middot; Dining</small></div>
+          <span class="hearts">&hearts;&hearts;&hearts;&hearts;&hearts;<em></em></span></div>
+      </div>
+      <div class="shelfline"></div>
+      <div class="more" style="margin-top:10px">16 more on the shelf</div>
+
+      <div class="dock">
+        <a class="on">Home</a><a>Album</a><a>Ideas</a><a>Stats</a>
+        <div class="plus">+</div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <p class="lbl">B - The Shelf / Album</p>
+    <div class="phone sh">
+      <div class="bar"><div class="wordmark">Album</div><div class="dots">&#8943;</div></div>
+      <div class="searchrow">
+        <input placeholder="Search 19 dates"><div class="chip">&#8645;</div><div class="chip">&#9662;</div>
+      </div>
+
+      <div class="scroll">
+        <div class="yeartag">2026</div>
+        <div class="stack">
+          <div class="book b2"><img src="../inspiration/date-analyzer/swing-chair-field-ocean-sunset.png" alt="">
+            <div class="t"><h4>The swing at Rosh Hanikra</h4><small>Jul 22 &middot; Outdoors</small></div>
+            <span class="hearts">&hearts;&hearts;&hearts;&hearts;&hearts;<em></em></span></div>
+          <div class="book b2"><img src="../inspiration/date-analyzer/pink-scooter-parked-by-flowers.jpg" alt="">
+            <div class="t"><h4>Scooter ride to Jaffa</h4><small>Jul 18 &middot; Outdoors</small></div>
+            <span class="hearts">&hearts;&hearts;&hearts;&hearts;<em>&#9825;</em></span></div>
+          <div class="book b2"><img src="../inspiration/date-analyzer/i-love-you-written-in-sand.jpg" alt="">
+            <div class="t"><h4>Beach morning, no phones</h4><small>Jul 15 &middot; Outdoors</small></div>
+            <span class="hearts">&hearts;&hearts;&hearts;&hearts;&hearts;<em></em></span></div>
+          <div class="book b3"><img src="../inspiration/date-analyzer/two-people-bench-sky-candles.png" alt="">
+            <div class="t"><h4>Rooftop dinner</h4><small>Jul 10 &middot; Dining</small></div>
+            <span class="hearts">&hearts;&hearts;&hearts;&hearts;&hearts;<em></em></span></div>
+          <div class="book b4"><img src="../inspiration/date-analyzer/books-cherries-pink-gingham.jpg" alt="">
+            <div class="t"><h4>Bookshop crawl</h4><small>Jul 6 &middot; Culture</small></div>
+            <span class="hearts">&hearts;&hearts;&hearts;<em>&#9825;&#9825;</em></span></div>
+          <div class="book b2"><img src="../inspiration/date-analyzer/painted-shelf-books-plants-teapots.jpg" alt="">
+            <div class="t"><h4>Plant market</h4><small>Jul 1 &middot; Outdoors</small></div>
+            <span class="hearts">&hearts;&hearts;&hearts;&hearts;<em>&#9825;</em></span></div>
+        </div>
+        <div class="shelfline"></div>
+        <div class="yeartag">2025</div>
+        <div class="stack">
+          <div class="book b3"><img src="../inspiration/date-analyzer/two-people-bench-sky-candles.png" alt="">
+            <div class="t"><h4>Anniversary rooftop</h4><small>Dec 24 &middot; Dining</small></div>
+            <span class="hearts">&hearts;&hearts;&hearts;&hearts;&hearts;<em></em></span></div>
+          <div class="book b5"><img src="../inspiration/date-analyzer/books-cherries-pink-gingham.jpg" alt="">
+            <div class="t"><h4>Rainy day baking</h4><small>Dec 12 &middot; At home</small></div>
+            <span class="hearts">&hearts;&hearts;&hearts;&hearts;<em>&#9825;</em></span></div>
+          <div class="book b4"><img src="../inspiration/date-analyzer/painted-shelf-books-plants-teapots.jpg" alt="">
+            <div class="t"><h4>Museum of Illusions</h4><small>Nov 30 &middot; Culture</small></div>
+            <span class="hearts">&hearts;&hearts;&hearts;<em>&#9825;&#9825;</em></span></div>
+        </div>
+      </div>
+
+      <div class="dock">
+        <a>Home</a><a class="on">Album</a><a>Ideas</a><a>Stats</a>
+        <div class="plus">+</div>
+      </div>
+    </div>
+  </div>
+</div>

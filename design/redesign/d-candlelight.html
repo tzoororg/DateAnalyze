@@ -1,0 +1,201 @@
+<meta charset="utf-8">
+<title>Redesign D - Candlelight</title>
+<style>
+  body { margin:0; background:#0f0a12; font:14px/1.4 "Segoe UI",system-ui,sans-serif; color:#7b6b7a; }
+  .stage { display:flex; gap:28px; padding:28px; align-items:flex-start; }
+  .lbl { font:700 11px/1 "Segoe UI"; letter-spacing:.16em; text-transform:uppercase; margin:0 0 8px 4px; color:#665a68; }
+  .phone { width:390px; height:844px; overflow:hidden; border-radius:34px; position:relative;
+           box-shadow:0 20px 60px rgba(0,0,0,.6); }
+
+  /* ---- Candlelight: plum night, one warm flame, raspberry accent ---- */
+  .cl {
+    --ink:#f4e9f0; --ink-dim:#bfa3b8;
+    --night:#1c1023; --lift:#2b1a31; --edge:#42294a;
+    --rose:#ff7fa2; --flame:#ffc98a;
+    background:radial-gradient(120% 45% at 78% 4%, #4a2445 0%, #2a1630 44%, var(--night) 100%);
+    color:var(--ink); font:15px/1.45 "Segoe UI",system-ui,sans-serif;
+    display:flex; flex-direction:column;
+  }
+  .cl .bar { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 6px; }
+  .cl .wordmark { font:600 20px/1 "Segoe UI"; letter-spacing:.06em; }
+  .cl .wordmark i { color:var(--rose); font-style:normal; }
+  .cl .dots { width:34px; height:34px; border-radius:999px; background:rgba(255,255,255,.06);
+              border:1px solid var(--edge); display:grid; place-items:center; color:var(--ink-dim); }
+  .cl .hearts { color:#ffb3c8; font-size:14px; letter-spacing:2px; text-shadow:0 1px 3px rgba(0,0,0,.75); }
+
+  /* the flame: tonight's suggestion, lit from a single warm point */
+  .cl .flamecard { margin:6px 16px 0; padding:13px 15px; border-radius:20px; position:relative;
+    background:radial-gradient(120% 100% at 8% 50%, rgba(255,201,138,.20), rgba(255,127,162,.08) 55%, rgba(255,255,255,.03));
+    border:1px solid rgba(255,201,138,.22); display:flex; align-items:center; gap:12px; overflow:hidden; }
+  .cl .flamecard .wick { width:9px; height:9px; border-radius:50%; flex:none; background:#ffd9a3;
+    box-shadow:0 0 8px 3px rgba(255,190,110,.65), 0 0 26px 10px rgba(255,150,90,.28); }
+  .cl .flamecard h3 { margin:0; font:600 19px/1.2 "Segoe UI"; letter-spacing:-.01em; }
+  .cl .flamecard p { margin:2px 0 0; font-size:12.5px; color:var(--ink-dim); }
+  .cl .flamecard .go { margin-left:auto; flex:none; background:var(--rose); color:#2e1020; border:0;
+    font:700 13px/1 "Segoe UI"; padding:10px 15px; border-radius:999px; }
+
+  /* the echo, quiet, a thumbnail and one line of their handwriting */
+  .cl .echo { margin:14px 16px 0; display:flex; gap:11px; align-items:center;
+              border-top:1px solid var(--edge); padding-top:13px; }
+  .cl .echo img { width:52px; height:52px; border-radius:14px; object-fit:cover; flex:none; }
+  .cl .echo .k { font:700 10.5px/1 "Segoe UI"; letter-spacing:.16em; text-transform:uppercase; color:var(--rose); }
+  .cl .echo p { margin:4px 0 0; font:italic 14.5px/1.3 "Palatino Linotype",Georgia,serif; color:#e6d5ea; }
+
+  /* Home: the newest memory, full width, nothing flanking it */
+  .cl .latest { margin:16px 0 0; position:relative; }
+  .cl .latest img { width:100%; height:296px; object-fit:cover; display:block; }
+  .cl .latest::after { content:""; position:absolute; inset:0;
+    background:linear-gradient(180deg,rgba(20,10,25,0) 40%, rgba(20,10,25,.92)); }
+  .cl .latest .cap { position:absolute; left:16px; right:16px; bottom:11px; z-index:2;
+                     display:flex; align-items:flex-end; gap:8px; }
+  .cl .latest .cap b { font:600 19px/1.15 "Segoe UI"; }
+  .cl .latest .cap span { font-size:12px; color:#d3bfd6; }
+  .cl .latest .cap .hearts { margin-left:auto; }
+
+  .cl .strip { display:flex; gap:9px; padding:14px 0 0 16px; overflow:hidden;
+    -webkit-mask-image:linear-gradient(90deg,#000 80%,transparent);
+    mask-image:linear-gradient(90deg,#000 80%,transparent); }
+  .cl .strip figure { margin:0; flex:none; width:112px; }
+  .cl .strip img { width:112px; height:136px; object-fit:cover; border-radius:15px; display:block; }
+  .cl .strip figcaption { font-size:11.5px; color:var(--ink-dim); margin-top:5px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+  /* Album: one lit thread, memories hang off it, photos keep the full width */
+  .cl .thread { flex:1; overflow:hidden; padding:10px 16px 0; position:relative;
+    -webkit-mask-image:linear-gradient(180deg,#000 86%,transparent 98%);
+    mask-image:linear-gradient(180deg,#000 86%,transparent 98%); }
+  /* the thread reads as a lit seam down the left edge of every card: no width stolen */
+  .cl .node { position:relative; margin-bottom:13px; border-radius:18px; overflow:hidden;
+              box-shadow:inset 16px 0 26px -16px rgba(255,201,138,.65); }
+  .cl .node .flame-dot { position:absolute; left:10px; top:12px; z-index:3; width:7px; height:7px;
+    border-radius:50%; background:var(--flame); box-shadow:0 0 8px 3px rgba(255,190,110,.6); }
+  .cl .node img { width:100%; height:168px; object-fit:cover; display:block; }
+  .cl .node::after { content:""; position:absolute; inset:0; pointer-events:none;
+    background:linear-gradient(180deg,rgba(20,10,25,.34) 0 16%,rgba(20,10,25,0) 42%, rgba(20,10,25,.9)); }
+  .cl .node .cap { position:absolute; left:14px; right:14px; bottom:10px; z-index:2;
+    display:flex; align-items:flex-end; gap:8px; }
+  .cl .node .cap b { font:600 17px/1.15 "Segoe UI"; }
+  .cl .node .cap span { font-size:11.5px; color:#d3bfd6; }
+  .cl .node .cap .hearts { margin-left:auto; }
+  /* no photo on this one: same rhythm, half the height, still on the thread */
+  .cl .node.text { height:64px; display:flex; align-items:center; padding:0 14px 0 26px;
+    background:var(--lift); border:1px solid var(--edge); }
+  .cl .node.text::after { display:none; }
+  .cl .node.text .flame-dot { top:50%; margin-top:-3px; background:#7a5f80; box-shadow:none; }
+  .cl .node.text b { font:600 16px/1.2 "Segoe UI"; display:block; }
+  .cl .node.text small { color:var(--ink-dim); font-size:12px; }
+  .cl .node.text .hearts { margin-left:auto; }
+  .cl .monthmark { font:700 10.5px/1 "Segoe UI"; letter-spacing:.18em; text-transform:uppercase;
+    color:var(--ink-dim); margin:4px 0 10px 2px; }
+  .cl .count { font-size:12.5px; color:var(--ink-dim); margin:0 18px 0; }
+
+  .cl .search { display:flex; gap:8px; padding:8px 16px 0; }
+  .cl .search input { flex:1; background:rgba(255,255,255,.06); border:1px solid var(--edge);
+    color:var(--ink); border-radius:999px; padding:9px 14px; font:14px "Segoe UI"; }
+  .cl .search input::placeholder { color:#a48bb0; }
+  .cl .search .chip { background:rgba(255,255,255,.06); border:1px solid var(--edge); color:var(--ink-dim);
+    border-radius:999px; padding:9px 14px; font:15px "Segoe UI"; }
+
+  .cl .dock { position:absolute; left:14px; right:14px; bottom:14px; height:56px; border-radius:999px;
+    background:rgba(48,29,54,.88); backdrop-filter:blur(14px); border:1px solid var(--edge);
+    display:flex; align-items:center; padding:0 6px; }
+  .cl .dock a { flex:1; text-align:center; font:600 12px/1 "Segoe UI"; color:var(--ink-dim);
+    text-decoration:none; padding:9px 0; border-radius:999px; }
+  .cl .dock a.on { color:#2e1020; background:var(--rose); }
+  .cl .dock .plus { flex:none; width:44px; height:44px; margin-left:4px; border-radius:50%;
+    background:var(--rose); color:#2e1020; box-shadow:0 0 0 3px rgba(255,201,138,.22); font-size:24px;
+    display:grid; place-items:center; box-shadow:0 6px 16px rgba(255,140,150,.32); }
+  /* unfilled hearts stay visible so 3/5 and 5/5 are tellable apart */
+  .hearts em { font-style:normal; opacity:.42; }
+</style>
+
+<div class="stage">
+  <div>
+    <p class="lbl">D - Candlelight / Home</p>
+    <div class="phone cl">
+      <div class="bar"><div class="wordmark">Us <i>&hearts;</i></div><div class="dots">&#8943;</div></div>
+
+      <div class="flamecard">
+        <div class="wick"></div>
+        <div>
+          <h3>Day trip to the coast</h3>
+          <p>Five stars last time, not since April</p>
+        </div>
+        <button class="go">Plan it</button>
+      </div>
+
+      <div class="echo">
+        <img src="../inspiration/date-analyzer/two-people-bench-sky-candles.png" alt="">
+        <div>
+          <div class="k">One year ago tonight</div>
+          <p>"If you are reading this, book the rooftop again."</p>
+        </div>
+      </div>
+
+      <div class="latest">
+        <img src="../inspiration/date-analyzer/swing-chair-field-ocean-sunset.png" alt="">
+        <div class="cap"><b>The swing at Rosh Hanikra</b><span>Jul 22</span>
+          <span class="hearts">&hearts;&hearts;&hearts;&hearts;&hearts;<em></em></span></div>
+      </div>
+
+      <div class="strip">
+        <figure><img src="../inspiration/date-analyzer/pink-scooter-parked-by-flowers.jpg" alt=""><figcaption>Jaffa ride</figcaption></figure>
+        <figure><img src="../inspiration/date-analyzer/i-love-you-written-in-sand.jpg" alt=""><figcaption>Beach morning</figcaption></figure>
+        <figure><img src="../inspiration/date-analyzer/books-cherries-pink-gingham.jpg" alt=""><figcaption>Bookshop crawl</figcaption></figure>
+      </div>
+
+      <div class="dock">
+        <a class="on">Home</a><a>Album</a><a>Ideas</a><a>Stats</a>
+        <div class="plus">+</div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <p class="lbl">D - Candlelight / Album</p>
+    <div class="phone cl">
+      <div class="bar"><div class="wordmark">Album</div><div class="dots">&#8943;</div></div>
+      <div class="search">
+        <input placeholder="Search 19 dates"><div class="chip">&#9662;</div>
+      </div>
+      <p class="count">19 dates, 6 this month</p>
+
+      <div class="thread">
+        <div class="monthmark">July</div>
+        <div class="node">
+          <i class="flame-dot"></i>
+          <img src="../inspiration/date-analyzer/swing-chair-field-ocean-sunset.png" alt="">
+          <div class="cap"><b>The swing at Rosh Hanikra</b><span>Jul 22</span>
+            <span class="hearts">&hearts;&hearts;&hearts;&hearts;&hearts;<em></em></span></div>
+        </div>
+        <div class="node text">
+          <i class="flame-dot"></i>
+          <div><b>Scooter ride to Jaffa</b><small>Jul 18 &middot; Outdoors</small></div>
+          <span class="hearts">&hearts;&hearts;&hearts;&hearts;<em>&#9825;</em></span>
+        </div>
+        <div class="node">
+          <i class="flame-dot"></i>
+          <img src="../inspiration/date-analyzer/two-people-bench-sky-candles.png" alt="">
+          <div class="cap"><b>Rooftop dinner</b><span>Jul 10</span>
+            <span class="hearts">&hearts;&hearts;&hearts;&hearts;&hearts;<em></em></span></div>
+        </div>
+        <div class="node text">
+          <i class="flame-dot"></i>
+          <div><b>Bookshop crawl</b><small>Jul 6 &middot; Culture</small></div>
+          <span class="hearts">&hearts;&hearts;&hearts;<em>&#9825;&#9825;</em></span>
+        </div>
+        <div class="node">
+          <i class="flame-dot"></i>
+          <img src="../inspiration/date-analyzer/i-love-you-written-in-sand.jpg" alt="">
+          <div class="cap"><b>Beach morning, no phones</b><span>Jul 15</span>
+            <span class="hearts">&hearts;&hearts;&hearts;&hearts;&hearts;<em></em></span></div>
+        </div>
+      </div>
+
+      <div class="dock">
+        <a>Home</a><a class="on">Album</a><a>Ideas</a><a>Stats</a>
+        <div class="plus">+</div>
+      </div>
+    </div>
+  </div>
+</div>
