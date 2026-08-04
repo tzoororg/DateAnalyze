@@ -5,7 +5,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const dir = path.dirname(fileURLToPath(import.meta.url));
-const mocks = ["mock-a-love-letters", "mock-b-golden-hour", "mock-c-reading-nook", "mock-d-riviera"];
+const mocks = process.argv.length > 2 ? process.argv.slice(2)
+  : ["mock-a-love-letters", "mock-b-golden-hour", "mock-c-reading-nook", "mock-d-riviera",
+     "b1-plum-dusk", "b2-candlelight", "b3-blue-hour"];
 
 const cdp = await launchChrome({ port: 9231, profileName: "cdp-redesign-mocks" });
 try {

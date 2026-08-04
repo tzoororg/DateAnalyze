@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B1 · Plum Dusk</title>
+<style>
+  /* Variation B1: "Plum Dusk" — the chosen Golden Hour direction on the app's
+     existing plum theme tokens. Sunset-amber is ambience only (bg glow, card
+     border); raspberry stays the interactive accent.
+     Token migration: none for base; new --glow/--glow-deep pair. */
+  :root {
+    --bg: #2a1b26;
+    --bg-soft: #33222e;
+    --card: #3b2a37;
+    --card-2: #4a3444;
+    --line: #54394c;
+    --text: #f5e6ee;
+    --muted: #c99bb0;
+    --accent: #ff7fa2;        /* charter raspberry */
+    --accent-2: #ff9fba;
+    --glow: #f4a15d;          /* lantern amber */
+    --glow-deep: #e2703a;
+    --radius: 16px;
+    --shadow: 0 6px 16px rgba(0, 0, 0, .4);
+    --cursive: "Segoe Script", "Bradley Hand", cursive;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    width: 390px; min-height: 844px; margin: 0 auto;
+    background:
+      radial-gradient(140% 46% at 50% -6%, rgba(226, 112, 58, .28), transparent 60%),
+      linear-gradient(180deg, var(--bg-soft), var(--bg) 55%);
+    color: var(--text);
+    font: 15px/1.4 "Segoe UI", system-ui, sans-serif;
+    overflow: hidden;
+  }
+  header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px 2px; }
+  .title { font: 700 26px var(--cursive); color: var(--accent); transform: rotate(-2deg); }
+  /* raspberry stays the interactive accent; amber is ambience only */
+  .title small { font: 400 13px "Segoe UI"; color: var(--muted); }
+  .icon-btn {
+    width: 36px; height: 36px; border-radius: 12px; border: none;
+    background: var(--card); color: var(--muted); font-size: 17px;
+    display: grid; place-items: center; box-shadow: var(--shadow);
+  }
+  .tabs { display: flex; gap: 6px; padding: 6px 16px 10px; }
+  .tab {
+    flex: 1; text-align: center; padding: 8px 0; border-radius: 999px;
+    background: var(--card); border: 1.5px solid var(--line);
+    color: var(--muted); font-size: 12.5px; font-weight: 700;
+  }
+  .tab.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .view { padding: 0 16px 96px; } /* list scrolls clear of the FAB */
+
+  /* Tonight card: warm invitation, the one glowing thing on screen */
+  .tonight {
+    position: relative; border-radius: var(--radius); overflow: hidden;
+    margin-bottom: 14px; box-shadow: 0 8px 22px rgba(226, 112, 58, .22);
+    background: linear-gradient(140deg, #4a2a2c, var(--card) 70%);
+    border: 1px solid rgba(244, 161, 93, .35);
+    padding: 14px;
+  }
+  /* amber stays ambience-only (bg glow, card border); text accents are raspberry */
+  .tonight .eyebrow { font: 700 13px var(--cursive); color: var(--accent-2); margin-bottom: 4px; }
+  .tonight .line { font-size: 14.5px; }
+  .tonight .line b { color: var(--accent); }
+
+  /* Date cards: photo full-bleed with dusk scrim, meta overlaid at the bottom */
+  .dusk-card {
+    position: relative; border-radius: var(--radius); overflow: hidden;
+    margin-bottom: 12px; box-shadow: var(--shadow); background: var(--card);
+  }
+  /* one shared 165px card height (charter: consistent geometry) */
+  .dusk-card img { width: 100%; height: 150px; object-fit: cover; display: block; }
+  .dusk-card .scrim {
+    position: absolute; inset: auto 0 0 0; padding: 34px 12px 8px;
+    /* one scrim spec for every card: AA holds regardless of photo brightness */
+    background: linear-gradient(180deg, transparent 0%, rgba(24, 10, 14, .6) 52%, rgba(24, 10, 14, .92) 100%);
+    display: flex; align-items: baseline; gap: 8px; color: #fff;
+  }
+  .scrim .name { font-weight: 700; font-size: 15px; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .scrim .date { color: #ddb9c6; font-size: 12px; }
+  .scrim .glow { color: var(--accent-2); font-size: 12.5px; letter-spacing: 1px; }
+
+  /* Ember strip: totals as one quiet row, not cards */
+  .embers {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--card); border-radius: 13px; box-shadow: var(--shadow);
+    padding: 8px 14px; margin-bottom: 12px;
+  }
+  .ember { text-align: center; }
+  .ember .n { font: 700 18px Georgia, serif; color: var(--accent); }
+  .ember .l { font-size: 10.5px; color: var(--muted); font-weight: 700; }
+  .embers .sep { width: 1px; height: 26px; background: var(--line); }
+
+  .fab {
+    position: fixed; right: calc(50% - 195px + 16px); bottom: 22px;
+    width: 56px; height: 56px; border-radius: 50%; border: none;
+    background: var(--accent); color: #fff; font-size: 26px; font-weight: 700;
+    box-shadow: 0 8px 20px rgba(255, 127, 162, .4);
+    display: grid; place-items: center;
+  }
+</style>
+</head>
+<body>
+  <header>
+    <div class="title">Us ♥</div>
+    <div class="icon-btn">⋯</div>
+  </header>
+  <nav class="tabs">
+    <div class="tab on">Home</div>
+    <div class="tab">History</div>
+    <div class="tab">Insights</div>
+    <div class="tab">Suggest</div>
+  </nav>
+  <main class="view">
+    <div class="tonight">
+      <div class="eyebrow">one year ago tonight</div>
+      <div class="line">Rooftop picnic under the string lights. <b>5 hearts</b>, you said you'd do it again.</div>
+    </div>
+
+    <div class="embers">
+      <div class="ember"><div class="n">47</div><div class="l">dates</div></div>
+      <div class="sep"></div>
+      <div class="ember"><div class="n">12</div><div class="l">this year</div></div>
+      <div class="sep"></div>
+      <div class="ember"><div class="n">4.3</div><div class="l">avg ♥</div></div>
+    </div>
+
+    <div class="dusk-card">
+      <img src="https://picsum.photos/seed/evening-glow-city/780/350" alt="">
+      <div class="scrim">
+        <div class="name">Night market by the port</div>
+        <div class="date">Sat · Jul 26</div>
+        <div class="glow">♥♥♥♥♥</div>
+      </div>
+    </div>
+
+    <div class="dusk-card">
+      <img src="https://picsum.photos/seed/night-lights-bokeh/780/260" alt="">
+      <div class="scrim">
+        <div class="name">Pasta from scratch, take two</div>
+        <div class="date">Tue · Jul 15</div>
+        <div class="glow">♥♥♥♥</div>
+      </div>
+    </div>
+
+    <div class="dusk-card">
+      <img src="https://picsum.photos/seed/sunset-pier-gold/780/260" alt="">
+      <div class="scrim">
+        <div class="name">Sunrise hike, almost on time</div>
+        <div class="date">Sun · Jul 6</div>
+        <div class="glow">♥♥♥</div>
+      </div>
+    </div>
+  </main>
+  <button class="fab">+</button>
+</body>
+</html>
