@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mock D · Riviera</title>
+<style>
+  /* Direction D: "Riviera" — the pink scooter on the Amalfi coast. Airy sky
+     blue + blush + terracotta postcard pastels. Sunlit, breezy, light theme.
+     Token migration if chosen: light "pink" theme family -> sky/cream family,
+     --accent raspberry -> terracotta #d96a54 with blush #f2b8c0 secondary;
+     pill tabs, FAB, postcard whimsy retained. */
+  :root {
+    --bg: #eaf2f6;
+    --bg-warm: #fdf1ec;
+    --card: #ffffff;
+    --line: #d8e2e8;
+    --text: #2f4152;
+    --muted: #7d93a3;
+    --accent: #d96a54;        /* terracotta roof */
+    --blush: #f2b8c0;
+    --sea: #7fb6c9;
+    --radius: 16px;
+    --shadow: 0 5px 14px rgba(70, 110, 135, .14);
+    --serif: Georgia, "Times New Roman", serif;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    width: 390px; min-height: 844px; margin: 0 auto;
+    background: linear-gradient(180deg, var(--bg-warm) 0%, var(--bg) 42%);
+    color: var(--text);
+    font: 15px/1.4 "Segoe UI", system-ui, sans-serif;
+    overflow: hidden;
+  }
+  header { display: flex; align-items: baseline; justify-content: space-between; padding: 15px 18px 4px; }
+  .title { font: 700 23px var(--serif); letter-spacing: .01em; }
+  .title .amp { color: var(--accent); font-style: italic; }
+  .icon-btn {
+    width: 36px; height: 36px; border-radius: 12px; border: 1px solid var(--line);
+    background: var(--card); color: var(--muted); font-size: 17px;
+    display: grid; place-items: center; box-shadow: var(--shadow);
+  }
+  .tabs { display: flex; gap: 6px; padding: 9px 16px 13px; }
+  .tab {
+    flex: 1; text-align: center; padding: 8px 0; border-radius: 999px;
+    background: var(--card); border: 1.5px solid var(--line);
+    color: var(--muted); font-size: 12.5px; font-weight: 700;
+  }
+  .tab.on { background: var(--accent); border-color: var(--accent); color: #fff8f5; }
+  .view { padding: 0 16px 96px; } /* list scrolls clear of the FAB */
+
+  /* Postcard memory: stamp corner + serif message */
+  .postcard {
+    position: relative; background: var(--card); border-radius: var(--radius);
+    padding: 13px 58px 13px 14px; margin-bottom: 14px; box-shadow: var(--shadow);
+    border: 1px solid var(--line);
+    transform: rotate(-.6deg);   /* sticker-book tilt */
+  }
+  /* washi tape holding the postcard down — the one whimsy element */
+  .postcard::before {
+    content: ""; position: absolute; top: -8px; left: 24px; width: 74px; height: 18px;
+    background: rgba(242, 184, 192, .6); border-radius: 2px;
+    transform: rotate(-3deg);
+  }
+  .postcard .stamp {
+    position: absolute; top: 10px; right: 10px; width: 38px; height: 44px;
+    background: var(--bg-warm); border: 1px dashed var(--accent);
+    border-radius: 3px; display: grid; place-items: center;
+    color: var(--accent); font-size: 17px; transform: rotate(4deg);
+  }
+  .postcard .when { font: italic 700 13px var(--serif); color: var(--accent); margin-bottom: 2px; }
+  .postcard .line { font-size: 14px; }
+
+  /* Date cards: full-bleed photo, metadata on a bottom scrim.
+     One shared 165px height (charter: consistent geometry). Serif stays in
+     header + postcard; card names are sans so full titles fit at 390px. */
+  .card {
+    position: relative; border-radius: var(--radius); overflow: hidden;
+    box-shadow: var(--shadow); margin-bottom: 13px; border: 1px solid var(--line);
+  }
+  .card img { width: 100%; height: 165px; object-fit: cover; display: block; }
+  .card .scrim {
+    position: absolute; inset: auto 0 0 0; padding: 30px 13px 9px;
+    background: linear-gradient(180deg, transparent, rgba(22, 34, 44, .92) 78%);
+    display: flex; align-items: baseline; gap: 8px; color: #fff;
+  }
+  .scrim .name { font-weight: 700; font-size: 15px; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .scrim .date { color: #c9d8e2; font-size: 12px; }
+  .scrim .hearts { color: var(--blush); font-size: 12.5px; letter-spacing: 1px; }
+
+  /* Tide line totals: one strip, hairline dividers */
+  .tide {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--card); border: 1px solid var(--line); border-radius: 999px;
+    padding: 7px 22px; margin: 0 0 13px; box-shadow: var(--shadow);
+  }
+  .chip { display: flex; align-items: baseline; gap: 5px; }
+  .chip .n { font: 700 16px var(--serif); color: var(--sea); }
+  .chip.rose .n { color: var(--accent); }
+  .chip .l { font-size: 11px; color: var(--muted); font-weight: 700; }
+  .tide .sep { width: 1px; height: 22px; background: var(--line); }
+
+  .fab {
+    position: fixed; right: calc(50% - 195px + 16px); bottom: 22px;
+    width: 56px; height: 56px; border-radius: 50%; border: none;
+    background: var(--accent); color: #fff8f5; font-size: 26px;
+    box-shadow: 0 8px 18px rgba(217, 106, 84, .42);
+    display: grid; place-items: center;
+  }
+</style>
+</head>
+<body>
+  <header>
+    <div class="title">You <span class="amp">&amp;</span> Me</div>
+    <div class="icon-btn">⋯</div>
+  </header>
+  <nav class="tabs">
+    <div class="tab on">Home</div>
+    <div class="tab">History</div>
+    <div class="tab">Insights</div>
+    <div class="tab">Suggest</div>
+  </nav>
+  <main class="view">
+    <div class="postcard">
+      <div class="stamp">♥</div>
+      <div class="when">One year ago today</div>
+      <div class="line">Rooftop picnic under the string lights. Five hearts, and a promise to repeat it.</div>
+    </div>
+
+    <div class="tide">
+      <div class="chip"><span class="n">47</span><span class="l">dates</span></div>
+      <div class="sep"></div>
+      <div class="chip"><span class="n">12</span><span class="l">this year</span></div>
+      <div class="sep"></div>
+      <div class="chip rose"><span class="n">4.3</span><span class="l">avg ♥</span></div>
+    </div>
+
+    <div class="card">
+      <img src="https://picsum.photos/seed/coast-town-terrace/780/340" alt="">
+      <div class="scrim">
+        <div class="name">Night market by the port</div>
+        <div class="date">Sat · Jul 26</div>
+        <div class="hearts">♥♥♥♥♥</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <img src="https://picsum.photos/seed/lemon-kitchen-table/780/260" alt="">
+      <div class="scrim">
+        <div class="name">Pasta from scratch, take two</div>
+        <div class="date">Tue · Jul 15</div>
+        <div class="hearts">♥♥♥♥</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <img src="https://picsum.photos/seed/pastel-shore-path/780/260" alt="">
+      <div class="scrim">
+        <div class="name">Sunrise hike, almost on time</div>
+        <div class="date">Sun · Jul 6</div>
+        <div class="hearts">♥♥♥</div>
+      </div>
+    </div>
+  </main>
+  <button class="fab">+</button>
+</body>
+</html>

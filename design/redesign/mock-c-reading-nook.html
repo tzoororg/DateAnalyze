@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mock C · Reading Nook</title>
+<style>
+  /* Direction C: "Reading Nook" — the painted bookshelf. Deep botanical green,
+     walnut wood, cream serif type, terracotta accent. The couple's shared
+     journal living on a shelf.
+     Token migration if chosen: --bg/--card plum family -> green/cream family,
+     --accent raspberry #ff7fa2 -> terracotta #c96f4a; pill tabs, FAB, sticker
+     whimsy (tilted title, ribbon marker) retained. */
+  :root {
+    --bg: #21322a;
+    --bg-soft: #283b31;
+    --card: #f6efe2;          /* cream book page */
+    --card-ink: #3d3226;
+    --card-muted: #8c7c68;
+    --shelf: #5c4432;
+    --line: #37503f;
+    --text: #ede4d2;
+    --muted: #a9b8a5;
+    --accent: #c96f4a;        /* terracotta */
+    --accent-soft: #e0a184;
+    --radius: 12px;
+    --shadow: 0 6px 14px rgba(10, 20, 14, .4);
+    --serif: Georgia, "Times New Roman", serif;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    width: 390px; min-height: 844px; margin: 0 auto;
+    background: linear-gradient(180deg, var(--bg-soft), var(--bg) 40%);
+    color: var(--text);
+    font: 15px/1.4 "Segoe UI", system-ui, sans-serif;
+    overflow: hidden;
+  }
+  header { display: flex; align-items: baseline; justify-content: space-between; padding: 16px 18px 4px; }
+  .title { font: 700 24px var(--serif); color: var(--text); letter-spacing: .01em; }
+  .title em { color: var(--accent-soft); font-style: italic; }
+  .icon-btn {
+    width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--line);
+    background: transparent; color: var(--muted); font-size: 17px;
+    display: grid; place-items: center;
+  }
+  .tabs { display: flex; gap: 6px; padding: 10px 16px 14px; }
+  .tab {
+    flex: 1; text-align: center; padding: 8px 0; border-radius: 999px;
+    background: transparent; border: 1.5px solid var(--line);
+    color: var(--muted); font-size: 12.5px; font-weight: 700;
+  }
+  .tab.on { background: var(--accent); border-color: var(--accent); color: #fff6ef; }
+  .view { padding: 0 16px 96px; } /* list scrolls clear of the FAB */
+
+  /* Bookmark memory: a cream bookmark laid across the shelf */
+  .bookmark {
+    position: relative; background: var(--card); color: var(--card-ink);
+    border-radius: var(--radius);
+    padding: 11px 14px 12px; margin-bottom: 16px; box-shadow: var(--shadow);
+  }
+  /* ribbon page-marker hanging over the card edge */
+  .bookmark::after {
+    content: ""; position: absolute; top: -6px; right: 22px; width: 16px; height: 34px;
+    background: var(--accent);
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 78%, 0 100%);
+    box-shadow: 0 2px 5px rgba(10, 20, 14, .3);
+  }
+  .bookmark .when { font: italic 700 13px var(--serif); color: var(--accent); margin-bottom: 2px; }
+  .bookmark .line { font: 14.5px/1.45 var(--serif); }
+
+  /* Date cards: full-bleed photo, metadata on a bottom scrim.
+     One shared 165px height (charter: consistent geometry). Serif stays in
+     header + bookmark only; card names are sans so full titles fit at 390px. */
+  .plate {
+    position: relative; border-radius: var(--radius); overflow: hidden;
+    box-shadow: var(--shadow); margin-bottom: 14px;
+  }
+  .plate img { width: 100%; height: 165px; object-fit: cover; display: block; }
+  .plate .scrim {
+    position: absolute; inset: auto 0 0 0; padding: 30px 13px 9px;
+    background: linear-gradient(180deg, transparent, rgba(12, 22, 16, .94) 78%);
+    display: flex; align-items: baseline; gap: 8px; color: #fff;
+  }
+  .scrim .name { font-weight: 700; font-size: 15px; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .scrim .date { color: #c3cdb9; font-size: 12px; }
+  .scrim .hearts { color: var(--accent-soft); font-size: 12.5px; letter-spacing: 1px; }
+
+  /* Shelf ledge with spine-count totals */
+  .shelf {
+    background: linear-gradient(180deg, #6b5140, var(--shelf));
+    border-radius: 8px; box-shadow: var(--shadow);
+    display: flex; align-items: center; justify-content: space-around;
+    padding: 8px 10px; margin-bottom: 16px;
+    border-bottom: 4px solid #47331f;
+  }
+  .spine { text-align: center; color: #f3e6d2; }
+  .spine .n { font: 700 18px var(--serif); }
+  .spine .l { font-size: 10.5px; opacity: .75; font-weight: 700; }
+
+  .fab {
+    position: fixed; right: calc(50% - 195px + 16px); bottom: 22px;
+    width: 56px; height: 56px; border-radius: 50%; border: none;
+    background: var(--accent); color: #fff6ef; font-size: 26px;
+    box-shadow: 0 8px 18px rgba(201, 111, 74, .5);
+    display: grid; place-items: center;
+  }
+</style>
+</head>
+<body>
+  <header>
+    <div class="title">Our <em>story</em></div>
+    <div class="icon-btn">⋯</div>
+  </header>
+  <nav class="tabs">
+    <div class="tab on">Home</div>
+    <div class="tab">History</div>
+    <div class="tab">Insights</div>
+    <div class="tab">Suggest</div>
+  </nav>
+  <main class="view">
+    <div class="bookmark">
+      <div class="when">One year ago today</div>
+      <div class="line">The rooftop picnic under the string lights. Five hearts, and you both stayed until the candles gave out.</div>
+    </div>
+
+    <div class="shelf">
+      <div class="spine"><div class="n">47</div><div class="l">dates</div></div>
+      <div class="spine"><div class="n">12</div><div class="l">this year</div></div>
+      <div class="spine"><div class="n">4.3</div><div class="l">avg ♥</div></div>
+    </div>
+
+    <div class="plate">
+      <img src="https://picsum.photos/seed/lantern-alley-evening/780/340" alt="">
+      <div class="scrim">
+        <div class="name">Night market by the port</div>
+        <div class="date">Sat · Jul 26</div>
+        <div class="hearts">♥♥♥♥♥</div>
+      </div>
+    </div>
+
+    <div class="plate">
+      <img src="https://picsum.photos/seed/cottage-kitchen-herbs/780/260" alt="">
+      <div class="scrim">
+        <div class="name">Pasta from scratch, take two</div>
+        <div class="date">Tue · Jul 15</div>
+        <div class="hearts">♥♥♥♥</div>
+      </div>
+    </div>
+
+    <div class="plate">
+      <img src="https://picsum.photos/seed/forest-morning-path/780/260" alt="">
+      <div class="scrim">
+        <div class="name">Sunrise hike, almost on time</div>
+        <div class="date">Sun · Jul 6</div>
+        <div class="hearts">♥♥♥</div>
+      </div>
+    </div>
+  </main>
+  <button class="fab">+</button>
+</body>
+</html>

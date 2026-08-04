@@ -6,3 +6,6 @@ worker/.wrangler/
 # Firebase emulator artifacts
 firebase-debug.log
 firestore-debug.log
+
+# Third-party inspiration images (local reference only, not for redistribution)
+design/inspiration/
