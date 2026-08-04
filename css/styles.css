@@ -283,6 +283,7 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); bo
 .slider-row { display: flex; align-items: center; gap: 12px; margin: 6px 0 2px; }
 .slider-row input[type=range] { flex: 1; accent-color: var(--accent); }
 .slider-ends { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: var(--muted); }
+.slider-ends .muted-hint { width: 100%; text-align: center; font-weight: 500; font-style: italic; }
 .sug-card { position: relative; display: flex; align-items: center; gap: 10px; padding: 12px 14px; } /* New/Favorite lives in the .tag pill; no side border */
 .sug-card.flash { animation: sug-flash 1.5s ease-out; }
 @keyframes sug-flash {
@@ -339,6 +340,7 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); bo
    chip row in the same spot (card height doesn't grow a line). */
 .filter-group.effort summary { justify-content: flex-start; gap: 8px; }
 .filter-group.effort summary .fg-badge { background: transparent; color: var(--text); padding: 0; font-size: 15px; font-weight: 700; }
+.filter-group.effort summary .fg-badge.muted { color: var(--muted); font-weight: 500; font-size: 13px; }
 .filter-group.effort[open] > summary { display: none; }
 .filter-group.effort .chips-row {
   display: none; align-items: center; gap: 6px;

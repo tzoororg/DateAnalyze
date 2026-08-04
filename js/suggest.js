@@ -9,7 +9,8 @@
 // own past activities (exploit pool) plus unseen ideas from the seed catalog (explore pool).
 
 import { CATALOG } from "./catalog.js";
-import { catLabel, normTitle, entryTimeMs } from "./model.js";
+import { catLabel, normTitle, entryTimeMs, MOOD_OPTIONS } from "./model.js";
+const MOOD_LABEL = Object.fromEntries(MOOD_OPTIONS.map(m => [m.key, m.label]));
 import { mean } from "./analytics.js";
 
 const HALFLIFE_DAYS = 120;   // recency weighting for past enjoyment
@@ -38,14 +39,17 @@ export function suggest(dates, opts = {}) {
     const t = entryTimeMs(d);
     const k = normTitle(d.title);
     const dMoods = Array.isArray(d.mood) ? d.mood : [];
+    const dVibe = (d.vibe || "").trim().toLowerCase();
     if (k) {
-      if (!acts.has(k)) acts.set(k, { title: d.title, category: d.category, items: [], lastMs: 0, moods: new Set() });
+      if (!acts.has(k)) acts.set(k, { title: d.title, category: d.category, items: [], lastMs: 0, moods: new Set(), vibes: new Set() });
       const a = acts.get(k); a.items.push(d); a.lastMs = Math.max(a.lastMs, t);
       for (const m of dMoods) a.moods.add(m);
+      if (dVibe) a.vibes.add(dVibe);
     }
-    if (!cats.has(d.category)) cats.set(d.category, { items: [], lastMs: 0, moods: new Set() });
+    if (!cats.has(d.category)) cats.set(d.category, { items: [], lastMs: 0, moods: new Set(), vibes: new Set() });
     const c = cats.get(d.category); c.items.push(d); c.lastMs = Math.max(c.lastMs, t);
     for (const m of dMoods) c.moods.add(m);
+    if (dVibe) c.vibes.add(dVibe);
   }
   const globalAvg = N ? mean(dates.map(d => d.enjoyment)) : NEUTRAL;
 
@@ -84,16 +88,21 @@ export function suggest(dates, opts = {}) {
     if (moods.length) {
       const actMoods = acts.get(normTitle(c.title))?.moods;
       const catMoods = cats.get(c.category)?.moods;
-      const known = actMoods?.size || catMoods?.size;
+      const actVibe = acts.get(normTitle(c.title))?.vibes;
+      const catVibe = cats.get(c.category)?.vibes;
+      const known = actMoods?.size || catMoods?.size || actVibe?.size || catVibe?.size;
       if (known) {
-        const match = moods.some(m => actMoods?.has(m) || catMoods?.has(m));
+        const match = moods.some(m => {
+          if (actMoods?.has(m) || catMoods?.has(m)) return true;
+          const label = (MOOD_LABEL[m] || m).toLowerCase();
+          return actVibe?.has(label) || catVibe?.has(label);
+        });
         if (!match) return false;
       }
       // no mood history at all → include (benefit of the doubt for explore ideas)
     }
     return true;
   });
-  if (!pool.length) pool = candidates; // never return nothing because of filters
 
   if (jitter) for (const c of pool) c.score += (Math.random() - 0.5) * 0.5 * (0.4 + explore);
 

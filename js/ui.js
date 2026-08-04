@@ -1619,23 +1619,26 @@ function renderInsights() {
 function renderSuggest() {
   const v = viewEl();
   const results = suggest(done(), { ...sug, jitter: false });
+  const coldStart = done().length === 0;
 
   v.innerHTML = `
     <section class="card">
       <h2 style="margin:0 0 10px">Date night ideas</h2>
-      <div class="slider-row">
+      <div class="slider-row" style="${coldStart ? "opacity:.45" : ""}">
         <span title="repeat favorites">🛋️</span>
-        <input id="s-explore" type="range" min="0" max="100" value="${Math.round(sug.explore * 100)}"/>
+        <input id="s-explore" type="range" min="0" max="100" value="${Math.round(sug.explore * 100)}" ${coldStart ? "disabled" : ""}/>
         <span title="try new things">🧭</span>
       </div>
-      <div class="slider-ends"><span>Comfort (favorites)</span><span>Adventure (new)</span></div>
+      ${coldStart
+        ? `<div class="slider-ends"><span class="muted-hint">unlocks after your first logged date</span></div>`
+        : `<div class="slider-ends"><span>Comfort (favorites)</span><span>Adventure (new)</span></div>`}
 
       <div class="seg4" id="s-budget" style="margin-top:14px">
         ${COST_TIERS.map(t => `<button class="${sug.budgetTier === t.key ? "on" : ""}" data-btier="${t.key}">${t.label}</button>`).join("")}
       </div>
       <details class="filter-group effort" id="s-effort-group">
         <summary>
-          <span class="fg-right"><span class="fg-badge">${sug.maxEffort ? "⚡".repeat(sug.maxEffort) : "⚡"}</span></span>
+          <span class="fg-right"><span class="fg-badge${sug.maxEffort ? "" : " muted"}">${sug.maxEffort ? "⚡".repeat(sug.maxEffort) : "Any"}</span></span>
           <span class="fg-arrow">▼</span>
         </summary>
         <div class="chips-row" id="s-effort">
@@ -1723,7 +1726,7 @@ function renderSugCards(results) {
       </div>
       <div class="sug-actions">
         ${isSaved
-          ? `<button class="heart-btn" disabled aria-label="Saved">✓</button>`
+          ? `<button class="heart-btn" data-unsave='${payload}' aria-label="Remove from wishlist">✓</button>`
           : `<button class="heart-btn" data-save='${payload}' aria-label="Wishlist">♡</button>`}
         <button class="btn secondary small" data-log='${payload}'>Log →</button>
       </div>
@@ -1764,7 +1767,7 @@ function wireSuggest() {
     sug.maxEffort = b.dataset.seffort === "" ? null : Number(b.dataset.seffort);
     setOn(v.querySelectorAll("#s-effort .chip-sm"), b);
     const badge = v.querySelector("#s-effort-group summary .fg-badge");
-    if (badge) badge.textContent = sug.maxEffort ? "⚡".repeat(sug.maxEffort) : "⚡";
+    if (badge) { badge.textContent = sug.maxEffort ? "⚡".repeat(sug.maxEffort) : "Any"; badge.classList.toggle("muted", !sug.maxEffort); }
     v.querySelector("#s-effort-group").open = false;
     rerun();
   });
@@ -1846,6 +1849,16 @@ function wireLogButtons() {
     await db.putDate(idea);
     await reload();
     toast("Saved to wishlist ♡");
+    const host = v.querySelector("#sug-results");
+    if (host) { host.innerHTML = renderSugCards(suggest(done(), { ...sug, jitter: false })); wireLogButtons(); loadSugPhotos(); }
+  }));
+  v.querySelectorAll("[data-unsave]").forEach(b => b.addEventListener("click", async () => {
+    const seed = JSON.parse(b.dataset.unsave);
+    const k = normTitle(seed.title);
+    const idea = dates.find(e => e.status === "idea" && normTitle(e.title) === k);
+    if (idea) await db.deleteDate(idea.id);
+    await reload();
+    toast("Removed from wishlist");
     const host = v.querySelector("#sug-results");
     if (host) { host.innerHTML = renderSugCards(suggest(done(), { ...sug, jitter: false })); wireLogButtons(); loadSugPhotos(); }
   }));
