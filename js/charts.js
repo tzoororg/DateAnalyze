@@ -127,8 +127,8 @@ export function wrappedCard(stats, theme = "plum") {
   }
 
   const cols = [];
-  if (stats.favCategory) cols.push({ emoji: stats.favCategory.emoji, label: "FAVORITE", value: stats.favCategory.label, sub: `${stats.favCategory.count} date${stats.favCategory.count === 1 ? "" : "s"}` });
-  if (stats.mostRepeated) cols.push({ emoji: stats.mostRepeated.emoji, label: "MOST REPEATED", value: stats.mostRepeated.title, sub: `♥ ${stats.mostRepeated.avgEnjoyment.toFixed(1)}` });
+  if (stats.favCategory) cols.push({ emoji: stats.favCategory.emoji, label: "FAVORITE", value: firstWord(stats.favCategory.label), sub: `${stats.favCategory.count} date${stats.favCategory.count === 1 ? "" : "s"}` });
+  if (stats.mostRepeated) cols.push({ emoji: stats.mostRepeated.emoji, label: "REPEATED", value: firstWord(stats.mostRepeated.title), sub: `♥ ${stats.mostRepeated.avgEnjoyment.toFixed(1)}` });
   if (stats.usualTier) cols.push({ emoji: "💸", label: "OUR USUAL", value: `${stats.usualTier.label} dates`, sub: `${stats.usualTier.pct}% of them` });
   if (stats.bestMonth) cols.push({ emoji: "📅", label: "BEST MONTH", value: stats.bestMonth.label, sub: `${stats.bestMonth.count} date${stats.bestMonth.count === 1 ? "" : "s"}` });
   const colW = 900 / Math.max(1, cols.length);
@@ -156,6 +156,7 @@ export function wrappedCard(stats, theme = "plum") {
   </svg>`;
 }
 function truncate(s, n) { return s.length > n ? s.slice(0, n - 1) + "…" : s; }
+function firstWord(s) { return truncate((s || "").split(/[\s/]+/)[0] || "", 12); }
 
 function defsGrad() {
   return `<defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="0">

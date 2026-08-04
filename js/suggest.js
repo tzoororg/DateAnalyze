@@ -198,7 +198,7 @@ function avgDefined(arr) {
   return v.length ? v.reduce((s, x) => s + x, 0) / v.length : null;
 }
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
-function humanGap(days) {
+export function humanGap(days) {
   if (days < 14) return `${Math.round(days)} days`;
   if (days < 60) return `${Math.round(days / 7)} weeks`;
   if (days < 365) return `${Math.round(days / 30)} months`;

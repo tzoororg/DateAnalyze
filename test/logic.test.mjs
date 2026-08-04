@@ -225,7 +225,7 @@ test("wrappedCard renders stat strings for a fixture, and a graceful empty state
   };
   const svg = wrappedCard(stats);
   assert.ok(svg.startsWith("<svg"));
-  for (const needle of ["12", "4.3", "Outdoors", "Ramen night", "$$ dates", "38% of them", "May '26", "silly", "romantic", "chill"])
+  for (const needle of ["12", "4.3", "Outdoors", "Ramen", "$$ dates", "38% of them", "May '26", "silly", "romantic", "chill"])
     assert.ok(svg.includes(needle), `missing "${needle}"`);
 
   const empty = wrappedCard({ periodLabel: "2026 SO FAR", count: 0 });

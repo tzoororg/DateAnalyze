@@ -8,7 +8,7 @@ import {
 } from "./model.js";
 import * as A from "./analytics.js";
 import * as C from "./charts.js";
-import { suggest } from "./suggest.js";
+import { suggest, humanGap } from "./suggest.js";
 import { CATALOG } from "./catalog.js";
 import * as push from "./push.js";
 
@@ -597,14 +597,16 @@ function renderLog() {
             <span class="cat-current" id="f-cat-current">${draft.category ? catShort(draft.category) : ""}</span>
           </div>
           <span class="from-photo hidden" id="f-from-photo">📷 Date set from photo · <button type="button">undo</button></span>
-          <div class="cat-grid" id="f-category">
-            ${CATEGORIES.map(c => `<button class="cat-dot ${draft.category === c.key ? "on" : ""}" data-cat="${c.key}" title="${c.label}" aria-label="${c.label}">${c.emoji}</button>`).join("")}
+          <div class="cat-strip-wrap">
+            <div class="cat-strip" id="f-category">
+              ${CATEGORIES.map(c => `<button type="button" class="cat-chip ${draft.category === c.key ? "on" : ""}" data-cat="${c.key}"><span class="em">${c.emoji}</span>${c.label}</button>`).join("")}
+            </div>
+            <div class="cat-fade"></div>
           </div>
           <div class="seg4" id="f-cost">
             ${COST_TIERS.map(t => `<button class="${selTier === t.key ? "on" : ""}" data-tier="${t.key}">${t.label}</button>`).join("")}
           </div>
           <div class="fields-bottom">
-            <div class="blocklabel">One word for the vibe</div>
             <input id="f-vibe" type="text" class="vibe-input" placeholder="magical? chaotic? cozy?" value="${escAttr(draft.vibe || "")}"/>
             <div class="vibe-sugs" id="f-vibe-sugs">
               ${vibeSugs.map(w => `<button type="button" class="vibe-sug" data-vibe="${escAttr(w)}">${escHtml(w)}</button>`).join("")}
@@ -697,7 +699,7 @@ function wireForm() {
   v.querySelector("#f-category").addEventListener("click", e => {
     const b = e.target.closest("[data-cat]"); if (!b) return;
     draft.category = b.dataset.cat;
-    setOn(v.querySelectorAll("#f-category .cat-dot"), b);
+    setOn(v.querySelectorAll("#f-category .cat-chip"), b);
     v.querySelector("#f-cat-current").textContent = catShort(b.dataset.cat);
   });
 
@@ -1525,8 +1527,7 @@ function renderSuggest() {
       </div>
       <div class="slider-ends"><span>Comfort (favorites)</span><span>Adventure (new)</span></div>
 
-      <div class="blocklabel" style="margin-top:14px">Max budget</div>
-      <div class="seg4" id="s-budget">
+      <div class="seg4" id="s-budget" style="margin-top:14px">
         ${COST_TIERS.map(t => `<button class="${sug.budgetTier === t.key ? "on" : ""}" data-btier="${t.key}">${t.label}</button>`).join("")}
       </div>
       <label class="field"><span>Max effort</span>
@@ -1576,6 +1577,15 @@ function renderSuggest() {
 
 let coldBannerDismissed = false; // ponytail: module-level, resets on reload — fine while user has zero dates
 
+function shortReason(r) {
+  if (r.kind === "exploit") {
+    const gap = r.daysSince > 21 ? ` · last done ${humanGap(r.daysSince)} ago` : ` · done ${r.actTimes}×`;
+    return `${r.avgEnj.toFixed(1)}♥${gap}`;
+  }
+  if (r.catTimes > 0 && r.catAvg != null) return `New in ${catLabel(r.category)} · you rate it ${r.catAvg.toFixed(1)}♥`;
+  return "A whole new kind of date — pure adventure.";
+}
+
 function renderSugCards(results) {
   const coldStart = done().length === 0;
   const banner = (coldStart && !coldBannerDismissed) ? `
@@ -1589,26 +1599,23 @@ function renderSugCards(results) {
   return banner + results.map(r => {
     const payload = escAttr(JSON.stringify({ title: r.title, category: r.category, cost: r.estCost ?? null, effort: r.effort }));
     const isSaved = saved.has(normTitle(r.title));
-    const reason = coldStart ? (r.desc || r.reason) : r.reason;
+    const reason = coldStart ? (r.desc || r.reason) : shortReason(r);
     return `
     <div class="card sug-card ${r.kind}">
       ${isSaved ? `<span class="sticker-tag butter">saved ♡</span>` : ""}
-      <div class="sug-head">
-        <h3>${catEmoji(r.category)} ${escHtml(r.title)}</h3>
-        <span class="tag ${r.kind}">${r.kind === "explore" ? "New" : "Favorite"}</span>
-      </div>
-      ${r.photos?.length ? `<div class="sug-photos" data-sug-photos="${escAttr(r.photos.join(","))}"></div>` : ""}
-      <p class="sug-reason">${escHtml(reason)}</p>
-      <div class="sug-meta">
-        <span>${catLabel(r.category)}</span>
-        <span>${tierPill({ cost: r.estCost })}</span>
-        <span>${"⚡".repeat(r.effort)}</span>
+      <div class="sug-body">
+        <div class="sug-head">
+          <h3>${catEmoji(r.category)} ${escHtml(r.title)} ${tierPill({ cost: r.estCost })}</h3>
+          <span class="tag ${r.kind}">${r.kind === "explore" ? "New" : "Favorite"}</span>
+        </div>
+        ${r.photos?.length ? `<div class="sug-photos" data-sug-photos="${escAttr(r.photos.join(","))}"></div>` : ""}
+        <p class="sug-reason">${escHtml(reason)}</p>
       </div>
       <div class="sug-actions">
         ${isSaved
-          ? `<button class="btn ghost" disabled style="opacity:.55">✓ Saved</button>`
-          : `<button class="btn ghost" data-save='${payload}'>♡ Wishlist</button>`}
-        <button class="btn secondary" data-log='${payload}'>Log →</button>
+          ? `<button class="heart-btn" disabled aria-label="Saved">✓</button>`
+          : `<button class="heart-btn" data-save='${payload}' aria-label="Wishlist">♡</button>`}
+        <button class="btn secondary small" data-log='${payload}'>Log →</button>
       </div>
     </div>`;
   }).join("");

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Audit fixes · before/after mocks</title>
+<style>
+  :root {
+    --bg: #2a1b26; --bg-soft: #33222e; --card: #3b2a37; --card-2: #4a3444;
+    --line: #54394c; --text: #f5e6ee; --muted: #c99bb0;
+    --accent: #ff7fa2; --accent-2: #ff9fba;
+    --radius: 18px; --shadow: 0 6px 16px rgba(0, 0, 0, .35);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #17101a; }
+  body { font: 15px/1.42 "Segoe UI", system-ui, sans-serif; color: var(--text); padding: 30px 0 60px; }
+  .panel { width: 390px; margin: 0 auto 46px; }
+  .panel-title { width: 390px; margin: 0 auto 10px; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: #ffb3c9; }
+  .frame {
+    width: 390px; border-radius: 22px; overflow: hidden;
+    background: radial-gradient(140% 46% at 50% -6%, rgba(226, 112, 58, .22), transparent 60%), linear-gradient(180deg, var(--bg-soft), var(--bg) 55%);
+    padding: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.5);
+  }
+  .frame.before { opacity: .88; }
+  .row-label { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin: 0 0 8px; }
+  .caption { width: 390px; margin: 10px auto 0; font-size: 13px; color: #c9b3c0; }
+
+  .card { background: var(--card); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); }
+  .card + .card { margin-top: 12px; }
+  .blocklabel { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); margin: 14px 2px 8px; }
+
+  /* ---- Panel 1: category picker ---- */
+  .cat-grid-old { display: grid; grid-template-columns: repeat(6, 1fr); gap: 7px; margin: 10px 0; justify-items: center; }
+  .cat-dot { width: 34px; height: 34px; border-radius: 50%; border: none; background: var(--card-2); display: grid; place-items: center; font-size: 17px; }
+  .cat-dot.on { background: var(--accent); box-shadow: 0 0 0 3px rgba(255,127,162,.35); }
+
+  .cat-strip-wrap { position: relative; margin: 10px 0; }
+  .cat-strip { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 6px; scrollbar-width: none; }
+  .cat-strip::-webkit-scrollbar { display: none; }
+  .cat-chip { flex: none; display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 999px; background: var(--card-2); border: 1.5px solid var(--line); font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; }
+  .cat-chip .em { font-size: 15px; }
+  .cat-chip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .cat-fade { position: absolute; right: 0; top: 0; bottom: 6px; width: 64px; background: linear-gradient(90deg, transparent, var(--card) 45%, var(--card) 100%); pointer-events: none; }
+
+  /* ---- Panel 2: label-less inputs ---- */
+  .vibe-input, .seg4-input { width: 100%; padding: 12px 14px; border-radius: 13px; border: 1.5px solid var(--line); background: var(--card-2); color: var(--text); font-size: 14px; }
+  .vibe-input::placeholder { color: var(--muted); }
+  .seg4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; }
+  .seg4 button { border: 1.5px solid var(--line); background: var(--card-2); color: var(--text); border-radius: 12px; padding: 10px 0; font-size: 14px; font-weight: 700; }
+  .seg4 .on { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* ---- Panel 3: wrapped stat row ---- */
+  .wrap-card { border-radius: 24px; padding: 22px 16px; background: radial-gradient(120% 60% at 85% -5%, rgba(255,159,186,.28), transparent 60%), linear-gradient(160deg, #4a2138, #2a1b26 55%, #1e1420); }
+  .wrap-kicker { text-align: center; font-size: 11px; font-weight: 800; letter-spacing: .18em; color: #ff9fba; margin-bottom: 10px; }
+  .wrap-count { text-align: center; font-size: 54px; font-weight: 800; color: #fff; line-height: 1; }
+  .wrap-sub { text-align: center; font-size: 13px; color: var(--text); opacity: .85; margin: 4px 0 18px; }
+  .wrap-stats-old { display: flex; justify-content: space-between; gap: 4px; }
+  .wcol-old { text-align: center; flex: 1; }
+  .wcol-old .em { font-size: 26px; }
+  .wcol-old .lbl { font-size: 9px; font-weight: 800; letter-spacing: .08em; color: #e79fc0; margin-top: 4px; }
+  .wcol-old .val { font-size: 13px; font-weight: 800; color: #fff; white-space: nowrap; overflow: visible; margin-top: 2px; }
+  .wcol-old .sub { font-size: 11px; color: #e9d5e0; }
+
+  .wrap-stats-new { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .wcol-new { text-align: center; min-width: 0; }
+  .wcol-new .em { font-size: 24px; }
+  .wcol-new .lbl { font-size: 9px; font-weight: 800; letter-spacing: .07em; color: #e79fc0; margin-top: 4px; }
+  .wcol-new .val { font-size: 12px; font-weight: 800; color: #fff; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .wcol-new .sub { font-size: 10.5px; color: #e9d5e0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* ---- Panel 4: history cards ---- */
+  .hist-old, .hist-new { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; background: var(--card); box-shadow: var(--shadow); }
+  .hist-old + .hist-old, .hist-new + .hist-new { margin-top: 10px; }
+  .h-thumb { width: 40px; height: 40px; border-radius: 12px; background: var(--card-2); display: grid; place-items: center; font-size: 18px; flex: none; }
+  .h-meta-old { flex: 1; min-width: 0; }
+  .h-meta-old h4 { margin: 0 0 4px; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .h-meta-old .sub { font-size: 12px; color: var(--muted); }
+  .h-meta-new { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+  .h-meta-new .sub { font-size: 11.5px; color: var(--muted); order: 2; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .h-meta-new h4 { margin: 0; font-size: 15px; order: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .h-score { flex: none; width: 52px; text-align: right; font-size: 13px; color: var(--accent-2); }
+
+  /* ---- Panel 5: suggest cards ---- */
+  .sug-card-old { background: var(--card); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); }
+  .sug-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .sug-head h3 { margin: 0; font-size: 18px; }
+  .tag { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: var(--card-2); color: var(--muted); }
+  .tag.exploit { background: var(--butter-bg, #4a3d22); color: var(--butter-fg, #eec97a); }
+  .sug-reason { font-size: 13px; color: var(--muted); margin: 8px 0; }
+  .sug-meta-old { display: flex; gap: 14px; font-size: 13px; color: var(--muted); margin-bottom: 12px; }
+  .sug-actions-old { display: flex; gap: 8px; }
+  .btn { border: none; border-radius: 13px; padding: 11px; font-size: 14px; font-weight: 700; text-align: center; }
+  .btn.ghost { background: transparent; color: var(--muted); border: 1px solid var(--line); flex: 1; }
+  .btn.secondary { background: var(--card-2); color: var(--text); flex: 1; }
+
+  .sug-card-new { background: var(--card); border-radius: 16px; padding: 12px 14px; box-shadow: var(--shadow); display: flex; align-items: center; gap: 10px; }
+  .sug-body-new { flex: 1; min-width: 0; }
+  .sug-title-new { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .sug-title-new h3 { margin: 0; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sug-title-new .tag { flex: none; font-size: 10px; padding: 2px 7px; }
+  .sug-reason-new { font-size: 12px; color: var(--muted); margin: 3px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sug-actions-new { flex: none; display: flex; align-items: center; gap: 6px; }
+  .heart-btn { border: none; background: transparent; color: var(--muted); font-size: 20px; line-height: 1; padding: 6px; display: grid; place-items: center; }
+  .btn.small { padding: 8px 14px; font-size: 12.5px; border-radius: 11px; }
+  .cost-badge { font-size: 10.5px; font-weight: 800; color: var(--muted); background: var(--card-2); border-radius: 999px; padding: 1px 6px; flex: none; }
+</style>
+</head>
+<body>
+
+<div class="panel-title">1 · Category picker → horizontal chip strip</div>
+<div class="frame before">
+  <div class="row-label">before</div>
+  <div class="card">
+    <div class="cat-grid-old">
+      <button class="cat-dot">🍽️</button><button class="cat-dot">🌳</button><button class="cat-dot">🎬</button>
+      <button class="cat-dot">✈️</button><button class="cat-dot on">🎨</button><button class="cat-dot">🏠</button>
+      <button class="cat-dot">🍸</button><button class="cat-dot">🏛️</button><button class="cat-dot">🏃</button>
+      <button class="cat-dot">🧘</button><button class="cat-dot">💝</button>
+    </div>
+  </div>
+</div>
+<div class="frame">
+  <div class="row-label">after</div>
+  <div class="card">
+    <div class="cat-strip-wrap">
+      <div class="cat-strip">
+        <div class="cat-chip"><span class="em">🍽️</span>Dining</div>
+        <div class="cat-chip"><span class="em">🌳</span>Outdoors</div>
+        <div class="cat-chip"><span class="em">🎬</span>Movie / Show</div>
+        <div class="cat-chip"><span class="em">✈️</span>Travel</div>
+        <div class="cat-chip on"><span class="em">🎨</span>Creative / Class</div>
+        <div class="cat-chip"><span class="em">🏠</span>At home</div>
+        <div class="cat-chip"><span class="em">🍸</span>Nightlife</div>
+      </div>
+      <div class="cat-fade"></div>
+    </div>
+  </div>
+</div>
+<div class="caption">Single-row scroll strip with icon+label chips replaces the 11-dot grid. Right-edge gradient signals more categories are off-screen.</div>
+
+<div class="panel-title">2 · Drop redundant headings above labeled inputs</div>
+<div class="frame before">
+  <div class="row-label">before</div>
+  <div class="card">
+    <div class="blocklabel">One word for the vibe</div>
+    <input class="vibe-input" readonly value="cozy" placeholder="magical? chaotic? cozy?"/>
+    <div class="blocklabel">Max budget</div>
+    <div class="seg4"><button>$</button><button class="on">$$</button><button>$$$</button><button>$$$$</button></div>
+  </div>
+</div>
+<div class="frame">
+  <div class="row-label">after</div>
+  <div class="card">
+    <input class="vibe-input" placeholder="magical? chaotic? cozy?"/>
+    <div style="height:12px"></div>
+    <div class="seg4"><button>$</button><button class="on">$$</button><button>$$$</button><button>$$$$</button></div>
+  </div>
+</div>
+<div class="caption">The placeholder ("magical? chaotic? cozy?") and the $ pills already read as budget/vibe controls without needing "ONE WORD FOR THE VIBE" / "MAX BUDGET" headings above them.</div>
+
+<div class="panel-title">3 · Wrapped share card stat row</div>
+<div class="frame before">
+  <div class="row-label">before — columns overlap</div>
+  <div class="wrap-card">
+    <div class="wrap-kicker">US ♥ WRAPPED · THIS YEAR</div>
+    <div class="wrap-count">24</div>
+    <div class="wrap-sub">dates together · ♥ 4.3 average</div>
+    <div class="wrap-stats-old">
+      <div class="wcol-old"><div class="em">🎨</div><div class="lbl">FAVORITE</div><div class="val">Creative / Class</div><div class="sub">7 dates</div></div>
+      <div class="wcol-old"><div class="em">🏃</div><div class="lbl">MOST REPEATED</div><div class="val">Picnic in the park</div><div class="sub">♥ 4.8</div></div>
+      <div class="wcol-old"><div class="em">💸</div><div class="lbl">OUR USUAL</div><div class="val">$$ dates</div><div class="sub">62% of them</div></div>
+      <div class="wcol-old"><div class="em">📅</div><div class="lbl">BEST MONTH</div><div class="val">September</div><div class="sub">5 dates</div></div>
+    </div>
+  </div>
+</div>
+<div class="frame">
+  <div class="row-label">after — four fixed columns, ellipsized</div>
+  <div class="wrap-card">
+    <div class="wrap-kicker">US ♥ WRAPPED · THIS YEAR</div>
+    <div class="wrap-count">24</div>
+    <div class="wrap-sub">dates together · ♥ 4.3 average</div>
+    <div class="wrap-stats-new">
+      <div class="wcol-new"><div class="em">🎨</div><div class="lbl">FAVORITE</div><div class="val">Creative</div><div class="sub">7 dates</div></div>
+      <div class="wcol-new"><div class="em">🏃</div><div class="lbl">MOST REPEAT</div><div class="val">Picnic</div><div class="sub">♥ 4.8</div></div>
+      <div class="wcol-new"><div class="em">💸</div><div class="lbl">OUR USUAL</div><div class="val">$$ dates</div><div class="sub">62% of them</div></div>
+      <div class="wcol-new"><div class="em">📅</div><div class="lbl">BEST MONTH</div><div class="val">September</div><div class="sub">5 dates</div></div>
+    </div>
+  </div>
+</div>
+<div class="caption">Equal 25%-wide grid columns; long values use their short display name ("Creative", "Picnic") instead of the full label, so nothing needs ellipsizing and every value stays fully readable.</div>
+
+<div class="panel-title">4 · History list cards, equal height</div>
+<div class="frame before">
+  <div class="row-label">before — meta wraps, heights vary</div>
+  <div class="hist-old">
+    <div class="h-thumb">🏃</div>
+    <div class="h-meta-old">
+      <h4>Sunset Rooftop Picnic with the Whole Group</h4>
+      <div class="sub">Jul 22, 2026 · Sport / Active · $.</div>
+    </div>
+    <div class="h-score">♥♥♥♥♥</div>
+  </div>
+  <div class="hist-old">
+    <div class="h-thumb">🍽️</div>
+    <div class="h-meta-old"><h4>Tacos</h4><div class="sub">Jul 18, 2026 · Dining · $$</div></div>
+    <div class="h-score">♥♥♥</div>
+  </div>
+</div>
+<div class="frame">
+  <div class="row-label">after — one-line meta, fixed hearts column</div>
+  <div class="hist-new">
+    <div class="h-thumb">🏃</div>
+    <div class="h-meta-new">
+      <h4>Sunset Rooftop Picnic with the Whole Group</h4>
+      <div class="sub">Jul 22, 2026 · Sport / Active · $</div>
+    </div>
+    <div class="h-score">♥♥♥♥♥</div>
+  </div>
+  <div class="hist-new">
+    <div class="h-thumb">🍽️</div>
+    <div class="h-meta-new"><h4>Tacos</h4><div class="sub">Jul 18, 2026 · Dining · $$</div></div>
+    <div class="h-score">♥♥♥</div>
+  </div>
+</div>
+<div class="caption">Title takes the full remaining width and ellipsizes on one line; meta line drops the trailing dot and never wraps; hearts column is a fixed 52px right-aligned slot so every card is the same height.</div>
+
+<div class="panel-title">5 · Suggest cards, compressed</div>
+<div class="frame before">
+  <div class="row-label">before — tall card</div>
+  <div class="sug-card-old">
+    <div class="sug-head"><h3>🎨 Pottery class</h3><span class="tag exploit">Favorite</span></div>
+    <p class="sug-reason">You loved this last time — ♥ 5.0. Last done 7 weeks ago.</p>
+    <div class="sug-meta-old"><span>Creative / Class</span><span>$$</span><span>⚡⚡</span></div>
+    <div class="sug-actions-old">
+      <button class="btn ghost">♡ Wishlist</button>
+      <button class="btn secondary">Log →</button>
+    </div>
+  </div>
+</div>
+<div class="frame">
+  <div class="row-label">after — ~half the height</div>
+  <div class="sug-card-new">
+    <div class="sug-body-new">
+      <div class="sug-title-new"><h3>🎨 Pottery class <span class="cost-badge">$$</span></h3><span class="tag exploit">Favorite</span></div>
+      <p class="sug-reason-new">5.0♥ · last done 7 wks ago</p>
+    </div>
+    <div class="sug-actions-new">
+      <button class="heart-btn" aria-label="Wishlist">♡</button>
+      <button class="btn secondary small">Log →</button>
+    </div>
+  </div>
+</div>
+<div class="caption">Reason collapses to one short line; cost survives as a small $-tier badge inline after the title (no extra height). Actions unify to one labeled primary — "Log →" — with wishlist as a bare ♡ glyph, no button chrome.</div>
+
+</body>
+</html>
