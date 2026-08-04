@@ -332,6 +332,17 @@ try {
   await sleep(300);
   check("wishlist segment lists the saved idea",
     await t.evaluate(`document.querySelectorAll("#hist-list [data-didit]").length`) >= 1);
+  check("wishlist respects the active search filter",
+    await t.evaluate(`(async () => {
+      document.querySelector("#h-search").value = "zzz-no-such-idea-zzz";
+      document.querySelector("#h-search").dispatchEvent(new Event("input"));
+      await new Promise(r => setTimeout(r, 300));
+      const noneMatch = document.querySelectorAll("#hist-list [data-didit]").length === 0;
+      document.querySelector("#h-search").value = "";
+      document.querySelector("#h-search").dispatchEvent(new Event("input"));
+      await new Promise(r => setTimeout(r, 300));
+      return noneMatch;
+    })()`) === true);
   check("wishlist ideas are excluded from the normal history list",
     await t.evaluate(`(async () => {
       document.querySelector('.hist-view-toggle [data-view="list"]').click();

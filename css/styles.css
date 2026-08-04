@@ -415,14 +415,14 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); bo
 .chip.mint { background: var(--mint-bg); color: var(--mint-fg); }
 .chip.butter { background: var(--butter-bg); color: var(--butter-fg); }
 .chip .dots { color: var(--accent-2); letter-spacing: 1px; }
-.notes { color: var(--muted); font-size: 14px; margin: 12px 0 0; white-space: pre-wrap; }
+.notes { color: var(--muted); font-size: 14px; margin: 12px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 
 /* ---- comments ---- */
 .comments { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 12px; }
 .comments h5 { margin: 0 0 8px; font: 700 14px var(--cursive); color: var(--accent); }
 .cmt { display: flex; gap: 8px; margin-bottom: 8px; align-items: flex-start; }
 .cmt .who { width: 24px; height: 24px; flex: none; font-size: 11px; margin: 2px 0 0; }
-.cmt .bubble { background: var(--card-2); border-radius: 4px 14px 14px 14px; padding: 7px 11px; font-size: 14px; }
+.cmt .bubble { background: var(--card-2); border-radius: 4px 14px 14px 14px; padding: 7px 11px; font-size: 14px; overflow-wrap: anywhere; }
 .cmt .when { font-size: 11px; color: var(--muted); margin-top: 2px; }
 .cmt-input { display: flex; gap: 8px; margin-top: 10px; }
 .cmt-input input { flex: 1; background: var(--card-2); border: none; border-radius: 999px; padding: 9px 14px; color: var(--text); font-size: 14px; }

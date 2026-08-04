@@ -712,15 +712,41 @@ function capsuleOpenDate(dateStr) {
   return d.toISOString().slice(0, 10);
 }
 
-// Most-used past vibe words for the suggestion chips (defaults for a fresh diary).
-function pastVibes() {
+// Free-text vibe words actually present in the diary, most-used first (no fallback).
+function rawVibeWords() {
   const freq = new Map();
   for (const d of done()) {
     const w = (d.vibe || "").trim().toLowerCase();
     if (w) freq.set(w, (freq.get(w) || 0) + 1);
   }
-  const mine = [...freq.entries()].sort((a, b) => b[1] - a[1]).map(([w]) => w);
+  return [...freq.entries()].sort((a, b) => b[1] - a[1]).map(([w]) => w);
+}
+
+// Most-used past vibe words for the suggestion chips (defaults for a fresh diary).
+function pastVibes() {
+  const mine = rawVibeWords();
   return mine.length ? mine : ["cozy", "spontaneous", "giggly", "romantic"];
+}
+
+// History "Vibe" filter chips: legacy MOOD_OPTIONS actually present in data, plus
+// free-text vibe words from v2 entries — so new-entry vibes are filterable too.
+function historyVibeChips() {
+  const present = new Set();
+  done().forEach(e => { if (Array.isArray(e.mood)) e.mood.forEach(k => present.add(k)); });
+  const moodChips = MOOD_OPTIONS.filter(m => present.has(m.key));
+  const moodLabels = new Set(moodChips.map(m => m.label.toLowerCase()));
+  const vibeChips = rawVibeWords()
+    .filter(w => !moodLabels.has(w))
+    .map(w => ({ key: w, label: w, emoji: "💬" }));
+  return [...moodChips, ...vibeChips];
+}
+
+// Does entry e match vibe-filter chip key k? Legacy mood array, or v2 free-text
+// vibe compared case-insensitively against the chip's label.
+function histVibeMatches(e, k) {
+  if (Array.isArray(e.mood) && e.mood.includes(k)) return true;
+  const label = (MOOD_OPTIONS.find(o => o.key === k)?.label || k).toLowerCase();
+  return (e.vibe || "").trim().toLowerCase() === label;
 }
 
 // Paint the again-o-meter from draft.enjoyment (1–5).
@@ -1048,12 +1074,12 @@ function renderHistory() {
           <summary>
             <span class="fg-label">Vibe</span>
             <span class="fg-right">
-              ${hist.moods.length ? `<span class="fg-badge">${hist.moods.length === 1 ? (MOOD_OPTIONS.find(m => m.key === hist.moods[0])?.emoji + " " + MOOD_OPTIONS.find(m => m.key === hist.moods[0])?.label) : hist.moods.length + " selected"}</span>` : ""}
+              ${hist.moods.length ? `<span class="fg-badge">${hist.moods.length === 1 ? (historyVibeChips().find(m => m.key === hist.moods[0])?.emoji + " " + historyVibeChips().find(m => m.key === hist.moods[0])?.label) : hist.moods.length + " selected"}</span>` : ""}
               <span class="fg-arrow">▼</span>
             </span>
           </summary>
           <div class="chips" id="h-mood">
-            ${MOOD_OPTIONS.map(m => `<button class="chip ${hist.moods.includes(m.key) ? "on" : ""}" data-hmood="${m.key}">${m.emoji} ${m.label}</button>`).join("")}
+            ${historyVibeChips().map(m => `<button class="chip ${hist.moods.includes(m.key) ? "on" : ""}" data-hmood="${escAttr(m.key)}">${m.emoji} ${escHtml(m.label)}</button>`).join("")}
           </div>
         </details>
         <span class="hist-count" id="h-count">${dates.length} date${dates.length !== 1 ? "s" : ""}</span>
@@ -1098,7 +1124,7 @@ function wireHistory() {
     if (hist.moods.length) {
       const span = document.createElement("span");
       span.className = "fg-badge";
-      const m0 = MOOD_OPTIONS.find(m => m.key === hist.moods[0]);
+      const m0 = historyVibeChips().find(m => m.key === hist.moods[0]);
       span.textContent = hist.moods.length === 1 ? `${m0.emoji} ${m0.label}` : `${hist.moods.length} selected`;
       v.querySelector("#h-mood-group summary .fg-right").prepend(span);
     }
@@ -1115,7 +1141,7 @@ function wireHistory() {
 function sortedHistory() {
   let list = done();  // wishlist ideas render only in the dedicated wishlist view
   if (hist.category) list = list.filter(e => e.category === hist.category);
-  if (hist.moods.length) list = list.filter(e => Array.isArray(e.mood) && hist.moods.some(k => e.mood.includes(k)));
+  if (hist.moods.length) list = list.filter(e => hist.moods.some(k => histVibeMatches(e, k)));
   if (hist.query) {
     const q = hist.query.toLowerCase();
     list = list.filter(e =>
@@ -1165,21 +1191,21 @@ async function renderHistoryList() {
       if (url) img.src = url;
     });
     const tiles = [...host.querySelectorAll(".gallery-tile")];
-    tiles.forEach((tile, i) => tile.addEventListener("click", () => {
-      const items = tiles.map(t => ({
-        url: t.querySelector("img").getAttribute("src"),
-        caption: t.querySelector(".gallery-label").textContent,
-      }));
+    tiles.forEach((tile, i) => tile.addEventListener("click", async () => {
+      // Rebuild items from photo ids (not DOM img.src, which may still be empty
+      // mid-load) so tile index always lines up with the right photo.
+      const urls = await Promise.all(photoEntries.map(pe => photoURL(pe.pid)));
+      const items = photoEntries.map((pe, j) => ({ url: urls[j], caption: pe.e.title }));
       openLightbox(items, i);
     }));
     return;
   }
 
+  if (countEl) countEl.textContent = `${list.length} date${list.length !== 1 ? "s" : ""}`;
   if (!list.length) {
     host.innerHTML = `<div class="empty"><div class="big">🔍</div>No dates match this filter.</div>`;
     return;
   }
-  if (countEl) countEl.textContent = `${list.length} date${list.length !== 1 ? "s" : ""}`;
   host.innerHTML = list.map(e => {
     const isOpen = hist.expanded === e.id;
     return `
@@ -1302,15 +1328,19 @@ function wireHistDetail(host) {
   // comments
   host.querySelectorAll("[data-cmt-send]").forEach(btn => btn.addEventListener("click", async ev => {
     ev.stopPropagation();
-    const input = host.querySelector(`[data-cmt="${btn.dataset.cmtSend}"]`);
-    await addComment(btn.dataset.cmtSend, input.value);
-    renderHistoryList();
+    const id = btn.dataset.cmtSend;
+    const input = host.querySelector(`[data-cmt="${id}"]`);
+    await addComment(id, input.value);
+    await renderHistoryList();
+    host.querySelector(`[data-cmt="${id}"]`)?.focus();
   }));
   host.querySelectorAll("[data-cmt]").forEach(input => input.addEventListener("keydown", async ev => {
     if (ev.key !== "Enter") return;
     ev.stopPropagation();
-    await addComment(input.dataset.cmt, input.value);
-    renderHistoryList();
+    const id = input.dataset.cmt;
+    await addComment(id, input.value);
+    await renderHistoryList();
+    host.querySelector(`[data-cmt="${id}"]`)?.focus();
   }));
 
   // load detail photo mosaic (tap any tile → lightbox with ALL photos)
@@ -1329,9 +1359,32 @@ function prettyUrl(u) {
   return (u || "").replace(/^https?:\/\//, "").replace(/\/+$/, "");
 }
 
+function wishlistIdeas() {
+  let ideas = dates.filter(e => e.status === "idea");
+  if (hist.category) ideas = ideas.filter(e => e.category === hist.category);
+  if (hist.query) {
+    const q = hist.query.toLowerCase();
+    ideas = ideas.filter(e =>
+      (e.title || "").toLowerCase().includes(q) ||
+      (e.notes || "").toLowerCase().includes(q) ||
+      (e.location || "").toLowerCase().includes(q)
+    );
+  }
+  // vibe filter has no meaning for un-rated ideas — ignored rather than matching nothing
+  const cmp = {
+    "date-desc": (a, b) => entryTimeMs(b) - entryTimeMs(a),
+    "date-asc":  (a, b) => entryTimeMs(a) - entryTimeMs(b),
+    "cost-desc": (a, b) => (b.cost ?? -1) - (a.cost ?? -1) || entryTimeMs(b) - entryTimeMs(a),
+    "cost-asc":  (a, b) => (a.cost ?? Infinity) - (b.cost ?? Infinity) || entryTimeMs(b) - entryTimeMs(a),
+    "title-asc": (a, b) => a.title.localeCompare(b.title),
+    // enjoy-* is meaningless for un-rated ideas — fall back to newest-first
+  };
+  ideas.sort(cmp[hist.sort] || cmp["date-desc"]);
+  return ideas;
+}
+
 function renderWishlist(host, countEl) {
-  const ideas = dates.filter(e => e.status === "idea")
-    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  const ideas = wishlistIdeas();
   if (countEl) countEl.textContent = `${ideas.length} idea${ideas.length !== 1 ? "s" : ""}`;
   if (!ideas.length) {
     host.innerHTML = emptyState2("☆", "Nothing saved yet", {
