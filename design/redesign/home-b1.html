@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Home · B1 Plum Dusk restyle</title>
+<style>
+  /* The REAL Home view (Tonight's pick / Date night / On this day / Recent
+     memories) restyled in the approved B1 Plum Dusk language. Also kills the
+     three side-tab borders: .memory-card gets the amber-glow "tonight"
+     treatment, .capsule-memory gets a soft butter border all around, and the
+     Suggest card (annex below) uses sticker-tags instead of a left border. */
+  :root {
+    --bg: #2a1b26; --bg-soft: #33222e; --card: #3b2a37; --card-2: #4a3444;
+    --line: #54394c; --text: #f5e6ee; --muted: #c99bb0;
+    --accent: #ff7fa2; --accent-2: #ff9fba;
+    --glow: #f4a15d; --glow-deep: #e2703a;
+    --good: #7ed3ab; --mint-bg: #2e4a3e; --mint-fg: #8fd6b5;
+    --butter-bg: #4a3d22; --butter-fg: #eec97a;
+    --radius: 18px; --shadow: 0 6px 16px rgba(0, 0, 0, .35);
+    --cursive: "Segoe Script", "Comic Sans MS", cursive;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    width: 390px; min-height: 844px; margin: 0 auto;
+    background:
+      radial-gradient(140% 46% at 50% -6%, rgba(226, 112, 58, .28), transparent 60%),
+      linear-gradient(180deg, var(--bg-soft), var(--bg) 55%);
+    color: var(--text); font: 15px/1.42 "Segoe UI", system-ui, sans-serif;
+    overflow: hidden; padding-bottom: 40px;
+  }
+  header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px 4px; }
+  .title { font: 700 26px var(--cursive); color: var(--accent); transform: rotate(-2deg); }
+  .icon-btn { width: 38px; height: 38px; border-radius: 13px; border: none; background: var(--card); color: var(--muted); font-size: 18px; display: grid; place-items: center; box-shadow: var(--shadow); }
+  .tabs { display: flex; gap: 6px; padding: 6px 16px 10px; }
+  .tab { flex: 1; text-align: center; padding: 9px 0; border-radius: 999px; background: var(--card); border: 2px solid var(--line); color: var(--muted); font-size: 13px; font-weight: 700; }
+  .tab.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .view { padding: 0 16px; }
+  .section-title { font-size: 12px; text-transform: uppercase; letter-spacing: .14em; font-weight: 800; color: var(--muted); margin: 16px 4px 8px; }
+
+  .card { background: var(--card); border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow); margin-bottom: 12px; position: relative; }
+  /* one placement rule for every tag: -9px overhang, right 12px, -3deg */
+  .sticker-tag { position: absolute; top: -9px; right: 12px; padding: 3px 10px; border-radius: 10px; font: 700 12px var(--cursive); transform: rotate(-3deg); box-shadow: 0 3px 8px rgba(0,0,0,.15); }
+  .sticker-tag.mint { background: var(--mint-bg); color: var(--mint-fg); }
+  .sticker-tag.butter { background: var(--butter-bg); color: var(--butter-fg); }
+  .mini-btn { background: var(--accent); color: #fff; border: none; border-radius: 999px; padding: 8px 18px; font-size: 14px; font-weight: 700; }
+
+  /* Tonight's pick: unchanged structure, sticker keeps the whimsy */
+  .hero-card h3 { font-size: 18px; margin-bottom: 4px; }
+  .hero-card .sug-reason { color: #e3c2d2; font-size: 14px; margin-bottom: 10px; } /* lifted past AA on plum card */
+
+  .dn-invite { display: flex; align-items: center; gap: 12px; padding: 10px 14px; }
+  .dn-invite .moon { width: 40px; height: 40px; border-radius: 50%; background: var(--card-2); display: grid; place-items: center; font-size: 20px; }
+  .dn-invite h3 { font-size: 16px; flex: 1; }
+  .dn-invite { justify-content: space-between; }
+  .dn-invite .txt { flex: 1; }
+
+  /* On this day: the one glowing thing on screen (was: 4px left border).
+     Exactly the approved B1 "one year ago tonight" treatment. */
+  .memory-card {
+    background: linear-gradient(140deg, #4a2a2c, var(--card) 70%);
+    border: 1px solid rgba(244, 161, 93, .35);
+    box-shadow: 0 8px 22px rgba(226, 112, 58, .22);
+  }
+  .memory-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .memory-title { font: 700 16px var(--cursive); color: var(--accent-2); }
+  .memory-dismiss { background: none; border: none; color: var(--muted); font-size: 14px; }
+  /* collapsed: emoji inline with the title, no avatar tile, note inline */
+  .memory-line { font-size: 15px; }
+  .memory-line b { font-weight: 700; }
+  .memory-line .sub { color: #d5aec2; font-size: 12.5px; }
+  .hearts { color: var(--accent); letter-spacing: 1px; }
+  .capsule-line { margin-top: 6px; font-size: 14px; }
+  .capsule-line .from { font: 700 12.5px var(--cursive); color: var(--butter-fg); margin-right: 4px; }
+
+  /* Recent memories: equal columns, full-bleed to the screen edges */
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin: 0 -16px; }
+  .tile { position: relative; overflow: hidden; box-shadow: var(--shadow); }
+  .tile img { width: 100%; height: 180px; object-fit: cover; display: block; }
+  .tile .date-sticker { position: absolute; top: 8px; left: 8px; background: #fdf6ec; color: #4d3a2a; font: 700 11px var(--cursive); padding: 2px 8px; border-radius: 3px; transform: rotate(-3deg); box-shadow: 0 2px 5px rgba(0,0,0,.3); }
+  .tile .badge { position: absolute; top: 8px; right: 8px; width: 30px; height: 30px; border-radius: 50%; background: #fff; border: 2px solid var(--accent-2); display: grid; place-items: center; font-size: 15px; }
+
+  /* ANNEX: Suggest-tab card restyle (was: 4px left border, accent/good).
+     The mint/butter sticker-tag now carries the explore/favorite distinction. */
+  .annex { margin-top: 22px; padding-top: 4px; border-top: 1px dashed var(--line); }
+  .sug-card h4 { font-size: 16px; margin-bottom: 3px; }
+  .sug-card .why { color: #e3c2d2; font-size: 13.5px; }
+
+  .fab { position: fixed; right: calc(50% - 195px + 16px); bottom: 22px; width: 58px; height: 58px; border-radius: 50%; border: none; background: var(--accent); color: #fff; font-size: 28px; box-shadow: 0 8px 20px rgba(255, 127, 162, .45); display: grid; place-items: center; }
+</style>
+</head>
+<body>
+  <header>
+    <div class="title">Us ♥</div>
+    <div class="icon-btn">⋯</div>
+  </header>
+  <nav class="tabs">
+    <div class="tab on">Home</div>
+    <div class="tab">Album</div>
+    <div class="tab">Ideas</div>
+    <div class="tab">Stats</div>
+  </nav>
+  <main class="view">
+    <h3 class="section-title">Tonight's pick</h3>
+    <section class="card hero-card">
+      <span class="sticker-tag butter">new!</span>
+      <h3>🌳 Sunset hike</h3>
+      <p class="sug-reason">A whole new kind of date for the two of you. Pure adventure.</p>
+      <button class="mini-btn">Plan it →</button>
+    </section>
+
+    <section class="card dn-invite">
+      <div class="moon">🌙</div>
+      <div class="txt"><h3>Date night?</h3></div>
+      <button class="mini-btn">Start</button>
+    </section>
+
+    <section class="card memory-card">
+      <div class="memory-header">
+        <span class="memory-title">On this day · 1 year ago ✨</span>
+        <button class="memory-dismiss">✕</button>
+      </div>
+      <div class="memory-line">🧺 <b>Rooftop picnic</b> <span class="sub">Aug 4, 2025 · <span class="hearts">♥♥♥♥♥</span></span></div>
+      <div class="capsule-line"><span class="from">💌 From you:</span>Remember the string lights? Do this again every year.</div>
+    </section>
+
+    <h3 class="section-title">Recent memories</h3>
+    <div class="grid">
+      <div class="tile">
+        <img src="https://picsum.photos/seed/evening-glow-city/400/360" alt="">
+        <div class="date-sticker">Jul 29, 2026</div>
+      </div>
+      <div class="tile">
+        <img src="https://picsum.photos/seed/night-lights-bokeh/400/360" alt="">
+        <div class="badge">💝</div>
+      </div>
+    </div>
+
+    <div class="annex">
+      <h3 class="section-title">Annex · Suggest-tab cards, restyled</h3>
+      <section class="card sug-card">
+        <span class="sticker-tag mint">favorite ♥</span>
+        <h4>🍝 Pasta from scratch</h4>
+        <p class="why">You two rate this ♥ 4.5 — it never misses.</p>
+      </section>
+      <section class="card sug-card">
+        <span class="sticker-tag butter">new!</span>
+        <h4>🎨 Pottery class</h4>
+        <p class="why">Never tried — the adventure slider says go.</p>
+      </section>
+    </div>
+  </main>
+  <button class="fab">+</button>
+</body>
+</html>
