@@ -522,16 +522,8 @@ function renderHome() {
         const yearsAgo = new Date().getFullYear() - new Date(entryTimeMs(e)).getFullYear();
         return `<div class="memory-item">
           ${singleAgo === null ? `<div class="memory-ago">${yearsAgo} year${yearsAgo !== 1 ? "s" : ""} ago</div>` : ""}
-          <div class="entry" style="pointer-events:none">
-            <div class="thumb">${catEmoji(e.category)}</div>
-            <div class="meta"><h4>${escHtml(e.title)}</h4>
-              <div class="sub">${fmtDate(e.date)} · ${heartsHtml(e.enjoyment)}</div>
-            </div>
-          </div>
-          ${e.capsule ? `<div class="capsule-memory">
-            <div class="from">💌 From you</div>
-            <div class="msg">${escHtml(e.capsule)}</div>
-          </div>` : ""}
+          <div class="memory-line">${catEmoji(e.category)} <b>${escHtml(e.title)}</b> <span class="sub">${fmtDate(e.date)} · ${heartsHtml(e.enjoyment)}</span></div>
+          ${e.capsule ? `<div class="capsule-memory"><span class="from">💌 From you:</span><span class="msg">${escHtml(e.capsule)}</span></div>` : ""}
         </div>`;
         // ponytail: label is always "From you" — date docs carry no author uid; add author names when sync stamps one
       }).join("")}
