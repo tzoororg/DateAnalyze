@@ -21,6 +21,7 @@ let dates = [];
 const done = () => dates.filter(e => e.status !== "idea");
 let draft = blankEntry();        // the entry currently being composed/edited
 let editingId = null;
+let draftSnapshot = null;        // JSON snapshot of draft when an edit was opened, to detect no-op edits on close
 // True once the "When" date is deliberately set (manual edit, editing an entry,
 // a date-night session) — blocks the EXIF auto-fill so it only ever replaces the
 // untouched default. Also set by the auto-fill itself, so it fires at most once.
@@ -606,11 +607,22 @@ function openLogSheet() {
   renderLog();
 }
 
+function isDraftDirty() {
+  return !!(draft.title.trim() || draft.notes.trim() || (draft.vibe || "").trim() ||
+    (draft.capsule || "").trim() || (draft.url || "").trim() || draft.photos.length);
+}
+
+function isUnchangedEdit() {
+  return !!(editingId && draftSnapshot && JSON.stringify(draft) === draftSnapshot);
+}
+
 async function closeLogSheet() {
   if (draft.durationMin != null && !editingId) {
     if (!confirm("Discard tonight's session? Any photos you took will be deleted.")) return;
     const referenced = new Set(dates.flatMap(e => e.photos || []));
     for (const id of draft.photos) if (!referenced.has(id)) await db.deletePhoto(id);
+  } else if (isDraftDirty() && !isUnchangedEdit()) {
+    if (!confirm("Discard this entry?")) return;
   }
   document.getElementById("logSheet").classList.add("hidden");
   document.body.style.overflow = "";
@@ -765,7 +777,12 @@ function wireForm() {
   const v = formEl();
   // text-ish inputs update the draft without re-rendering (keeps focus/caret)
   bind("f-title", "input", e => draft.title = e.target.value);
-  bind("f-date", "change", e => { draft.date = e.target.value; dateTouched = true; });
+  bind("f-date", "change", e => {
+    draft.date = e.target.value;
+    dateTouched = true;
+    const when = v.querySelector("#f-capsule-wrap .when");
+    if (when) when.textContent = `opens ${fmtDate(capsuleOpenDate(draft.date))}`;
+  });
   bind("f-vibe", "input", e => draft.vibe = e.target.value);
   bind("f-notes", "input", e => draft.notes = e.target.value);
   bind("f-url", "input", e => draft.url = e.target.value);
@@ -919,11 +936,21 @@ async function pickGooglePhotos() {
 }
 
 async function saveDraft() {
-  if (!draft.title.trim()) { toast("Write a caption first"); return; }
+  if (!draft.title.trim()) {
+    toast("Write a caption first");
+    const cap = formEl().querySelector("#f-title");
+    cap?.scrollIntoView({ block: "center" });
+    cap?.focus();
+    return;
+  }
   draft.title = draft.title.trim();
   draft.vibe = (draft.vibe || "").trim();
   draft.url = (draft.url || "").trim();
   draft.capsule = (draft.capsule || "").trim();
+  if (draft.url && !/^https?:\/\//i.test(draft.url)) draft.url = "https://" + draft.url;
+  if (draft.url) {
+    try { new URL(draft.url); } catch { toast("That link doesn't look right"); return; }
+  }
   const isNew = !editingId;
   if (isNew) draft.createdAt = Date.now();
   // attribute the form's enjoyment score to me as a per-person rating (see resolveRatings)
@@ -938,13 +965,14 @@ async function saveDraft() {
   show(currentTab);
 }
 
-function resetDraft() { draft = blankEntry(); editingId = null; dateTouched = false; }
+function resetDraft() { draft = blankEntry(); editingId = null; draftSnapshot = null; dateTouched = false; }
 
 async function editEntry(id) {
   const e = await db.getDate(id);
   if (!e) return;
   draft = structuredClone(e);
   editingId = id;
+  draftSnapshot = JSON.stringify(draft);
   dateTouched = true;
   openLogSheet();
 }

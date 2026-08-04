@@ -228,6 +228,7 @@ try {
   await t.evaluate(`document.querySelector("#f-from-photo button").click()`);
   check("undo restores the default date",
     await t.evaluate(`document.getElementById("f-date").value`) === todayVal);
+  await t.evaluate(`window.confirm = () => true`); // dirty draft (photo added, no title) now confirms discard
   await t.evaluate(`document.getElementById("logCloseBtn").click()`);
 
   // ...and a hand-picked date is never clobbered by a later photo.
@@ -243,6 +244,7 @@ try {
   await t.waitFor(`document.querySelectorAll("#f-photos .photo-thumb").length === 1`);
   check("hand-set date survives an EXIF photo",
     await t.evaluate(`document.getElementById("f-date").value`) === "2024-02-02");
+  await t.evaluate(`window.confirm = () => true`); // dirty draft (photo added, no title) now confirms discard
   await t.evaluate(`document.getElementById("logCloseBtn").click()`);
 
   // 9. Google Photos pick, fully mocked: stub GIS + the picker/proxy endpoints,
@@ -360,6 +362,7 @@ try {
   await t.waitFor(`!document.getElementById("logSheet").classList.contains("hidden")`);
   check("'Log it' opens a pre-filled log sheet",
     (await t.evaluate(`document.getElementById("f-title").value`)).length > 0);
+  await t.evaluate(`window.confirm = () => true`); // pre-filled draft is dirty; now confirms discard
   await t.evaluate(`document.getElementById("logCloseBtn").click()`);
 
   // 9f. Date Night mode (Roadmap #7): start from Home, banner + camera FAB appear,
