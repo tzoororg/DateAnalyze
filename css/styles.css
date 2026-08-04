@@ -240,6 +240,7 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); bo
 }
 .dn-invite .txt { flex: 1; min-width: 0; }
 .dn-invite h3 { margin: 0; font-size: 15px; }
+.dn-invite .sub { margin: 2px 0 0; font-size: 12.5px; color: var(--muted); }
 .dn-invite .mini-btn { flex: none; margin-top: 0; }
 
 .dn-banner {
@@ -283,6 +284,11 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); bo
 .slider-row input[type=range] { flex: 1; accent-color: var(--accent); }
 .slider-ends { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: var(--muted); }
 .sug-card { position: relative; display: flex; align-items: center; gap: 10px; padding: 12px 14px; } /* New/Favorite lives in the .tag pill; no side border */
+.sug-card.flash { animation: sug-flash 1.5s ease-out; }
+@keyframes sug-flash {
+  0% { box-shadow: 0 0 0 3px var(--accent); }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
 .sug-card .sug-body { flex: 1; min-width: 0; }
 .sug-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 .sug-head h3 { margin: 0; font-size: 15px; min-width: 0; }

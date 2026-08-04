@@ -369,7 +369,16 @@ try {
   check("'End' opens the log sheet with the From tonight chip", fromTonight.includes("From tonight"), fromTonight);
   const fabAfterEnd = await t.evaluate(`document.getElementById("fab").textContent`);
   check("FAB reverts to ＋ after ending date night", fabAfterEnd === "＋", fabAfterEnd);
+  // Closing ✕ on an unsaved date-night draft asks for confirmation (#discard safety).
+  await t.evaluate(`window.confirm = () => false`);
   await t.evaluate(`document.getElementById("logCloseBtn").click()`);
+  await sleep(100);
+  const keptOnCancel = await t.evaluate(`!document.getElementById("logSheet").classList.contains("hidden")`);
+  check("cancelling the discard confirm keeps the log sheet open", keptOnCancel);
+  await t.evaluate(`window.confirm = () => true`);
+  await t.evaluate(`document.getElementById("logCloseBtn").click()`);
+  await t.waitFor(`document.getElementById("logSheet").classList.contains("hidden")`);
+  check("confirming the discard closes the log sheet", true);
 
   // 9g. XSS: cloud-sourced identifier fields (title/notes/location/url) must
   // never execute as HTML, and javascript: URLs must be neutralized.

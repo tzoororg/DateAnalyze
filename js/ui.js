@@ -44,6 +44,7 @@ const DN_MAX_MIN = 720; // 12h auto-expire cap
 export async function init() {
   dates = await db.getAllDates();
   activeDate = await db.getSetting("activeDate", null);
+  memoryDismissed = (await db.getSetting("memoryDismissed", null)) === todayISO();
   wireChrome();
   wireIdle();
   updateFab();
@@ -476,7 +477,7 @@ function renderDnBanner() {
   host.innerHTML = `
     <section class="dn-banner" id="dn-banner-body">
       <span class="moon">🌙</span>
-      <div class="txt"><b>Date night</b><div class="sub">${fmtDuration(elapsedMin)} · ${n} photo${n === 1 ? "" : "s"}</div></div>
+      <div class="txt"><b>Date night</b><div class="sub">${elapsedMin < 1 ? "just started" : fmtDuration(elapsedMin)} · ${n} photo${n === 1 ? "" : "s"}</div></div>
       <button class="end" id="dn-end">End</button>
     </section>`;
   host.querySelector("#dn-banner-body").addEventListener("click", () => document.getElementById("dnCameraInput").click());
@@ -561,7 +562,7 @@ function renderHome() {
     ${!activeDate ? `
     <section class="card dn-invite">
       <div class="moon">🌙</div>
-      <div class="txt"><h3>Date night?</h3></div>
+      <div class="txt"><h3>Date night?</h3><div class="sub">Start a timer, snap photos as you go — log it when you're done.</div></div>
       <button class="mini-btn" id="dn-start">Start</button>
     </section>` : ""}
     ${memoryCard}
@@ -575,9 +576,9 @@ function renderHome() {
     <h3 class="section-title">Recent memories</h3>
     <div id="date-list"></div>
   `;
-  bind("home-plan", "click", () => show("suggest"));
+  bind("home-plan", "click", () => planIt(top?.title));
   bind("dn-start", "click", onDnStart);
-  bind("memory-dismiss", "click", () => { memoryDismissed = true; renderHome(); });
+  bind("memory-dismiss", "click", async () => { memoryDismissed = true; await db.setSetting("memoryDismissed", todayISO()); renderHome(); });
   bind("backup-banner", "click", onExport);
   bind("backup-dismiss", "click", async e => {
     e.stopPropagation();
@@ -588,6 +589,16 @@ function renderHome() {
   renderList();
 }
 
+function planIt(title) {
+  show("suggest");
+  if (!title) return;
+  const card = viewEl().querySelector(`[data-norm-title="${CSS.escape(normTitle(title))}"]`);
+  if (!card) return;
+  card.scrollIntoView({ behavior: "smooth", block: "center" });
+  card.classList.add("flash");
+  setTimeout(() => card.classList.remove("flash"), 1500);
+}
+
 // ---------- log sheet (opened from the ＋ button) ----------
 function openLogSheet() {
   document.getElementById("logSheet").classList.remove("hidden");
@@ -595,7 +606,12 @@ function openLogSheet() {
   renderLog();
 }
 
-function closeLogSheet() {
+async function closeLogSheet() {
+  if (draft.durationMin != null && !editingId) {
+    if (!confirm("Discard tonight's session? Any photos you took will be deleted.")) return;
+    const referenced = new Set(dates.flatMap(e => e.photos || []));
+    for (const id of draft.photos) if (!referenced.has(id)) await db.deletePhoto(id);
+  }
   document.getElementById("logSheet").classList.add("hidden");
   document.body.style.overflow = "";
   resetDraft();
@@ -1642,7 +1658,7 @@ function renderSugCards(results) {
     const isSaved = saved.has(normTitle(r.title));
     const reason = coldStart ? (r.desc || r.reason) : shortReason(r);
     return `
-    <div class="card sug-card ${r.kind}">
+    <div class="card sug-card ${r.kind}" data-norm-title="${escAttr(normTitle(r.title))}">
       ${isSaved ? `<span class="sticker-tag butter">saved ♡</span>` : ""}
       <div class="sug-body">
         <div class="sug-head">
@@ -1793,6 +1809,8 @@ async function onExport() {
   URL.revokeObjectURL(a.href);
   await db.setSetting("lastExportAt", Date.now());
   document.getElementById("sheet").classList.add("hidden");
+  showBackupBanner = false;
+  if (currentTab === "home") renderHome();
   toast("Backup downloaded");
 }
 
