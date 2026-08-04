@@ -48,9 +48,17 @@ html[data-theme="twilight"] {
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; height: 100%; }
+/* Base wash on <html>, ambience glow on a fixed pseudo-element: mobile Chrome
+   ignores background-attachment:fixed, which sized the glow against the full
+   page height and diluted it to nothing. A position:fixed layer is always
+   viewport-sized, so the glow reads the same as in the mocks. */
+html { background: radial-gradient(120% 60% at 50% 0%, var(--bg-soft), var(--bg)); }
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: -1;
+  background: var(--ambience);
+  pointer-events: none;
+}
 body {
-  background: var(--ambience), radial-gradient(120% 60% at 50% 0%, var(--bg-soft), var(--bg));
-  background-attachment: fixed;
   color: var(--text);
   font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
   display: flex; flex-direction: column;
