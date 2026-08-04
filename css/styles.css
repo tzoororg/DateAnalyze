@@ -1,6 +1,7 @@
 /* "Sticker Book" theme — three palettes via CSS vars.
-   No data-theme attribute = Plum (the default).
-   data-theme="pink|plum|navy" = explicit choice from the ⋯ menu. */
+   No data-theme attribute = Dusk plum (the default).
+   data-theme="candle|twilight" = the alternates from the ⋯ menu.
+   pink/navy were retired; legacy stored values are migrated in js/theme-boot.js. */
 :root {
   --bg: #2a1b26;
   --bg-soft: #33222e;
@@ -23,29 +24,33 @@
   --shadow: 0 6px 16px rgba(0, 0, 0, .35);
   --cursive: "Segoe Script", "Comic Sans MS", cursive;
   --safe-b: env(safe-area-inset-bottom, 0px);
+  --glow: #f4a15d;
+  --glow-deep: #e2703a;
+  --ambience: radial-gradient(140% 46% at 50% -6%, rgba(226, 112, 58, .28), transparent 60%);
+  --chrome: rgba(51, 34, 46, .72); /* translucent --bg-soft so the ambience glow shows through the sticky header */
 }
-html[data-theme="pink"] {
-  --bg: #ffd9e4; --bg-soft: #ffe6ee; --card: #ffffff; --card-2: #ffeff4;
-  --line: #ffc9d8; --text: #5a3a4a; --muted: #a8798f;
-  --accent: #e8577e; --accent-2: #ff8fb0;
-  --good: #3e9d76; --warn: #e8a23c; --bad: #e05656;
-  --mint-bg: #d9f2e6; --mint-fg: #3e7d62; --butter-bg: #fff3d1; --butter-fg: #8a6d3b;
-  --pink-bg: #ffe3ee;
-  --shadow: 0 6px 16px rgba(200, 90, 130, .16);
+html[data-theme="candle"] {
+  --bg: #211511; --bg-soft: #2b1c16; --card: #362419; --card-2: #443023;
+  --line: #5d4433; --text: #f7ecdf; --muted: #c8a48c;
+  --glow: #f2b25c; --glow-deep: #d98232;
+  --ambience: radial-gradient(120% 42% at 50% 108%, rgba(217, 130, 50, .30), transparent 62%);
+  --chrome: rgba(43, 28, 22, .72);
+  --shadow: 0 6px 16px rgba(0, 0, 0, .45);
 }
-html[data-theme="navy"] {
-  --bg: #0d1220; --bg-soft: #141b2e; --card: #1c2438; --card-2: #273049;
-  --line: #2a3350; --text: #e8e6f0; --muted: #8891ac;
-  --accent: #ff7fa2; --accent-2: #ff9fba;
-  --good: #7ed3ab; --warn: #e8c97a; --bad: #f08a8a;
-  --mint-bg: #1e3d34; --mint-fg: #7ed3ab; --butter-bg: #3d3520; --butter-fg: #e8c97a;
-  --pink-bg: #33263f;
-  --shadow: 0 6px 16px rgba(0, 0, 0, .4);
+html[data-theme="twilight"] {
+  --bg: #141126; --bg-soft: #1c1733; --card: #251d3d; --card-2: #2f2549;
+  --line: #372c52; --text: #eae6f2; --muted: #a196c0;
+  --ambience:
+    radial-gradient(130% 40% at 50% -8%, rgba(90, 110, 180, .3), transparent 60%),
+    radial-gradient(120% 38% at 50% 108%, rgba(226, 112, 58, .22), transparent 62%);
+  --chrome: rgba(28, 23, 51, .72);
+  --shadow: 0 6px 16px rgba(0, 0, 0, .45);
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; height: 100%; }
 body {
-  background: radial-gradient(120% 60% at 50% 0%, var(--bg-soft), var(--bg)) fixed;
+  background: var(--ambience), radial-gradient(120% 60% at 50% 0%, var(--bg-soft), var(--bg));
+  background-attachment: fixed;
   color: var(--text);
   font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
   display: flex; flex-direction: column;
@@ -55,7 +60,7 @@ body {
 /* Header + tabs, stuck together so tabs stay reachable while scrolling */
 .app-chrome {
   position: sticky; top: 0; z-index: 5;
-  background: var(--bg-soft);
+  background: var(--chrome);
   backdrop-filter: blur(6px);
 }
 .app-header {
@@ -582,9 +587,9 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); bo
 .theme-row { display: flex; align-items: center; gap: 10px; }
 .theme-seg { display: flex; gap: 6px; flex: 1; }
 .tseg { flex: 1; text-align: center; padding: 7px 0; border-radius: 10px; font-size: 12px; font-weight: 700; border: 2px solid transparent; cursor: pointer; }
-.tseg-pink { background: #ffd9e4; color: #b04a68; }
 .tseg-plum { background: #2a1b26; color: #c99bb0; }
-.tseg-navy { background: #0d1220; color: #8891ac; }
+.tseg-candle { background: #211511; color: #c8a48c; }
+.tseg-twilight { background: #141126; color: #a196c0; }
 .tseg.on { border-color: var(--accent); }
 
 /* Photo-import triage overlay */

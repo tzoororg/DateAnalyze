@@ -99,9 +99,9 @@ function attachSwipe(el, onLeft, onRight) {
 }
 
 // ---------- tab + chrome wiring ----------
-const THEME_COLORS = { pink: "#e8577e", plum: "#2a1b26", navy: "#0d1220" };
+const THEME_COLORS = { plum: "#2a1b26", candle: "#211511", twilight: "#141126" };
 
-// pick = explicit user choice ("pink"|"plum"|"navy"); no arg = just sync UI + meta color.
+// pick = explicit user choice ("plum"|"candle"|"twilight"); no arg = just sync UI + meta color.
 function applyTheme(pick) {
   if (pick) {
     localStorage.setItem("theme", pick);
