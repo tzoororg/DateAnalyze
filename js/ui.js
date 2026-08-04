@@ -111,6 +111,8 @@ function applyTheme(pick) {
   document.querySelector('meta[name="theme-color"]').setAttribute("content", THEME_COLORS[eff]);
   document.querySelectorAll("[data-theme-pick]").forEach(b =>
     b.classList.toggle("on", b.dataset.themePick === eff));
+  // The Wrapped card bakes the theme into literal SVG colors; re-render it on switch.
+  if (pick && currentTab === "insights") renderInsights();
 }
 
 function wireChrome() {
@@ -1383,7 +1385,7 @@ function wrappedStats(period) {
 }
 
 async function onShareWrapped() {
-  const svgStr = C.wrappedCard(wrappedStats(wrapPeriod));
+  const svgStr = C.wrappedCard(wrappedStats(wrapPeriod), document.documentElement.dataset.theme || "plum");
   const url = URL.createObjectURL(new Blob([svgStr], { type: "image/svg+xml" }));
   const img = new Image();
   await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
@@ -1468,7 +1470,7 @@ function renderInsights() {
         <button class="seg ${wrapPeriod === "year" ? "on" : ""}" data-wrap-period="year">This year</button>
         <button class="seg ${wrapPeriod === "all" ? "on" : ""}" data-wrap-period="all">All time</button>
       </div>
-      <div class="chart-wrap">${C.wrappedCard(wStats)}</div>
+      <div class="chart-wrap">${C.wrappedCard(wStats, document.documentElement.dataset.theme || "plum")}</div>
       <button class="btn" id="wrap-share" style="margin-top:12px" ${wStats.count ? "" : "disabled"}>Share this card ↗</button>
     </div>
 

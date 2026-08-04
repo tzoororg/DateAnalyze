@@ -74,37 +74,55 @@ export function balanceDonut(newCount, repeatCount) {
   </svg>`;
 }
 
-// Shareable "Wrapped" recap card. Fixed brand palette (not CSS vars) — this
-// gets rasterized to a PNG and shared outside the app, so it must look the
-// same regardless of the viewer's or owner's active in-app theme.
+// Shareable "Wrapped" recap card. Fixed per-theme palettes (not CSS vars) —
+// this gets rasterized to a PNG and shared outside the app, so the colors are
+// resolved literals; the palette follows the sender's active theme.
+const WRAPPED_PALETTES = {
+  plum: {   // Dusk: plum + sunset-amber corner glow
+    stops: ["#4a2138", "#2a1b26", "#1e1420"],
+    glowA: ["#ff9fba", 0.35], glowB: ["#f4a15d", 0.20],
+    label: "#e79fc0", sub: "#e9d5e0", body: "#f5e6ee", gold: "#e8c97a", muted: "#c99bb0",
+  },
+  candle: { // espresso + candle-gold glow from below
+    stops: ["#45291a", "#2b1c16", "#1a100c"],
+    glowA: ["#ff9fba", 0.28], glowB: ["#f2b25c", 0.26],
+    label: "#e0b490", sub: "#eedbc8", body: "#f7ecdf", gold: "#f2b25c", muted: "#c8a48c",
+  },
+  twilight: { // violet-navy + warm low glow
+    stops: ["#35284f", "#1c1733", "#100d20"],
+    glowA: ["#ff9fba", 0.30], glowB: ["#f4a15d", 0.18],
+    label: "#b9a9dd", sub: "#ded5ee", body: "#eae6f2", gold: "#e8c97a", muted: "#a196c0",
+  },
+};
 export const WRAPPED_W = 1080, WRAPPED_H = 1350;
-export function wrappedCard(stats) {
+export function wrappedCard(stats, theme = "plum") {
+  const P = WRAPPED_PALETTES[theme] || WRAPPED_PALETTES.plum;
   const W = WRAPPED_W, H = WRAPPED_H;
   const kicker = `US ♥ WRAPPED · ${stats.periodLabel}`;
   const bg = `
     <defs>
       <linearGradient id="wbg" x1="0" y1="0" x2="0.6" y2="1">
-        <stop offset="0%" stop-color="#4a2138"/><stop offset="55%" stop-color="#2a1b26"/><stop offset="100%" stop-color="#1e1420"/>
+        <stop offset="0%" stop-color="${P.stops[0]}"/><stop offset="55%" stop-color="${P.stops[1]}"/><stop offset="100%" stop-color="${P.stops[2]}"/>
       </linearGradient>
-      <radialGradient id="wglowPink" cx="85%" cy="-5%" r="70%">
-        <stop offset="0%" stop-color="#ff9fba" stop-opacity="0.35"/><stop offset="60%" stop-color="#ff9fba" stop-opacity="0"/>
+      <radialGradient id="wglowA" cx="85%" cy="-5%" r="70%">
+        <stop offset="0%" stop-color="${P.glowA[0]}" stop-opacity="${P.glowA[1]}"/><stop offset="60%" stop-color="${P.glowA[0]}" stop-opacity="0"/>
       </radialGradient>
-      <radialGradient id="wglowGreen" cx="5%" cy="105%" r="65%">
-        <stop offset="0%" stop-color="#7ed3ab" stop-opacity="0.18"/><stop offset="60%" stop-color="#7ed3ab" stop-opacity="0"/>
+      <radialGradient id="wglowB" cx="5%" cy="105%" r="65%">
+        <stop offset="0%" stop-color="${P.glowB[0]}" stop-opacity="${P.glowB[1]}"/><stop offset="60%" stop-color="${P.glowB[0]}" stop-opacity="0"/>
       </radialGradient>
       <clipPath id="wclip"><rect width="${W}" height="${H}" rx="56"/></clipPath>
     </defs>
     <g clip-path="url(#wclip)">
       <rect width="${W}" height="${H}" fill="url(#wbg)"/>
-      <rect width="${W}" height="${H}" fill="url(#wglowPink)"/>
-      <rect width="${W}" height="${H}" fill="url(#wglowGreen)"/>
+      <rect width="${W}" height="${H}" fill="url(#wglowA)"/>
+      <rect width="${W}" height="${H}" fill="url(#wglowB)"/>
     </g>`;
   const svgOpen = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg" role="img" font-family="system-ui,-apple-system,'Segoe UI',sans-serif">`;
 
   if (!stats.count) {
     return `${svgOpen}${bg}
       <text x="${W / 2}" y="${H / 2 - 10}" text-anchor="middle" font-size="30" font-weight="700" letter-spacing="5" fill="#ff9fba">${esc(kicker)}</text>
-      <text x="${W / 2}" y="${H / 2 + 50}" text-anchor="middle" font-size="32" fill="#c99bb0">No dates logged yet</text>
+      <text x="${W / 2}" y="${H / 2 + 50}" text-anchor="middle" font-size="32" fill="${P.muted}">No dates logged yet</text>
     </svg>`;
   }
 
@@ -118,9 +136,9 @@ export function wrappedCard(stats) {
     const cx = 90 + colW * i + colW / 2;
     return `
       <text x="${cx}" y="630" text-anchor="middle" font-size="84">${esc(c.emoji)}</text>
-      <text x="${cx}" y="686" text-anchor="middle" font-size="24" font-weight="800" letter-spacing="1.5" fill="#e79fc0">${esc(c.label)}</text>
+      <text x="${cx}" y="686" text-anchor="middle" font-size="24" font-weight="800" letter-spacing="1.5" fill="${P.label}">${esc(c.label)}</text>
       <text x="${cx}" y="732" text-anchor="middle" font-size="34" font-weight="800" fill="#fff">${esc(truncate(c.value, 16))}</text>
-      <text x="${cx}" y="770" text-anchor="middle" font-size="24" fill="#e9d5e0">${esc(c.sub)}</text>`;
+      <text x="${cx}" y="770" text-anchor="middle" font-size="24" fill="${P.sub}">${esc(c.sub)}</text>`;
   }).join("");
 
   const vibeLine = stats.vibes?.length ? `our vibe: ${stats.vibes.join(" · ")}` : "";
@@ -128,11 +146,11 @@ export function wrappedCard(stats) {
   return `${svgOpen}${bg}
     <text x="${W / 2}" y="170" text-anchor="middle" font-size="30" font-weight="700" letter-spacing="5" fill="#ff9fba">${esc(kicker)}</text>
     <text x="${W / 2}" y="340" text-anchor="middle" font-size="220" font-weight="800" fill="#fff">${stats.count}</text>
-    <text x="${W / 2}" y="398" text-anchor="middle" font-size="42" font-weight="600" fill="#f5e6ee" opacity="0.85">dates together</text>
-    <text x="${W / 2}" y="466" text-anchor="middle" font-size="38" fill="#f5e6ee" opacity="0.9"><tspan font-weight="800" fill="#e8c97a">♥ ${stats.avgEnjoyment.toFixed(1)}</tspan> average</text>
+    <text x="${W / 2}" y="398" text-anchor="middle" font-size="42" font-weight="600" fill="${P.body}" opacity="0.85">dates together</text>
+    <text x="${W / 2}" y="466" text-anchor="middle" font-size="38" fill="${P.body}" opacity="0.9"><tspan font-weight="800" fill="${P.gold}">♥ ${stats.avgEnjoyment.toFixed(1)}</tspan> average</text>
     ${colsSvg}
     ${vibeLine ? `<line x1="90" y1="900" x2="990" y2="900" stroke="rgba(255,255,255,.12)" stroke-width="2"/>
-    <text x="${W / 2}" y="950" text-anchor="middle" font-size="30" fill="#e9d5e0">${esc(vibeLine)}</text>` : ""}
+    <text x="${W / 2}" y="950" text-anchor="middle" font-size="30" fill="${P.sub}">${esc(vibeLine)}</text>` : ""}
     <line x1="90" y1="1230" x2="990" y2="1230" stroke="rgba(255,255,255,.12)" stroke-width="2"/>
     <text x="${W / 2}" y="1280" text-anchor="middle" font-size="26" font-weight="800" letter-spacing="3" fill="#ff7fa2">MADE WITH US · OUR DATE JOURNAL</text>
   </svg>`;
