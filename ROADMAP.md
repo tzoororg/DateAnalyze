@@ -331,16 +331,16 @@ alongside any other Log-form work.
 
 ## Release triage backlog
 
-- **low** — Wishlist "We did it! Log it →" CTA wraps to two lines at narrow width (mid-phrase, arrow on line 2). Shorten copy or widen the button. *(found preparing v2.2.0 release)*
-- **low** — Lightbox photo is not full-bleed: image sits in a rounded card with side margins instead of edge-to-edge with overlaid arrows/caption. *(found preparing v2.2.0 release)*
+- ~~**low** — Wishlist "We did it! Log it →" CTA wraps to two lines at narrow width.~~ ✅ Fixed 2026-08-05 (7e30713): copy shortened to "Log it →".
+- ~~**low** — Lightbox photo is not full-bleed.~~ ✅ Fixed 2026-08-05 (7e30713): edge-to-edge, scrim caption, swipe-down dismiss.
 - ~~**low** — Ideas cards repeat identical rationale sentences verbatim across consecutive cards. Collapse the rationale into the badge row to shed two lines per card.~~ ✅ Fixed 2026-08-05 (c20bcf6): compact one-line reasons + half-height cards.
-- **medium** — Home "It's been a while — back up your dates" tip bubble sits centered over the hero memory photo, obscuring the focal subject. Move to a dismissible banner above the photo strip, or anchor to a non-focal corner. *(found preparing v2.3.0 release)*
+- ~~**medium** — Home backup tip bubble sits centered over the hero memory photo.~~ ✅ Fixed 2026-08-05 (7e30713): slim tappable banner above Recent Memories.
 - ~~**low** — Log form: "ONE WORD FOR THE VIBE" caps-label is redundant above the vibe chips. Drop the heading.~~ ✅ Fixed 2026-08-05 (c20bcf6).
-- **low** — `deleteAccount` sole-member branch (js/sync.js ~155) deletes photo *Firestore docs* but not Cloud Storage blobs (now that `useStorage:true`), leaving orphaned E2EE-encrypted, unreachable bytes in the bucket after account deletion. No user-facing data loss (rules deny access post-delete); add `deleteObject` for a clean wipe. *(found preparing v2.3.0 release)*
-- **medium** — Ideas filter panel is the app's one patch of stock Material: a native `<select>` for "Max effort" sits above the custom `Category▾`/`Vibe▾` pills, three control idioms stacked. Make effort a pill-dropdown too. *(found preparing v2.4.0 release; the `MAX BUDGET` heading half was fixed 2026-08-05, c20bcf6)*
+- ~~**low** — `deleteAccount` sole-member branch deletes photo Firestore docs but not Cloud Storage blobs.~~ ✅ Fixed 2026-08-05 (7e30713): listAll + deleteObject; **storage.rules changed — deploy at release**.
+- ~~**medium** — Ideas "Max effort" native `<select>` is the app's one patch of stock Material.~~ ✅ Fixed 2026-08-05 (7e30713): pill-dropdown matching Category/Vibe (heading half in c20bcf6).
 - ~~**low** — History rows have inconsistent heights because the cost badge wraps to a second line on longer titles.~~ ✅ Fixed 2026-08-05 (c20bcf6): one-line meta, fixed hearts column.
 - ~~**low** — Log form category icons render as a 6+5 grid; a single horizontally-scrollable strip would reclaim a row of vertical space.~~ ✅ Fixed 2026-08-05 (c20bcf6).
-- **low** — Date-night "It's a match" toast (fixed, bottom-centre) can land on top of a suggestion card's `Favorite` badge, clipping the toast text. Anchor the toast clear of card badges or suppress the badge while a toast is up. *(found preparing v2.4.0 release)*
+- **low** — Date-night "It's a match" toast (fixed, bottom-centre) can land on top of a suggestion card's `Favorite` badge, clipping the toast text. Anchor the toast clear of card badges or suppress the badge while a toast is up. *(found preparing v2.4.0 release — still open)*
 - ~~**low** — Wrapped share card truncates its own stat labels — on the one artifact designed to leave the app.~~ ✅ Fixed 2026-08-05 (c20bcf6): fixed 25% columns, short display names.
 
 ## Explicitly NOT doing
