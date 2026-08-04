@@ -12,5 +12,14 @@ service firebase.storage {
       allow read: if isMember();
       allow write: if isMember() && request.resource.size < 5 * 1024 * 1024;
     }
+    // Folder-level listAll(), used by deleteAccount to sweep every photo blob
+    // when the sole member leaves a space (list is a distinct op from read/write).
+    match /spaces/{spaceId}/photos {
+      function isMember() {
+        return request.auth != null &&
+          firestore.exists(/databases/(default)/documents/spaces/$(spaceId)/members/$(request.auth.uid));
+      }
+      allow list: if isMember();
+    }
   }
 }

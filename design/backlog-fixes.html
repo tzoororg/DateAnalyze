@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Backlog fixes · before/after mocks</title>
+<style>
+  :root {
+    --bg: #1c1420; --bg-soft: #241a29; --card: #2c2030; --card-2: #392a3e;
+    --line: #4a3a4f; --text: #f3e9f6; --muted: #b79ec0;
+    --accent: #ff7fa2; --accent-2: #ff9fba;
+    --radius: 18px; --shadow: 0 6px 16px rgba(0, 0, 0, .35);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #100b13; }
+  body { font: 15px/1.42 "Segoe UI", system-ui, sans-serif; color: var(--text); padding: 30px 0 60px; }
+  .panel-title { width: 390px; margin: 0 auto 10px; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--accent-2); }
+  .frame {
+    width: 390px; margin: 0 auto; border-radius: 22px; overflow: hidden;
+    background: radial-gradient(140% 46% at 50% -6%, rgba(255, 127, 162, .22), transparent 60%), linear-gradient(180deg, var(--bg-soft), var(--bg) 55%);
+    padding: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.5); position: relative;
+  }
+  .frame.tight-pad { padding: 0; }
+  .frame.before { opacity: .9; margin-bottom: 8px; }
+  .row-label { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin: 0 0 8px; padding: 0 16px; }
+  .frame.tight-pad .row-label { padding: 16px 16px 0; }
+  .caption { width: 390px; margin: 12px auto 46px; font-size: 13px; color: #cbb4c4; }
+
+  .card { background: var(--card); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); }
+  .section-title { font-size: 12px; text-transform: uppercase; letter-spacing: .14em; font-weight: 800; color: var(--muted); margin: 4px 4px 10px; }
+
+  /* ---- Panel 1: wishlist CTA wrap ---- */
+  .entry { display: flex; align-items: center; gap: 12px; }
+  .thumb { width: 38px; height: 38px; border-radius: 12px; background: var(--card-2); display: grid; place-items: center; font-size: 17px; flex: none; }
+  .meta { flex: 1; min-width: 0; }
+  .meta h4 { margin: 0 0 3px; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .meta .sub { font-size: 12px; color: var(--muted); }
+  .row-cta { flex: none; background: var(--accent); color: #fff; border: none; border-radius: 999px; font-size: 12.5px; font-weight: 800; padding: 8px 14px; cursor: pointer; }
+  .row-cta.wrap-demo { white-space: normal; text-align: center; line-height: 1.2; max-width: 76px; }
+
+  /* ---- Panel 2: lightbox ---- */
+  .lb-frame-old { background: #000; padding: 28px 20px; display: flex; flex-direction: column; align-items: center; }
+  .lb-card-old { width: 100%; background: var(--card); border-radius: 16px; padding: 14px; box-shadow: 0 12px 48px rgba(0,0,0,.6); }
+  .lb-img-old { width: 100%; height: 260px; border-radius: 10px; background: linear-gradient(135deg, #3a2b40, #5a3e4a); display: grid; place-items: center; font-size: 40px; }
+  .lb-cap-old { text-align: center; color: var(--muted); font-size: 13px; margin-top: 10px; }
+  .lb-nav-old-row { display: flex; justify-content: space-between; width: 100%; margin-top: 10px; }
+  .lb-nav-old-row button { width: 40px; height: 40px; border-radius: 50%; border: none; background: var(--card-2); color: #fff; font-size: 22px; }
+
+  .lb-frame-new { background: #000; position: relative; height: 420px; }
+  .lb-img-new { width: 100%; height: 100%; object-fit: cover; background: linear-gradient(135deg, #3a2b40, #5a3e4a); }
+  .lb-close-new { position: absolute; top: 14px; right: 14px; width: 38px; height: 38px; border-radius: 50%; border: none; background: rgba(0,0,0,.5); color: #fff; font-size: 18px; }
+  .lb-nav-new { position: absolute; top: 50%; transform: translateY(-50%); width: 42px; height: 42px; border-radius: 50%; border: none; background: rgba(0,0,0,.4); color: #fff; font-size: 26px; }
+  .lb-nav-new.prev { left: 12px; } .lb-nav-new.next { right: 12px; }
+  .lb-scrim-new { position: absolute; left: 0; right: 0; bottom: 0; height: 110px; background: linear-gradient(0deg, rgba(0,0,0,.75), transparent); display: flex; align-items: flex-end; padding: 0 20px 16px; }
+  .lb-scrim-new .cap { color: #fff; font-size: 13px; text-shadow: 0 1px 4px rgba(0,0,0,.9); }
+
+  /* ---- Panel 3: home tip ---- */
+  .memory-card { background: var(--card); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); position: relative; margin-bottom: 12px; }
+  .memory-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .memory-title { font-size: 13px; font-weight: 800; color: var(--accent-2); }
+  .memory-dismiss { border: none; background: transparent; color: var(--muted); font-size: 14px; }
+  .memory-photo { width: 100%; height: 150px; border-radius: 12px; background: linear-gradient(135deg, #3a2b40, #5a3e4a); margin-top: 4px; }
+  .tip-overlay { position: absolute; left: 50%; top: 90px; transform: translateX(-50%); width: 260px; background: var(--text); color: var(--bg); padding: 11px 16px; border-radius: 16px; font-size: 13px; font-weight: 600; box-shadow: var(--shadow); text-align: center; z-index: 3; }
+
+  .backup-banner { display: flex; align-items: center; gap: 10px; background: var(--card-2); border: 1px solid var(--line); border-radius: 14px; padding: 9px 10px 9px 12px; margin-bottom: 4px; font-size: 12.5px; color: var(--muted); cursor: pointer; }
+  .backup-banner .em { font-size: 15px; flex: none; }
+  .backup-banner .msg { flex: 1; }
+  .backup-banner .msg b { color: var(--text); }
+  .backup-banner .chev { flex: none; color: var(--accent-2); font-size: 16px; font-weight: 800; }
+  .backup-banner .x { border: none; background: transparent; color: var(--muted); font-size: 13px; padding: 2px 4px; flex: none; margin-left: 2px; }
+  .backup-caption { font-size: 11px; color: var(--muted); margin: 0 0 12px 2px; }
+
+  /* ---- Panel 4: filter panel ---- */
+  .seg4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; margin-bottom: 12px; }
+  .seg4 button { border: 1.5px solid var(--line); background: var(--card-2); color: var(--text); border-radius: 12px; padding: 9px 0; font-size: 13px; font-weight: 700; }
+  .seg4 .on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  label.field { display: block; margin: 12px 0; }
+  label.field > span { display: block; font-size: 13px; color: var(--muted); font-weight: 600; margin-bottom: 6px; }
+  select.native { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: #fff; color: #111; font-size: 14px; appearance: auto; }
+
+  .filter-group { border: none; padding: 0; margin: 0 0 8px; }
+  .filter-group summary {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 13px; border-radius: 12px; border: 1px solid var(--line);
+    background: var(--card-2); cursor: pointer; list-style: none;
+    font-size: 14px; color: var(--muted);
+  }
+  .filter-group summary::-webkit-details-marker { display: none; }
+  .filter-group summary::marker { display: none; }
+  .filter-group summary .fg-label { font-weight: 600; color: var(--text); }
+  .filter-group summary .fg-right { display: flex; align-items: center; gap: 8px; }
+  .filter-group summary .fg-badge { background: var(--accent); color: #fff; border-radius: 999px; padding: 2px 9px; font-size: 12px; font-weight: 700; }
+  .filter-group summary .fg-arrow { font-size: 11px; }
+  .filter-group[open] summary .fg-arrow { transform: rotate(180deg); }
+  .filter-group .chips { padding: 10px 4px 4px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { padding: 9px 13px; border-radius: 13px; border: 1px solid var(--line); background: var(--card-2); color: var(--muted); font-size: 14px; font-weight: 600; white-space: nowrap; }
+
+  /* Effort pill: unlabeled like $ pills; open state swaps the pill row for a chip row in place */
+  .filter-group.effort summary { justify-content: flex-start; gap: 8px; }
+  .filter-group.effort summary .fg-badge { background: transparent; color: var(--text); padding: 0; font-size: 15px; font-weight: 700; }
+  .filter-group.effort[open] > summary { display: none; }
+  .filter-group.effort .chips-row {
+    display: none; align-items: center; gap: 6px;
+    border: 1.5px solid var(--accent); background: var(--card-2); border-radius: 12px;
+    padding: 9px 10px; overflow-x: auto;
+  }
+  .filter-group.effort[open] .chips-row { display: flex; }
+  .chip-sm { flex: none; padding: 6px 11px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg-soft); color: var(--muted); font-size: 13px; font-weight: 700; white-space: nowrap; }
+  .chip-sm.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .chip.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="panel-title">1 · Wishlist "did it" CTA — copy that always fits</div>
+<div class="frame before">
+  <div class="row-label">before — wraps mid-phrase at 390px</div>
+  <div class="card">
+    <div class="entry">
+      <div class="thumb">🎨</div>
+      <div class="meta"><h4>Pottery class</h4><div class="sub">Creative / Class · $$</div></div>
+      <button class="row-cta wrap-demo">We did it! Log it →</button>
+    </div>
+  </div>
+</div>
+<div class="frame">
+  <div class="row-label">after — one line, same action</div>
+  <div class="card">
+    <div class="entry">
+      <div class="thumb">🎨</div>
+      <div class="meta"><h4>Pottery class</h4><div class="sub">Creative / Class · $$</div></div>
+      <button class="row-cta">Log it →</button>
+    </div>
+  </div>
+</div>
+<div class="caption">"We did it!" was redundant with the wishlist context — the button already lives next to a saved idea. "Log it →" carries the same intent and never wraps, even at 390px.</div>
+
+<div class="panel-title">2 · Lightbox — full-bleed photo</div>
+<div class="frame tight-pad before">
+  <div class="row-label" style="color:#cbb4c4">before — card with margins</div>
+  <div class="lb-frame-old">
+    <div class="lb-card-old">
+      <div class="lb-img-old">🖼️</div>
+      <div class="lb-cap-old">Sunset rooftop picnic · Jul 22</div>
+    </div>
+    <div class="lb-nav-old-row"><button>‹</button><button>›</button></div>
+  </div>
+</div>
+<div class="frame tight-pad">
+  <div class="row-label" style="color:#cbb4c4">after — edge to edge, overlaid chrome</div>
+  <div class="lb-frame-new">
+    <div class="lb-img-new"></div>
+    <button class="lb-close-new">✕</button>
+    <button class="lb-nav-new prev">‹</button>
+    <button class="lb-nav-new next">›</button>
+    <div class="lb-scrim-new"><div class="cap">Sunset rooftop picnic · Jul 22</div></div>
+  </div>
+</div>
+<div class="caption">Photo fills the full viewport width with no rounded card or side margins. Close/prev/next float over the image; a bottom gradient scrim keeps the caption legible without a solid bar eating into the photo. Primary dismissal is swipe-down or tap-outside-the-photo; the ✕ is a fallback for anyone who doesn't discover the gesture.</div>
+
+<div class="panel-title">3 · Home backup tip — banner, not overlay</div>
+<div class="frame before">
+  <div class="row-label">before — bubble floats over the memory photo</div>
+  <div class="memory-card">
+    <div class="memory-header"><span class="memory-title">On this day ✨</span><button class="memory-dismiss">✕</button></div>
+    <div class="memory-photo"></div>
+    <div class="tip-overlay">It's been a while — back up your dates</div>
+  </div>
+  <div class="section-title">Recent memories</div>
+</div>
+<div class="frame">
+  <div class="row-label">after — slim banner above the strip, photo clear</div>
+  <div class="memory-card">
+    <div class="memory-header"><span class="memory-title">On this day ✨</span><button class="memory-dismiss">✕</button></div>
+    <div class="memory-photo"></div>
+  </div>
+  <div class="backup-banner">
+    <span class="em">☁️</span>
+    <span class="msg">It's been a while — <b>back up your dates</b></span>
+    <span class="chev">›</span>
+    <button class="x">✕</button>
+  </div>
+  <div class="backup-caption">tap → Export</div>
+  <div class="section-title">Recent memories</div>
+</div>
+<div class="caption">Same card language as the app (rounded corners, card background) but as its own slim row above "Recent memories" instead of a toast pinned over the hero photo. The whole banner is tappable — it opens Export (chevron marks it as an action) — with the ✕ as a separate dismiss target. The memory photo stays fully visible.</div>
+
+<div class="panel-title">4 · Ideas filters — effort matches the pill idiom</div>
+<div class="frame before">
+  <div class="row-label">before — native &lt;select&gt; breaks the pattern</div>
+  <div class="card">
+    <div class="seg4"><button>$</button><button class="on">$$</button><button>$$$</button><button>$$$$</button></div>
+    <label class="field"><span>Max effort</span>
+      <select class="native"><option>Any</option><option>1 (easy)</option><option selected>2</option><option>3</option><option>4</option><option>5 (big)</option></select>
+    </label>
+    <details class="filter-group"><summary><span class="fg-label">Category</span><span class="fg-right"><span class="fg-arrow">▼</span></span></summary></details>
+    <details class="filter-group"><summary><span class="fg-label">Vibe</span><span class="fg-right"><span class="fg-arrow">▼</span></span></summary></details>
+  </div>
+</div>
+<div class="frame">
+  <div class="row-label">after — Effort ▾ pill-dropdown, open state</div>
+  <div class="card">
+    <div class="seg4"><button>$</button><button class="on">$$</button><button>$$$</button><button>$$$$</button></div>
+    <details class="filter-group effort" open>
+      <summary><span class="fg-right"><span class="fg-badge">⚡⚡</span></span><span class="fg-arrow">▼</span></summary>
+      <div class="chips-row">
+        <button class="chip-sm">Any</button>
+        <button class="chip-sm">⚡</button>
+        <button class="chip-sm on">⚡⚡</button>
+        <button class="chip-sm">⚡⚡⚡</button>
+      </div>
+    </details>
+    <details class="filter-group"><summary><span class="fg-label">Category</span><span class="fg-right"><span class="fg-arrow">▼</span></span></summary></details>
+    <details class="filter-group"><summary><span class="fg-label">Vibe</span><span class="fg-right"><span class="fg-arrow">▼</span></span></summary></details>
+  </div>
+</div>
+<div class="caption">"Max effort" drops the stock OS &lt;select&gt; for an unlabeled bolt pill (⚡⚡ ▾), matching the unlabeled $ pills above it. Opening it swaps the pill row for the chip row in the same spot — the card doesn't grow a line, it trades one row for another.</div>
+
+</body>
+</html>

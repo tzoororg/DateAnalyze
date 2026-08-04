@@ -163,6 +163,19 @@ export async function deleteAccount() {
       for (const d of dates.docs) await s.deleteDoc(d.ref);
       const photos = await s.getDocs(s.collection(s.fs, "spaces", spaceId, "photos"));
       for (const p of photos.docs) await s.deleteDoc(p.ref);
+      // Cloud Storage photo blobs (Blaze/useStorage) live outside Firestore, keyed
+      // by the same path convention as uploadPhoto/photoRef — list the space's
+      // photo folder and delete every object so account deletion leaves no orphans.
+      if (firebaseConfig.useStorage) {
+        try {
+          const st = await ensureStorage();
+          const folder = st.ref(st.storage, `spaces/${spaceId}/photos`);
+          const { items } = await st.listAll(folder);
+          for (const item of items) await st.deleteObject(item);
+        } catch (err) {
+          console.warn("storage photo cleanup skipped:", err?.code || err);
+        }
+      }
       await s.deleteDoc(s.doc(s.fs, "spaces", spaceId));   // isMember still true here
       await s.deleteDoc(s.doc(s.fs, "spaces", spaceId, "members", user.uid)); // last
     } else {

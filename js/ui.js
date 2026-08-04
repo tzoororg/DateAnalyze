@@ -98,6 +98,26 @@ function attachSwipe(el, onLeft, onRight) {
   }, { passive: true });
 }
 
+// Swipe-down → onDown(). Used by the lightbox to dismiss on a downward drag,
+// dragging the photo along with the finger for feedback.
+function attachSwipeDown(el, onDown) {
+  let sy = null;
+  const img = el.querySelector(".lb-img");
+  el.addEventListener("touchstart", e => { sy = e.touches[0].clientY; }, { passive: true });
+  el.addEventListener("touchmove", e => {
+    if (sy == null) return;
+    const dy = e.touches[0].clientY - sy;
+    if (dy > 0 && img) img.style.transform = `translateY(${dy}px)`;
+  }, { passive: true });
+  el.addEventListener("touchend", e => {
+    if (sy == null) return;
+    const dy = e.changedTouches[0].clientY - sy;
+    sy = null;
+    if (dy > 90) onDown();
+    else if (img) img.style.transform = "";
+  }, { passive: true });
+}
+
 // ---------- tab + chrome wiring ----------
 const THEME_COLORS = { plum: "#2a1b26", candle: "#211511", twilight: "#141126" };
 
@@ -213,14 +233,14 @@ async function renderStorageStatus() {
 }
 
 // Gentle reminder to back up if local-only, has data, and no export in 60 days.
+// Shown as a persistent banner on Home (not a one-shot toast) until exported or dismissed.
+let showBackupBanner = false;
 async function maybeBackupNudge() {
-  if (db.getMode() !== "local" || !dates.length) return;
+  if (db.getMode() !== "local" || !dates.length) { showBackupBanner = false; return; }
   const last = await db.getSetting("lastExportAt", 0);
-  if (last && Date.now() - last < 60 * 86400e3) return;
+  if (last && Date.now() - last < 60 * 86400e3) { showBackupBanner = false; return; }
   const snooze = await db.getSetting("backupNudgeSnooze", 0);
-  if (snooze && Date.now() < snooze) return;
-  await db.setSetting("backupNudgeSnooze", Date.now() + 7 * 86400e3);
-  toast("It's been a while — back up your dates (⋯ menu → Export) or turn on sync");
+  showBackupBanner = !(snooze && Date.now() < snooze);
 }
 
 // ---------- sync menu ----------
@@ -545,12 +565,26 @@ function renderHome() {
       <button class="mini-btn" id="dn-start">Start</button>
     </section>` : ""}
     ${memoryCard}
+    ${showBackupBanner ? `
+    <div class="backup-banner" id="backup-banner">
+      <span class="em">☁️</span>
+      <span class="msg">It's been a while — <b>back up your dates</b></span>
+      <span class="chev">›</span>
+      <button class="x" id="backup-dismiss" title="Dismiss">✕</button>
+    </div>` : ""}
     <h3 class="section-title">Recent memories</h3>
     <div id="date-list"></div>
   `;
   bind("home-plan", "click", () => show("suggest"));
   bind("dn-start", "click", onDnStart);
   bind("memory-dismiss", "click", () => { memoryDismissed = true; renderHome(); });
+  bind("backup-banner", "click", onExport);
+  bind("backup-dismiss", "click", async e => {
+    e.stopPropagation();
+    await db.setSetting("backupNudgeSnooze", Date.now() + 7 * 86400e3);
+    showBackupBanner = false;
+    renderHome();
+  });
   renderList();
 }
 
@@ -1301,7 +1335,7 @@ function renderWishlist(host, countEl) {
           <div class="sub">${catLabel(e.category)}${tierPill(e) ? " · " + tierPill(e) : ""}${e.effort ? " · " + "⚡".repeat(e.effort) : ""}</div>
           ${e.url ? `<a class="url-link" href="${escAttr(safeUrl(e.url))}" target="_blank" rel="noopener">🔗 ${escHtml(prettyUrl(e.url))}</a>` : ""}
         </div>
-        <button class="row-cta" data-didit="${escAttr(e.id)}">Log →</button>
+        <button class="row-cta" data-didit="${escAttr(e.id)}">Log it →</button>
       </div>
     </div>`).join("");
   host.querySelectorAll("[data-didit]").forEach(b => b.addEventListener("click", () => logIdea(b.dataset.didit)));
@@ -1530,11 +1564,18 @@ function renderSuggest() {
       <div class="seg4" id="s-budget" style="margin-top:14px">
         ${COST_TIERS.map(t => `<button class="${sug.budgetTier === t.key ? "on" : ""}" data-btier="${t.key}">${t.label}</button>`).join("")}
       </div>
-      <label class="field"><span>Max effort</span>
-        <select id="s-effort">
-          ${[["", "Any"], [1, "1 (easy)"], [2, "2"], [3, "3"], [4, "4"], [5, "5 (big)"]]
-            .map(([val, lbl]) => `<option value="${val}" ${String(sug.maxEffort ?? "") === String(val) ? "selected" : ""}>${lbl}</option>`).join("")}
-        </select></label>
+      <details class="filter-group effort" id="s-effort-group">
+        <summary>
+          <span class="fg-right"><span class="fg-badge">${sug.maxEffort ? "⚡".repeat(sug.maxEffort) : "⚡"}</span></span>
+          <span class="fg-arrow">▼</span>
+        </summary>
+        <div class="chips-row" id="s-effort">
+          <button class="chip-sm ${sug.maxEffort == null ? "on" : ""}" data-seffort="">Any</button>
+          <button class="chip-sm ${sug.maxEffort === 1 ? "on" : ""}" data-seffort="1">⚡</button>
+          <button class="chip-sm ${sug.maxEffort === 2 ? "on" : ""}" data-seffort="2">⚡⚡</button>
+          <button class="chip-sm ${sug.maxEffort === 3 ? "on" : ""}" data-seffort="3">⚡⚡⚡</button>
+        </div>
+      </details>
 
       <details class="filter-group" id="s-cat-group">
         <summary>
@@ -1649,7 +1690,15 @@ function wireSuggest() {
     setOn(v.querySelectorAll("#s-budget button"), sug.budgetTier ? b : null);
     rerun();
   });
-  bind("s-effort", "change", e => { sug.maxEffort = e.target.value === "" ? null : Number(e.target.value); rerun(); });
+  v.querySelector("#s-effort").addEventListener("click", e => {
+    const b = e.target.closest("[data-seffort]"); if (!b) return;
+    sug.maxEffort = b.dataset.seffort === "" ? null : Number(b.dataset.seffort);
+    setOn(v.querySelectorAll("#s-effort .chip-sm"), b);
+    const badge = v.querySelector("#s-effort-group summary .fg-badge");
+    if (badge) badge.textContent = sug.maxEffort ? "⚡".repeat(sug.maxEffort) : "⚡";
+    v.querySelector("#s-effort-group").open = false;
+    rerun();
+  });
   v.querySelector("#s-cat").addEventListener("click", e => {
     const b = e.target.closest("[data-scat]"); if (!b) return;
     sug.category = b.dataset.scat || null;
@@ -2037,11 +2086,15 @@ function openLightbox(items, startIndex = 0, opts = {}) {
   box.querySelector(".lb-next").addEventListener("click", e => { e.stopPropagation(); goUser(1); });
   imgEl.addEventListener("click", e => {
     e.stopPropagation();
+    // Full-bleed photo has no "outside" area to tap — the image itself is the
+    // dismiss target (unless tapping jumps to the entry, e.g. slideshow mode).
     if (onTap) { close(); onTap(items[idx]); }
+    else close();
   });
-  box.addEventListener("click", close);   // tap backdrop to dismiss
+  box.addEventListener("click", close);   // tap backdrop (chrome areas) to dismiss
   document.addEventListener("keydown", onKey);
   if (multi) attachSwipe(box, () => goUser(1), () => goUser(-1));
+  attachSwipeDown(box, close);
   document.body.appendChild(box);
   show();
   arm();
