@@ -70,11 +70,13 @@ export function valueForMoney(dates, topN = 5) {
 
 // Most common cost tier + its share of tiered entries. Null if nothing has a tier.
 export function tierDistribution(list) {
+  const validKeys = new Set(COST_TIERS.map(t => t.key));
   const counts = {};
   let total = 0;
   for (const e of list) {
-    const t = e.costTier || tierForCost(e.cost);
-    if (!t) continue;
+    let t = e.costTier || tierForCost(e.cost);
+    if (!validKeys.has(t)) t = tierForCost(e.cost); // legacy/unknown costTier -> re-derive from cost
+    if (!validKeys.has(t)) continue; // still unresolvable -> skip rather than corrupt the pct
     counts[t] = (counts[t] || 0) + 1;
     total++;
   }

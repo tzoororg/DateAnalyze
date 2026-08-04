@@ -3,7 +3,7 @@
 import * as db from "./store.js";
 import {
   CATEGORIES, MOOD_OPTIONS, COST_TIERS, METER, catLabel, catEmoji,
-  blankEntry, fmtDate, entryTimeMs, tierLabel, tierForCost, repeatForEnjoyment,
+  blankEntry, fmtDate, entryTimeMs, tierLabel, tierWord, tierForCost, repeatForEnjoyment,
   normTitle, todayISO, fmtDuration,
 } from "./model.js";
 import * as A from "./analytics.js";
@@ -1458,21 +1458,34 @@ function fullMonthName(ym) {
 
 function wrappedStats(period) {
   const year = new Date().getFullYear();
-  const periodLabel = period === "year" ? `${year} SO FAR` : "ALL TIME";
-  const list = period === "year" ? done().filter(d => new Date(entryTimeMs(d)).getFullYear() === year) : done();
+  let effPeriod = period;
+  let list = period === "year" ? done().filter(d => new Date(entryTimeMs(d)).getFullYear() === year) : done();
+  let fallbackNote = null;
+  if (period === "year" && !list.length && done().length) {
+    list = done();
+    effPeriod = "all";
+    fallbackNote = `No dates in ${year} yet — showing all time`;
+  }
+  const periodLabel = effPeriod === "year" ? `${year} SO FAR` : "ALL TIME";
   const s = A.summary(list);
   if (!s.count) return { periodLabel, count: 0 };
   const cats = A.byCategory(list);
+  // most-dated category wins "favorite" (tie-break by avg enjoyment) — sorting
+  // purely by avg enjoyment let a single 5-heart outlier beat a real favorite.
+  const favCat = cats.length
+    ? [...cats].sort((a, b) => b.count - a.count || b.avgEnjoyment - a.avgEnjoyment)[0]
+    : null;
   const bestMonth = A.monthlyTrend(list).reduce((a, b) => (b.count > a.count ? b : a));
   const repeats = A.repeatWorthy(list, list.length);
   const mostRepeated = repeats.length ? repeats.reduce((a, b) => (b.count > a.count ? b : a)) : null;
   const td = A.tierDistribution(list);
   return {
     periodLabel,
+    fallbackNote,
     count: s.count,
     avgEnjoyment: s.avgEnjoyment,
     usualTier: td ? { label: tierLabel(td.usual), pct: td.pct } : null,
-    favCategory: cats[0] ? { emoji: cats[0].emoji, label: cats[0].label, count: cats[0].count } : null,
+    favCategory: favCat ? { emoji: favCat.emoji, label: favCat.label, count: favCat.count } : null,
     mostRepeated: mostRepeated && mostRepeated.count > 1
       ? { emoji: catEmoji(mostRepeated.category), title: mostRepeated.title, avgEnjoyment: mostRepeated.avgEnjoyment }
       : null,
@@ -1498,8 +1511,13 @@ async function onShareWrapped() {
     if (!blob) return;
     const file = new File([blob], "us-wrapped.png", { type: "image/png" });
     if (navigator.canShare?.({ files: [file] })) {
-      try { await navigator.share({ files: [file] }); } catch { /* user cancelled — share sheet already handled it */ }
-      return;
+      try {
+        await navigator.share({ files: [file] });
+        return;
+      } catch (err) {
+        if (err?.name === "AbortError") return; // user cancelled — stay silent
+        // any other rejection (e.g. share sheet failed) falls through to download below
+      }
     }
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
@@ -1521,6 +1539,19 @@ function wireInsights() {
   bind("wrap-share", "click", onShareWrapped);
   const wrapCard = viewEl().querySelector(".wrap-card");
   if (wrapCard) attachSwipe(wrapCard, () => setWrapPeriod("all"), () => setWrapPeriod("year"));
+  viewEl().querySelectorAll("[data-open]").forEach(el =>
+    el.addEventListener("click", () => openEntry(el.dataset.open)));
+  viewEl().querySelectorAll("[data-norm-title]").forEach(el =>
+    el.addEventListener("click", () => openEntryByNormTitle(el.dataset.normTitle)));
+}
+
+// Most repeat-worthy rows are grouped by normalized title (no single entry id) —
+// jump to the most recent logged entry that matches, same detail-expand path as
+// Home's Recent Memories / History's openEntry.
+function openEntryByNormTitle(normT) {
+  const match = [...done()].sort((a, b) => entryTimeMs(b) - entryTimeMs(a))
+    .find(e => normTitle(e.title) === normT);
+  if (match) openEntry(match.id);
 }
 
 function renderInsights() {
@@ -1568,13 +1599,14 @@ function renderInsights() {
         <button class="seg ${wrapPeriod === "all" ? "on" : ""}" data-wrap-period="all">All time</button>
       </div>
       <div class="chart-wrap">${C.wrappedCard(wStats, document.documentElement.dataset.theme || "plum")}</div>
+      ${wStats.fallbackNote ? `<p class="muted small" style="margin:6px 0 0">${escHtml(wStats.fallbackNote)}</p>` : ""}
       <button class="btn" id="wrap-share" style="margin-top:12px" ${wStats.count ? "" : "disabled"}>Share this card ↗</button>
     </div>
 
     <div class="stat-grid">
       <div class="stat"><div class="num">${s.count}</div><div class="lbl">Dates logged</div></div>
       <div class="stat"><div class="num">${s.avgEnjoyment.toFixed(1)}♥</div><div class="lbl">Avg enjoyment</div></div>
-      <div class="stat"><div class="num">${td ? tierLabel(td.usual) : "—"}</div><div class="lbl">Typical date</div></div>
+      <div class="stat"><div class="num">${td ? tierWord(td.usual) : "—"}</div><div class="lbl">Typical date</div></div>
       <div class="stat"><div class="num">${s.distinctCategories}/${s.totalCategories}</div><div class="lbl">Categories tried</div></div>
     </div>
 
@@ -1592,7 +1624,7 @@ function renderInsights() {
       const pill = tier ? `<span class="tier-pill${tier === "free" ? " free" : ""}">${tierLabel(tier)}</span> · ` : "";
       const hearts = `<span class="hearts">${"♥".repeat(d.enjoyment)}<span class="off">${"♡".repeat(5 - d.enjoyment)}</span></span>`;
       return `
-      <div class="entry" style="padding:6px 0">
+      <div class="entry" style="padding:6px 0;cursor:pointer" data-open="${escAttr(d.id)}">
         <div class="thumb">${catEmoji(d.category)}</div>
         <div class="meta"><h4>${escHtml(d.title)}</h4><div class="sub">${pill}${hearts}</div></div>
       </div>`;
@@ -1600,7 +1632,7 @@ function renderInsights() {
 
     <h3 class="section-title">Most repeat-worthy</h3>
     <div class="card tight">${rep.map(r => `
-      <div class="entry" style="padding:6px 0">
+      <div class="entry" style="padding:6px 0;cursor:pointer" data-norm-title="${escAttr(normTitle(r.title))}">
         <div class="thumb">${catEmoji(r.category)}</div>
         <div class="meta"><h4>${escHtml(r.title)}</h4><div class="sub">${r.avgEnjoyment.toFixed(1)}♥ · done ${r.count}×</div></div>
       </div>`).join("")}</div>

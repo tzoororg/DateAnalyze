@@ -6,7 +6,7 @@ const esc = s => String(s).replace(/[<>&]/g, c => ({ "<": "&lt;", ">": "&gt;", "
 // Horizontal bar chart for category enjoyment (value scale 0..5).
 export function barChart(rows, { max = 5, unit = "♥" } = {}) {
   if (!rows.length) return emptySvg("No data yet");
-  const W = 320, rowH = 34, padL = 96, padR = 40, top = 8;
+  const W = 320, rowH = 34, padL = 120, padR = 28, top = 8;
   const H = top * 2 + rows.length * rowH;
   const barW = W - padL - padR;
   let bars = "";

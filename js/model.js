@@ -28,12 +28,13 @@ export const REPEAT_OPTIONS = [
 // v2 log form: categorical cost tiers. `ils` is a representative amount stored in
 // the numeric `cost` field so spend analytics keep working on approximations.
 export const COST_TIERS = [
-  { key: "free", label: "Free", ils: 0 },
-  { key: "low",  label: "$",    ils: 60 },
-  { key: "mid",  label: "$$",   ils: 180 },
-  { key: "high", label: "$$$",  ils: 450 },
+  { key: "free", label: "Free", word: "Free",  ils: 0 },
+  { key: "low",  label: "$",    word: "Cheap", ils: 60 },
+  { key: "mid",  label: "$$",   word: "Mid",   ils: 180 },
+  { key: "high", label: "$$$",  word: "Fancy", ils: 450 },
 ];
 export function tierLabel(key) { return COST_TIERS.find(t => t.key === key)?.label || ""; }
+export function tierWord(key) { return COST_TIERS.find(t => t.key === key)?.word || ""; }
 // Bucket a legacy numeric cost into the nearest tier (for pre-selecting on edit).
 export function tierForCost(n) {
   if (n == null || isNaN(n)) return null;
