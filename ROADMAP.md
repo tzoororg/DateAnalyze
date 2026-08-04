@@ -340,7 +340,7 @@ alongside any other Log-form work.
 - ~~**medium** — Ideas "Max effort" native `<select>` is the app's one patch of stock Material.~~ ✅ Fixed 2026-08-05 (7e30713): pill-dropdown matching Category/Vibe (heading half in c20bcf6).
 - ~~**low** — History rows have inconsistent heights because the cost badge wraps to a second line on longer titles.~~ ✅ Fixed 2026-08-05 (c20bcf6): one-line meta, fixed hearts column.
 - ~~**low** — Log form category icons render as a 6+5 grid; a single horizontally-scrollable strip would reclaim a row of vertical space.~~ ✅ Fixed 2026-08-05 (c20bcf6).
-- **low** — Date-night "It's a match" toast (fixed, bottom-centre) can land on top of a suggestion card's `Favorite` badge, clipping the toast text. Anchor the toast clear of card badges or suppress the badge while a toast is up. *(found preparing v2.4.0 release — still open)*
+- ~~**low** — Date-night "It's a match" toast can collide with a card's badge.~~ ✅ Fixed 2026-08-05 (9fa63a8): own left anchor, no overlap with the saved ♡ tag. **Release triage backlog is now empty.**
 - ~~**low** — Wrapped share card truncates its own stat labels — on the one artifact designed to leave the app.~~ ✅ Fixed 2026-08-05 (c20bcf6): fixed 25% columns, short display names.
 
 ## Explicitly NOT doing
