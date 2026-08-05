@@ -81,17 +81,17 @@ const WRAPPED_PALETTES = {
   plum: {   // Dusk: plum + sunset-amber corner glow
     stops: ["#4a2138", "#2a1b26", "#1e1420"],
     glowA: ["#ff9fba", 0.35], glowB: ["#f4a15d", 0.20],
-    label: "#e79fc0", sub: "#e9d5e0", body: "#f5e6ee", gold: "#e8c97a", muted: "#c99bb0",
+    label: "#e79fc0", sub: "#e9d5e0", body: "#f5e6ee", gold: "#e8c97a", muted: "#c99bb0", accent: "#ff9fba",
   },
   candle: { // espresso + candle-gold glow from below
     stops: ["#45291a", "#2b1c16", "#1a100c"],
     glowA: ["#ff9fba", 0.28], glowB: ["#f2b25c", 0.26],
-    label: "#e0b490", sub: "#eedbc8", body: "#f7ecdf", gold: "#f2b25c", muted: "#c8a48c",
+    label: "#e0b490", sub: "#eedbc8", body: "#f7ecdf", gold: "#f2b25c", muted: "#c8a48c", accent: "#f2b25c",
   },
   twilight: { // violet-navy + warm low glow
     stops: ["#35284f", "#1c1733", "#100d20"],
     glowA: ["#ff9fba", 0.30], glowB: ["#f4a15d", 0.18],
-    label: "#b9a9dd", sub: "#ded5ee", body: "#eae6f2", gold: "#e8c97a", muted: "#a196c0",
+    label: "#b9a9dd", sub: "#ded5ee", body: "#eae6f2", gold: "#e8c97a", muted: "#a196c0", accent: "#b9a9dd",
   },
 };
 export const WRAPPED_W = 1080, WRAPPED_H = 1350;
@@ -121,7 +121,7 @@ export function wrappedCard(stats, theme = "plum") {
 
   if (!stats.count) {
     return `${svgOpen}${bg}
-      <text x="${W / 2}" y="${H / 2 - 10}" text-anchor="middle" font-size="30" font-weight="700" letter-spacing="5" fill="#ff9fba">${esc(kicker)}</text>
+      <text x="${W / 2}" y="${H / 2 - 10}" text-anchor="middle" font-size="30" font-weight="700" letter-spacing="5" fill="${P.accent}">${esc(kicker)}</text>
       <text x="${W / 2}" y="${H / 2 + 50}" text-anchor="middle" font-size="32" fill="${P.muted}">No dates logged yet</text>
     </svg>`;
   }
@@ -144,7 +144,7 @@ export function wrappedCard(stats, theme = "plum") {
   const vibeLine = stats.vibes?.length ? `our vibe: ${stats.vibes.join(" · ")}` : "";
 
   return `${svgOpen}${bg}
-    <text x="${W / 2}" y="170" text-anchor="middle" font-size="30" font-weight="700" letter-spacing="5" fill="#ff9fba">${esc(kicker)}</text>
+    <text x="${W / 2}" y="170" text-anchor="middle" font-size="30" font-weight="700" letter-spacing="5" fill="${P.accent}">${esc(kicker)}</text>
     <text x="${W / 2}" y="340" text-anchor="middle" font-size="220" font-weight="800" fill="#fff">${stats.count}</text>
     <text x="${W / 2}" y="398" text-anchor="middle" font-size="42" font-weight="600" fill="${P.body}" opacity="0.85">dates together</text>
     <text x="${W / 2}" y="466" text-anchor="middle" font-size="38" fill="${P.body}" opacity="0.9"><tspan font-weight="800" fill="${P.gold}">♥ ${stats.avgEnjoyment.toFixed(1)}</tspan> average</text>

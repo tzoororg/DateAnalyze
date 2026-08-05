@@ -229,8 +229,11 @@ async function renderStorageStatus() {
   if (!el || !navigator.storage?.estimate) return;
   try {
     const { usage = 0 } = await navigator.storage.estimate();
-    const persisted = await navigator.storage.persisted?.() ?? false;
-    el.textContent = `Storage: ${(usage / 1048576).toFixed(1)} MB used · ${persisted ? "persistent ✓" : "not guaranteed"}`;
+    const last = await db.getSetting("lastExportAt", 0);
+    const backupStr = last
+      ? `backed up ${Math.max(0, Math.floor((Date.now() - last) / 86400e3))}d ago`
+      : "no backup yet — export below";
+    el.textContent = `Storage: ${(usage / 1048576).toFixed(1)} MB used · ${backupStr}`;
   } catch { el.textContent = ""; }
 }
 
@@ -250,6 +253,7 @@ let lastInviteCode = null;
 
 async function renderSyncStatus() {
   const status = document.getElementById("syncStatus");
+  const explainer = document.getElementById("syncExplainer");
   const signIn = document.getElementById("syncSignInBtn");
   const create = document.getElementById("syncCreateBtn");
   const join = document.getElementById("syncJoinBtn");
@@ -282,6 +286,7 @@ async function renderSyncStatus() {
       status.textContent = `🔄 Syncing as ${user.email}`;
     }
     status.classList.remove("hidden");
+    explainer.classList.add("hidden");
     signIn.classList.add("hidden"); create.classList.add("hidden"); join.classList.add("hidden");
     copyCode.classList.toggle("hidden", !lastInviteCode);
     regen.classList.toggle("hidden", !lastInviteCode);
@@ -292,6 +297,7 @@ async function renderSyncStatus() {
   } else if (user) {
     status.textContent = `Signed in as ${user.email} — set up a shared space:`;
     status.classList.remove("hidden");
+    explainer.classList.add("hidden");
     signIn.classList.add("hidden"); create.classList.remove("hidden"); join.classList.remove("hidden");
     copyCode.classList.add("hidden");
     regen.classList.add("hidden");
@@ -301,6 +307,7 @@ async function renderSyncStatus() {
     deleteAcct.classList.remove("hidden");
   } else {
     status.classList.add("hidden");
+    explainer.classList.remove("hidden");
     signIn.classList.remove("hidden"); create.classList.add("hidden"); join.classList.add("hidden");
     copyCode.classList.add("hidden");
     regen.classList.add("hidden");
@@ -1944,14 +1951,26 @@ async function onImport(e) {
   const file = e.target.files[0];
   e.target.value = "";
   if (!file) return;
+  let payload;
   try {
-    const payload = JSON.parse(await file.text());
+    payload = JSON.parse(await file.text());
+  } catch (err) {
+    console.error(err);
+    document.getElementById("sheet").classList.add("hidden");
+    toast("That file isn't JSON");
+    return;
+  }
+  try {
     const n = await db.importAll(payload, { merge: true });
     await reload();
     document.getElementById("sheet").classList.add("hidden");
     toast(`Imported ${n} dates`);
     show(currentTab);
-  } catch (err) { console.error(err); toast("Couldn't read that backup"); }
+  } catch (err) {
+    console.error(err);
+    document.getElementById("sheet").classList.add("hidden");
+    toast("That doesn't look like a Date Tracker backup");
+  }
 }
 
 async function onSeed() {
@@ -1965,10 +1984,16 @@ async function onSeed() {
 }
 
 async function onWipe() {
-  const msg = db.getMode() === "cloud"
+  const last = await db.getSetting("lastExportAt", 0);
+  if (!last || Date.now() - last > 30 * 86400e3) {
+    if (confirm("No recent backup — export before erasing?")) await onExport();
+  }
+  const cloud = db.getMode() === "cloud";
+  const msg = cloud
     ? "Erase ALL dates and photos in your shared space — for both of you? This cannot be undone."
     : "Erase ALL dates and photos? This cannot be undone.";
   if (!confirm(msg)) return;
+  if (cloud && !confirm("This erases the shared space for BOTH partners. Continue?")) return;
   await db.wipeAll();
   await reload();
   urlCache.clear();
