@@ -3,7 +3,7 @@
 import * as db from "./store.js";
 import {
   CATEGORIES, MOOD_OPTIONS, COST_TIERS, METER, catLabel, catEmoji,
-  blankEntry, fmtDate, entryTimeMs, tierLabel, tierWord, tierForCost, repeatForEnjoyment,
+  blankEntry, fmtDate, entryTimeMs, tierLabel, tierForCost, repeatForEnjoyment,
   normTitle, todayISO, fmtDuration,
 } from "./model.js";
 import * as A from "./analytics.js";
@@ -1520,6 +1520,8 @@ function wrappedStats(period) {
     count: s.count,
     avgEnjoyment: s.avgEnjoyment,
     usualTier: td ? { label: tierLabel(td.usual), pct: td.pct } : null,
+    distinctCategories: s.distinctCategories,
+    totalCategories: s.totalCategories,
     favCategory: favCat ? { emoji: favCat.emoji, label: favCat.label, count: favCat.count } : null,
     mostRepeated: mostRepeated && mostRepeated.count > 1
       ? { emoji: catEmoji(mostRepeated.category), title: mostRepeated.title, avgEnjoyment: mostRepeated.avgEnjoyment }
@@ -1606,7 +1608,6 @@ function renderInsights() {
   const moods = A.byMood(d);
   const trend = A.monthlyTrend(d);
   const vfm = A.valueForMoney(d, 5);
-  const td = A.tierDistribution(d);
   const rep = A.repeatWorthy(d, 5);
   const exp = A.explorationStats(d);
 
@@ -1639,10 +1640,8 @@ function renderInsights() {
     </div>
 
     <div class="stat-grid">
-      <div class="stat"><div class="num">${s.count}</div><div class="lbl">Dates logged</div></div>
-      <div class="stat"><div class="num">${s.avgEnjoyment.toFixed(1)}♥</div><div class="lbl">Avg enjoyment</div></div>
-      <div class="stat"><div class="num">${td ? tierWord(td.usual) : "—"}</div><div class="lbl">Typical date</div></div>
-      <div class="stat"><div class="num">${s.distinctCategories}/${s.totalCategories}</div><div class="lbl">Categories tried</div></div>
+      <div class="stat"><div class="num">${wStats.usualTier ? wStats.usualTier.label : "—"}</div><div class="lbl">Typical date</div></div>
+      <div class="stat"><div class="num">${wStats.distinctCategories ?? 0}/${wStats.totalCategories ?? 0}</div><div class="lbl">Categories tried</div></div>
     </div>
 
     <h3 class="section-title">Enjoyment by category</h3>

@@ -34,7 +34,6 @@ export const COST_TIERS = [
   { key: "high", label: "$$$",  word: "Fancy", ils: 450 },
 ];
 export function tierLabel(key) { return COST_TIERS.find(t => t.key === key)?.label || ""; }
-export function tierWord(key) { return COST_TIERS.find(t => t.key === key)?.word || ""; }
 // Bucket a legacy numeric cost into the nearest tier (for pre-selecting on edit).
 export function tierForCost(n) {
   if (n == null || isNaN(n)) return null;
