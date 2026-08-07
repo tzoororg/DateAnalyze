@@ -345,12 +345,12 @@ alongside any other Log-form work.
 
 Found in the v2.5.0 release validation (2026-08-07):
 
-- **medium** — Stats: the This-year/All-time toggle scopes the Wrapped card + the two tiles, but "Enjoyment by category", vibes, best-value etc. below are always all-time. Either scope everything or move the tiles inside the wrap-card so the toggle's reach is visually unambiguous.
-- **medium** — Ideas tab filter block: three stacked full-width dropdowns + cost row eat ~470px before the first result. Collapse into the Album toolbar's compact chip-row pattern.
-- **medium** — Date-night active view: camera FAB overlaps the hearts badge and the memory-card caption at bottom-right. Offset the badge or dock the FAB.
-- **low** — Log form: ~180px dead band between the cost-tier row and the vibe input (space beside the again-o-meter column unused). Pull the vibe field up.
-- **low** — Log category strip: fade mask could be stronger — "Outd…" chip still reads as cut mid-word under the fade.
-- **low** — Gallery view repeats the same truncated title label on every tile of a multi-photo date. Label only the first tile of a date, or drop labels.
+- ~~**medium** — Stats: the This-year/All-time toggle scopes the Wrapped card + the two tiles, but "Enjoyment by category", vibes, best-value etc. below are always all-time. Either scope everything or move the tiles inside the wrap-card so the toggle's reach is visually unambiguous.~~ ✅ Fixed 2026-08-07 (ce9653b): scoped everything below the toggle to the selected period (year falls back to all-time when empty).
+- ~~**medium** — Ideas tab filter block: three stacked full-width dropdowns + cost row eat ~470px before the first result. Collapse into the Album toolbar's compact chip-row pattern.~~ ✅ Fixed 2026-08-07 (ce9653b): budget/effort/category/vibe collapsed into one compact chip-row toolbar.
+- ~~**medium** — Date-night active view: camera FAB overlaps the hearts badge and the memory-card caption at bottom-right. Offset the badge or dock the FAB.~~ ✅ Fixed 2026-08-07 (ce9653b): hearts + vibe stickers moved to the top-right under the category sticker; caption full-width.
+- ~~**low** — Log form: ~180px dead band between the cost-tier row and the vibe input (space beside the again-o-meter column unused). Pull the vibe field up.~~ ✅ Fixed 2026-08-07 (ce9653b): vibe field pulled up beside the again-o-meter.
+- ~~**low** — Log category strip: fade mask could be stronger — "Outd…" chip still reads as cut mid-word under the fade.~~ ✅ Fixed 2026-08-07 (ce9653b): wider/denser mask + right scroll padding so the last chip can scroll clear.
+- ~~**low** — Gallery view repeats the same truncated title label on every tile of a multi-photo date. Label only the first tile of a date, or drop labels.~~ ✅ Fixed 2026-08-07 (ce9653b): label only on the first tile of each date.
 
 ## Explicitly NOT doing
 
