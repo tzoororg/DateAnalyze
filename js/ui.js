@@ -1220,10 +1220,10 @@ async function renderHistoryList() {
       host.innerHTML = `<div class="empty"><div class="big">📷</div>No photos for this filter.</div>`;
       return;
     }
-    host.innerHTML = `<div class="hist-gallery">${photoEntries.map(({ pid, e }) =>
+    host.innerHTML = `<div class="hist-gallery">${photoEntries.map(({ pid, e }, i) =>
       `<div class="gallery-tile" data-entry="${escAttr(e.id)}" data-pid="${escAttr(pid)}">
         <img src="" data-load="${escAttr(pid)}" alt="${escAttr(e.title)}"/>
-        <div class="gallery-label">${escHtml(e.title)}</div>
+        ${i === 0 || photoEntries[i - 1].e.id !== e.id ? `<div class="gallery-label">${escHtml(e.title)}</div>` : ""}
       </div>`).join("")}</div>`;
     host.querySelectorAll("[data-load]").forEach(async img => {
       const url = await photoURL(img.dataset.load);
@@ -1607,13 +1607,18 @@ function renderInsights() {
     return;
   }
   const wStats = wrappedStats(wrapPeriod);
-  const s = A.summary(d);
-  const cats = A.byCategory(d);
-  const moods = A.byMood(d);
-  const trend = A.monthlyTrend(d);
-  const vfm = A.valueForMoney(d, 5);
-  const rep = A.repeatWorthy(d, 5);
-  const exp = A.explorationStats(d);
+  // Scope the whole tab to the selected period, same "year" definition wrappedStats uses
+  // (fall back to all-time if the year has no entries, matching wrappedStats' own fallback).
+  const year = new Date().getFullYear();
+  let scoped = wrapPeriod === "year" ? d.filter(e => new Date(entryTimeMs(e)).getFullYear() === year) : d;
+  if (wrapPeriod === "year" && !scoped.length) scoped = d;
+  const s = A.summary(scoped);
+  const cats = A.byCategory(scoped);
+  const moods = A.byMood(scoped);
+  const trend = A.monthlyTrend(scoped);
+  const vfm = A.valueForMoney(scoped, 5);
+  const rep = A.repeatWorthy(scoped, 5);
+  const exp = A.explorationStats(scoped);
 
   const moodSection = moods.length ? (() => {
     const maxCount = moods[0].count;
@@ -1703,48 +1708,50 @@ function renderSuggest() {
         ? `<div class="slider-ends"><span class="muted-hint">unlocks after your first logged date</span></div>`
         : `<div class="slider-ends"><span>Comfort (favorites)</span><span>Adventure (new)</span></div>`}
 
-      <div class="seg4" id="s-budget" style="margin-top:14px">
-        ${COST_TIERS.map(t => `<button class="${sug.budgetTier === t.key ? "on" : ""}" data-btier="${t.key}">${t.label}</button>`).join("")}
+      <div class="sug-filters">
+        <div class="seg4" id="s-budget">
+          ${COST_TIERS.map(t => `<button class="${sug.budgetTier === t.key ? "on" : ""}" data-btier="${t.key}">${t.label}</button>`).join("")}
+        </div>
+        <details class="filter-group effort" id="s-effort-group">
+          <summary>
+            <span class="fg-right"><span class="fg-badge${sug.maxEffort ? "" : " muted"}">${sug.maxEffort ? "⚡".repeat(sug.maxEffort) : "Any"}</span></span>
+            <span class="fg-arrow">▼</span>
+          </summary>
+          <div class="chips-row" id="s-effort">
+            <button class="chip-sm ${sug.maxEffort == null ? "on" : ""}" data-seffort="">Any</button>
+            <button class="chip-sm ${sug.maxEffort === 1 ? "on" : ""}" data-seffort="1">⚡</button>
+            <button class="chip-sm ${sug.maxEffort === 2 ? "on" : ""}" data-seffort="2">⚡⚡</button>
+            <button class="chip-sm ${sug.maxEffort === 3 ? "on" : ""}" data-seffort="3">⚡⚡⚡</button>
+          </div>
+        </details>
+
+        <details class="filter-group" id="s-cat-group">
+          <summary>
+            <span class="fg-label">Category</span>
+            <span class="fg-right">
+              ${sug.category ? `<span class="fg-badge">${CATEGORIES.find(c => c.key === sug.category)?.emoji} ${CATEGORIES.find(c => c.key === sug.category)?.label}</span>` : ""}
+              <span class="fg-arrow">▼</span>
+            </span>
+          </summary>
+          <div class="chips" id="s-cat">
+            <button class="chip ${!sug.category ? "on" : ""}" data-scat="">Any</button>
+            ${CATEGORIES.map(c => `<button class="chip ${sug.category === c.key ? "on" : ""}" data-scat="${c.key}">${c.emoji} ${c.label}</button>`).join("")}
+          </div>
+        </details>
+
+        <details class="filter-group" id="s-mood-group">
+          <summary>
+            <span class="fg-label">Vibe</span>
+            <span class="fg-right">
+              ${sug.moods.length ? `<span class="fg-badge">${sug.moods.length === 1 ? (MOOD_OPTIONS.find(m => m.key === sug.moods[0])?.emoji + " " + MOOD_OPTIONS.find(m => m.key === sug.moods[0])?.label) : sug.moods.length + " selected"}</span>` : ""}
+              <span class="fg-arrow">▼</span>
+            </span>
+          </summary>
+          <div class="chips" id="s-mood">
+            ${MOOD_OPTIONS.map(m => `<button class="chip ${sug.moods.includes(m.key) ? "on" : ""}" data-smood="${m.key}">${m.emoji} ${m.label}</button>`).join("")}
+          </div>
+        </details>
       </div>
-      <details class="filter-group effort" id="s-effort-group">
-        <summary>
-          <span class="fg-right"><span class="fg-badge${sug.maxEffort ? "" : " muted"}">${sug.maxEffort ? "⚡".repeat(sug.maxEffort) : "Any"}</span></span>
-          <span class="fg-arrow">▼</span>
-        </summary>
-        <div class="chips-row" id="s-effort">
-          <button class="chip-sm ${sug.maxEffort == null ? "on" : ""}" data-seffort="">Any</button>
-          <button class="chip-sm ${sug.maxEffort === 1 ? "on" : ""}" data-seffort="1">⚡</button>
-          <button class="chip-sm ${sug.maxEffort === 2 ? "on" : ""}" data-seffort="2">⚡⚡</button>
-          <button class="chip-sm ${sug.maxEffort === 3 ? "on" : ""}" data-seffort="3">⚡⚡⚡</button>
-        </div>
-      </details>
-
-      <details class="filter-group" id="s-cat-group">
-        <summary>
-          <span class="fg-label">Category</span>
-          <span class="fg-right">
-            ${sug.category ? `<span class="fg-badge">${CATEGORIES.find(c => c.key === sug.category)?.emoji} ${CATEGORIES.find(c => c.key === sug.category)?.label}</span>` : ""}
-            <span class="fg-arrow">▼</span>
-          </span>
-        </summary>
-        <div class="chips" id="s-cat">
-          <button class="chip ${!sug.category ? "on" : ""}" data-scat="">Any</button>
-          ${CATEGORIES.map(c => `<button class="chip ${sug.category === c.key ? "on" : ""}" data-scat="${c.key}">${c.emoji} ${c.label}</button>`).join("")}
-        </div>
-      </details>
-
-      <details class="filter-group" id="s-mood-group">
-        <summary>
-          <span class="fg-label">Vibe</span>
-          <span class="fg-right">
-            ${sug.moods.length ? `<span class="fg-badge">${sug.moods.length === 1 ? (MOOD_OPTIONS.find(m => m.key === sug.moods[0])?.emoji + " " + MOOD_OPTIONS.find(m => m.key === sug.moods[0])?.label) : sug.moods.length + " selected"}</span>` : ""}
-            <span class="fg-arrow">▼</span>
-          </span>
-        </summary>
-        <div class="chips" id="s-mood">
-          ${MOOD_OPTIONS.map(m => `<button class="chip ${sug.moods.includes(m.key) ? "on" : ""}" data-smood="${m.key}">${m.emoji} ${m.label}</button>`).join("")}
-        </div>
-      </details>
 
       <div class="btn-row">
         <button class="btn secondary" id="s-shuffle">🎲 Surprise us</button>
