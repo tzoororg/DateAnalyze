@@ -343,6 +343,15 @@ alongside any other Log-form work.
 - ~~**low** — Date-night "It's a match" toast can collide with a card's badge.~~ ✅ Fixed 2026-08-05 (9fa63a8): own left anchor, no overlap with the saved ♡ tag. **Release triage backlog is now empty.**
 - ~~**low** — Wrapped share card truncates its own stat labels — on the one artifact designed to leave the app.~~ ✅ Fixed 2026-08-05 (c20bcf6): fixed 25% columns, short display names.
 
+Found in the v2.5.0 release validation (2026-08-07):
+
+- **medium** — Stats: the This-year/All-time toggle scopes the Wrapped card + the two tiles, but "Enjoyment by category", vibes, best-value etc. below are always all-time. Either scope everything or move the tiles inside the wrap-card so the toggle's reach is visually unambiguous.
+- **medium** — Ideas tab filter block: three stacked full-width dropdowns + cost row eat ~470px before the first result. Collapse into the Album toolbar's compact chip-row pattern.
+- **medium** — Date-night active view: camera FAB overlaps the hearts badge and the memory-card caption at bottom-right. Offset the badge or dock the FAB.
+- **low** — Log form: ~180px dead band between the cost-tier row and the vibe input (space beside the again-o-meter column unused). Pull the vibe field up.
+- **low** — Log category strip: fade mask could be stronger — "Outd…" chip still reads as cut mid-word under the fade.
+- **low** — Gallery view repeats the same truncated title label on every tile of a multi-photo date. Label only the first tile of a date, or drop labels.
+
 ## Explicitly NOT doing
 
 - **Booking / restaurant marketplace** (Cupla, Fever, OpenTable) — needs

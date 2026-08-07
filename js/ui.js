@@ -956,7 +956,11 @@ async function saveDraft() {
   draft.capsule = (draft.capsule || "").trim();
   if (draft.url && !/^https?:\/\//i.test(draft.url)) draft.url = "https://" + draft.url;
   if (draft.url) {
-    try { new URL(draft.url); } catch { toast("That link doesn't look right"); return; }
+    // Chrome's URL parser percent-encodes spaces instead of throwing, so a bare
+    // try/new URL lets "https://not a url" through — also require a dotted host.
+    let ok = !/\s/.test(draft.url);
+    try { ok = ok && new URL(draft.url).hostname.includes("."); } catch { ok = false; }
+    if (!ok) { toast("That link doesn't look right"); return; }
   }
   const isNew = !editingId;
   if (isNew) draft.createdAt = Date.now();
