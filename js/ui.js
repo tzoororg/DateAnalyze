@@ -1290,7 +1290,11 @@ document.addEventListener("click", ev => {
   // a detached target means another handler already re-rendered on this click
   // (row expand, home-card jump) — that's never a background tap
   if (!ev.target.isConnected) return;
-  if (ev.target.closest(".hist-entry, .lightbox, .menu-pop, .logsheet, .sheet, button, summary, a, input, textarea, select, label")) return;
+  if (ev.target.closest(".lightbox, .menu-pop, .logsheet, .sheet, button, summary, a, input, textarea, select, label")) return;
+  const entry = ev.target.closest(".hist-entry");
+  if (entry && !entry.classList.contains("open")) return; // collapsed row = expand, not background
+  // inside the open card, only actual content blocks eat the tap — its background collapses
+  if (entry && ev.target.closest("[data-hero], [data-strip], .rate-line, .cmt, .chip, .cmt-input")) return;
   hist.expanded = null;
   renderHistoryList();
 });
