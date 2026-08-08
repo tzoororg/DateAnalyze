@@ -58,20 +58,22 @@ body {
 .entry .meta h4 { margin: 0; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .entry .meta .sub { color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* PROPOSED: dense single-line ranked rows */
+/* PROPOSED: dense single-line ranked rows (non-interactive) */
 .rank-row {
   display: flex; align-items: center; gap: 9px; padding: 7px 0;
-  border-bottom: 1px dashed var(--line); cursor: pointer;
+  border-bottom: 1px dashed var(--line);
 }
 .rank-row:last-child, details .rank-row:last-child { border-bottom: none; }
 .rank-row .rank {
   flex: none; width: 24px; height: 24px; border-radius: 8px; display: grid; place-items: center;
   font: 800 12px/1 sans-serif; background: var(--card-2); color: var(--muted);
-  transform: rotate(-3deg); /* sticker tilt */
+  transform: rotate(-3deg); /* sticker tilt; even rows flip below */
 }
-.rank-row:nth-child(1) .rank { background: var(--accent); color: #fff; box-shadow: 0 3px 8px rgba(232,87,126,.35); }
-.rank-row:nth-child(2) .rank { background: var(--butter-bg); color: var(--butter-fg); }
-.rank-row:nth-child(3) .rank { background: var(--mint-bg); color: var(--mint-fg); }
+/* explicit podium classes — nth-child broke inside <details> (summary is child 1) */
+.rank-row:nth-child(even) .rank { transform: rotate(3deg); }
+.rank-row .rank.r1 { background: var(--accent); color: #fff; box-shadow: 0 3px 8px rgba(232,87,126,.35); }
+.rank-row .rank.r2 { background: var(--butter-bg); color: var(--butter-fg); }
+.rank-row .rank.r3 { background: var(--mint-bg); color: var(--mint-fg); }
 .rank-row .emoji { flex: none; font-size: 16px; }
 .rank-row .title {
   flex: 1; min-width: 0; font-size: 14.5px; font-weight: 600;
@@ -81,17 +83,16 @@ body {
 .rank-row .metric .hot { color: var(--accent); }
 .rank-row .metric .val { color: var(--good); }
 
-/* top-3 + "more" expander — native <details>, no JS */
+/* top-3 + "more" expander — native <details>, no JS; count lives in markup */
 details.more { margin: 0; }
-details.more > summary {
-  list-style: none; text-align: center; cursor: pointer;
-  font: 700 13px var(--cursive); color: var(--accent-2); padding: 8px 0 2px;
-}
+details.more > summary { list-style: none; text-align: center; cursor: pointer; padding: 12px 0; /* ≥44px hit area */ }
 details.more > summary::-webkit-details-marker { display: none; }
-details.more > summary .closed-label::before { content: "+ 2 more ›"; }
-details.more[open] > summary .closed-label::before { content: "‹ show less"; }
-details.more[open] > summary { border-top: 1px dashed var(--line); margin-top: 2px; }
-details.more .rank-row .rank { background: var(--card-2); color: var(--muted); }
+details.more > summary .more-pill {
+  display: inline-block; background: var(--card-2); color: var(--muted);
+  font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 8px; letter-spacing: .5px;
+}
+details.more > summary .chev { display: inline-block; transition: transform .2s; }
+details.more[open] > summary .chev { transform: rotate(180deg); }
 
 .note { width: 390px; flex: none; color: var(--muted); font-size: 13px; margin: -14px 4px 0; }
 </style>
@@ -134,26 +135,26 @@ details.more .rank-row .rank { background: var(--card-2); color: var(--muted); }
   <h3 class="section-title">Best value for money</h3>
   <div class="card tight">
     <span class="sticker-tag mint">smart spender!</span>
-    <div class="rank-row"><span class="rank">1</span><span class="emoji">🌅</span><span class="title">Sunset picnic at the park</span><span class="metric"><span class="hot">♥5.0</span> · <span class="val">free</span></span></div>
-    <div class="rank-row"><span class="rank">2</span><span class="emoji">🏠</span><span class="title">Homemade pasta night</span><span class="metric"><span class="hot">♥5.0</span> · <span class="val">$</span></span></div>
-    <div class="rank-row"><span class="rank">3</span><span class="emoji">🥾</span><span class="title">Waterfall trail hike</span><span class="metric"><span class="hot">♥4.0</span> · <span class="val">free</span></span></div>
+    <div class="rank-row"><span class="rank r1">1</span><span class="emoji">🌅</span><span class="title">Sunset picnic at the park</span><span class="metric"><span class="hot">♥5.0</span> · <span class="val">free</span></span></div>
+    <div class="rank-row"><span class="rank r2">2</span><span class="emoji">🏠</span><span class="title">Homemade pasta night</span><span class="metric"><span class="hot">♥5.0</span> · <span class="val">$</span></span></div>
+    <div class="rank-row"><span class="rank r3">3</span><span class="emoji">🥾</span><span class="title">Waterfall trail hike</span><span class="metric"><span class="hot">♥4.0</span> · <span class="val">free</span></span></div>
     <details class="more">
-      <summary><span class="closed-label"></span></summary>
-      <div class="rank-row"><span class="rank">4</span><span class="emoji">🍜</span><span class="title">Ramen at the new place</span><span class="metric"><span class="hot">♥4.0</span> · <span class="val">$</span></span></div>
-      <div class="rank-row"><span class="rank">5</span><span class="emoji">🎨</span><span class="title">Pottery painting cafe</span><span class="metric"><span class="hot">♥4.0</span> · <span class="val">$$</span></span></div>
+      <summary><span class="more-pill">2 more <span class="chev">▾</span></span></summary>
+      <div class="rank-row"><span class="rank r4">4</span><span class="emoji">🍜</span><span class="title">Ramen at the new place</span><span class="metric"><span class="hot">♥4.0</span> · <span class="val">$</span></span></div>
+      <div class="rank-row"><span class="rank r5">5</span><span class="emoji">🎨</span><span class="title">Pottery painting cafe</span><span class="metric"><span class="hot">♥4.0</span> · <span class="val">$$</span></span></div>
     </details>
   </div>
 
   <h3 class="section-title">Most repeat-worthy</h3>
   <div class="card tight">
     <span class="sticker-tag butter">do it again!</span>
-    <div class="rank-row"><span class="rank">1</span><span class="emoji">🍜</span><span class="title">Ramen at the new place</span><span class="metric"><span class="hot">♥4.7</span> · 3×</span></div>
-    <div class="rank-row"><span class="rank">2</span><span class="emoji">🏠</span><span class="title">Movie fort night</span><span class="metric"><span class="hot">♥4.5</span> · 2×</span></div>
-    <div class="rank-row"><span class="rank">3</span><span class="emoji">🌅</span><span class="title">Sunset picnic at the park</span><span class="metric"><span class="hot">♥4.5</span> · 2×</span></div>
+    <div class="rank-row"><span class="rank r1">1</span><span class="emoji">🍜</span><span class="title">Ramen at the new place</span><span class="metric"><span class="hot">♥4.7</span> · 3×</span></div>
+    <div class="rank-row"><span class="rank r2">2</span><span class="emoji">🏠</span><span class="title">Movie fort night</span><span class="metric"><span class="hot">♥4.5</span> · 2×</span></div>
+    <div class="rank-row"><span class="rank r3">3</span><span class="emoji">🌅</span><span class="title">Sunset picnic at the park</span><span class="metric"><span class="hot">♥4.5</span> · 2×</span></div>
     <details class="more">
-      <summary><span class="closed-label"></span></summary>
-      <div class="rank-row"><span class="rank">4</span><span class="emoji">🎳</span><span class="title">Retro bowling</span><span class="metric"><span class="hot">♥4.2</span> · 2×</span></div>
-      <div class="rank-row"><span class="rank">5</span><span class="emoji">🥾</span><span class="title">Waterfall trail hike</span><span class="metric"><span class="hot">♥4.0</span> · 1×</span></div>
+      <summary><span class="more-pill">2 more <span class="chev">▾</span></span></summary>
+      <div class="rank-row"><span class="rank r4">4</span><span class="emoji">🎳</span><span class="title">Retro bowling</span><span class="metric"><span class="hot">♥4.2</span> · 2×</span></div>
+      <div class="rank-row"><span class="rank r5">5</span><span class="emoji">🥾</span><span class="title">Waterfall trail hike</span><span class="metric"><span class="hot">♥4.0</span> · 1×</span></div>
     </details>
   </div>
 

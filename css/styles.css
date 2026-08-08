@@ -281,6 +281,32 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); bo
 .vibe-row .bar .fill { height: 100%; border-radius: 99px; background: var(--accent); }
 .vibe-row .n { flex: none; width: 24px; text-align: right; font-size: 13px; font-weight: 700; }
 
+/* Dense ranked rows (Best value / Most repeat-worthy) — non-interactive */
+.rank-row { display: flex; align-items: center; gap: 9px; padding: 8px 0; border-bottom: 1px dashed var(--line); }
+.rank-row:last-child { border-bottom: none; }
+.rank-row .rank {
+  flex: none; width: 24px; height: 24px; border-radius: 8px; display: grid; place-items: center;
+  font-size: 12px; font-weight: 800; background: var(--card-2); color: var(--muted);
+  transform: rotate(-3deg); /* sticker tilt; even rows flip below */
+}
+.rank-row:nth-child(even) .rank { transform: rotate(3deg); }
+.rank-row .rank.r1 { background: var(--accent); color: #fff; }
+.rank-row .rank.r2 { background: var(--butter-bg); color: var(--butter-fg); }
+.rank-row .rank.r3 { background: var(--mint-bg); color: var(--mint-fg); }
+.rank-row .emoji { flex: none; font-size: 16px; }
+.rank-row .title { flex: 1; min-width: 0; font-size: 14.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rank-row .metric { flex: none; font-size: 12.5px; font-weight: 800; color: var(--muted); white-space: nowrap; }
+.rank-row .metric .hot { color: var(--accent); }
+.rank-row .metric .val { color: var(--good); }
+details.more > summary { list-style: none; cursor: pointer; text-align: center; padding: 12px 0; /* ≥44px hit area */ }
+details.more > summary::-webkit-details-marker { display: none; }
+details.more > summary .more-pill {
+  display: inline-block; background: var(--card-2); color: var(--muted);
+  font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 8px; letter-spacing: .5px;
+}
+details.more > summary .chev { display: inline-block; transition: transform .2s; }
+details.more[open] > summary .chev { transform: rotate(180deg); }
+
 /* Suggest */
 .slider-row { display: flex; align-items: center; gap: 12px; margin: 6px 0 2px; }
 .slider-row input[type=range] { flex: 1; accent-color: var(--accent); }

@@ -354,7 +354,7 @@ Found in the v2.5.0 release validation (2026-08-07):
 
 Found in the 2026-08-08 design-audit sweep (taste-critic):
 
-- **design** — Stats tab scrolls like a report: "Best value for money" and "Most repeat-worthy" are five padded rows each. Candidate: dense single-line ranked rows or top-3 + "more" expander. Needs a mock.
+- ~~**design** — Stats tab scrolls like a report: "Best value for money" and "Most repeat-worthy" are five padded rows each. Candidate: dense single-line ranked rows or top-3 + "more" expander. Needs a mock.~~ ✅ Fixed 2026-08-08 — dense ranked rows (rank sticker · emoji · title · metric), top-3 + native `<details>` expander; mock at `design/roadmap/stats-dense-rows.html`.
 - **design** — Ideas result cards: titles truncate while the right half holds heart + "Log →" + a text "Favorite"/"New" badge. Candidate: icon/dot badge, title takes the width. Needs a mock.
 - **taste** — Log category strip edge: fade strengthened 2026-08-07, residual sliced-chip look at the meter column. Revisit only if a mock proposes a cleaner treatment.
 

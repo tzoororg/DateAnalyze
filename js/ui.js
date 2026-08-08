@@ -1660,19 +1660,26 @@ function wireInsights() {
   bind("wrap-share", "click", onShareWrapped);
   const wrapCard = viewEl().querySelector(".wrap-card");
   if (wrapCard) attachSwipe(wrapCard, () => setWrapPeriod("all"), () => setWrapPeriod("year"));
-  viewEl().querySelectorAll("[data-open]").forEach(el =>
-    el.addEventListener("click", () => openEntry(el.dataset.open)));
-  viewEl().querySelectorAll("[data-norm-title]").forEach(el =>
-    el.addEventListener("click", () => openEntryByNormTitle(el.dataset.normTitle)));
 }
 
-// Most repeat-worthy rows are grouped by normalized title (no single entry id) —
-// jump to the most recent logged entry that matches, same detail-expand path as
-// Home's Recent Memories / History's openEntry.
-function openEntryByNormTitle(normT) {
-  const match = [...done()].sort((a, b) => entryTimeMs(b) - entryTimeMs(a))
-    .find(e => normTitle(e.title) === normT);
-  if (match) openEntry(match.id);
+// Dense ranked list: top-3 visible, rest behind a native <details> expander.
+// rows: [{ emoji, title, metric(html) }]
+function rankRows(rows) {
+  const row = (r, i) => `
+    <div class="rank-row">
+      <span class="rank r${i + 1}">${i + 1}</span>
+      <span class="emoji">${r.emoji}</span>
+      <span class="title">${escHtml(r.title)}</span>
+      <span class="metric">${r.metric}</span>
+    </div>`;
+  const top = rows.slice(0, 3).map(row).join("");
+  const rest = rows.slice(3);
+  if (!rest.length) return top;
+  return `${top}
+    <details class="more">
+      <summary><span class="more-pill">${rest.length} more <span class="chev">▾</span></span></summary>
+      ${rest.map((r, i) => row(r, i + 3)).join("")}
+    </details>`;
 }
 
 function renderInsights() {
@@ -1742,23 +1749,18 @@ function renderInsights() {
       <div class="legend"><span style="color:var(--accent)">avg enjoyment</span><span style="color:var(--muted)">how many dates</span></div></div>
 
     <h3 class="section-title">Best value for money</h3>
-    <div class="card tight">${vfm.length ? vfm.map(d => {
-      const tier = d.costTier || tierForCost(d.cost);
-      const pill = tier ? `<span class="tier-pill${tier === "free" ? " free" : ""}">${tierLabel(tier)}</span> · ` : "";
-      const hearts = `<span class="hearts">${"♥".repeat(d.enjoyment)}<span class="off">${"♡".repeat(5 - d.enjoyment)}</span></span>`;
-      return `
-      <div class="entry" style="padding:6px 0;cursor:pointer" data-open="${escAttr(d.id)}">
-        <div class="thumb">${catEmoji(d.category)}</div>
-        <div class="meta"><h4>${escHtml(d.title)}</h4><div class="sub">${pill}${hearts}</div></div>
-      </div>`;
-    }).join("") : `<p class="muted small">Add cost to your dates to rank value.</p>`}</div>
+    <div class="card tight">
+      ${vfm.length ? `<span class="sticker-tag mint">smart spender!</span>` + rankRows(vfm.map(d => {
+        const tier = d.costTier || tierForCost(d.cost);
+        return { emoji: catEmoji(d.category), title: d.title, metric: `<span class="hot">♥${d.enjoyment.toFixed(1)}</span>${tier ? ` · <span class="val">${tier === "free" ? "free" : tierLabel(tier)}</span>` : ""}` };
+      })) : `<p class="muted small">Add cost to your dates to rank value.</p>`}
+    </div>
 
     <h3 class="section-title">Most repeat-worthy</h3>
-    <div class="card tight">${rep.map(r => `
-      <div class="entry" style="padding:6px 0;cursor:pointer" data-norm-title="${escAttr(normTitle(r.title))}">
-        <div class="thumb">${catEmoji(r.category)}</div>
-        <div class="meta"><h4>${escHtml(r.title)}</h4><div class="sub">${r.avgEnjoyment.toFixed(1)}♥ · done ${r.count}×</div></div>
-      </div>`).join("")}</div>
+    <div class="card tight">
+      <span class="sticker-tag butter">do it again!</span>
+      ${rankRows(rep.map(r => ({ emoji: catEmoji(r.category), title: r.title, metric: `<span class="hot">♥${r.avgEnjoyment.toFixed(1)}</span> · ${r.count}×` })))}
+    </div>
 
     <h3 class="section-title">Adventure balance</h3>
     <div class="card" style="display:flex;align-items:center;gap:16px">
