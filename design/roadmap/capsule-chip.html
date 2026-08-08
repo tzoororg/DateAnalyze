@@ -1,0 +1,109 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Capsule chip — olive accent vs standard chip</title>
+<style>
+  body { margin: 0; padding: 24px; background: #17121a; color: #eee;
+         font: 15px/1.5 system-ui, sans-serif; }
+  h1 { font-size: 20px; } h2 { font-size: 15px; margin: 0 0 10px; opacity: .8; }
+  .themes { display: flex; gap: 18px; flex-wrap: wrap; }
+  .theme { flex: 1 1 300px; border-radius: 18px; padding: 18px; }
+  /* card backgrounds per theme, from styles.css */
+  .dusk     { background: #2a1b26; } .dusk .card     { background: #3b2a37; }
+  .candle   { background: #211511; } .candle .card   { background: #362419; }
+  .twilight { background: #141126; } .twilight .card { background: #251d3d; }
+  .card { border-radius: 18px; padding: 14px 16px; margin-bottom: 14px;
+          box-shadow: 0 6px 16px rgba(0,0,0,.4); }
+  .label { font-size: 11px; letter-spacing: .5px; text-transform: uppercase;
+           opacity: .55; margin-bottom: 8px; }
+  .row { display: flex; align-items: center; justify-content: space-between; }
+  .addnote { background: none; border: none; font-size: 13px; font-weight: 700;
+             color: #ff9fba; padding: 4px; }
+  .chip { border: none; border-radius: 999px; font-size: 12px; font-weight: 700;
+          padding: 5px 12px; }
+  /* CURRENT — butter vars, identical in all 3 themes */
+  .cur { background: #4a3d22; color: #eec97a; }
+  /* (a) improved-contrast olive */
+  .imp { background: #3a3018; color: #f6dc9a; }
+  /* (b) standard palette chip — pink-bg + accent-2, same recipe as .chip family */
+  .std { background: #4a2a38; color: #ff9fba; }
+  .ratio { font-size: 11px; opacity: .55; margin: 4px 0 0; }
+  .note { max-width: 760px; background: #241d2a; border-radius: 14px;
+          padding: 16px 20px; margin-top: 24px; }
+  .note b.rec { color: #eec97a; }
+</style>
+
+<h1>Roadmap: Log-form "note to next year" capsule chip</h1>
+<p style="max-width:760px">The chip as rendered in <code>renderLog()</code>
+(<code>.capsule-toggle</code>, css/styles.css:616). The butter variables are not
+overridden per theme, so the chip itself is identical everywhere — only the card
+behind it changes.</p>
+
+<div class="themes">
+  <div class="theme dusk"><h2>Dusk plum (default)</h2>
+    <div class="card"><div class="label">Current — butter #eec97a on #4a3d22</div>
+      <div class="row"><button class="addnote">+ add a note</button>
+        <button class="chip cur">💌 note to next year</button></div>
+      <div class="ratio">label 6.70:1 (AA ✓, AAA-large ✓) · chip vs card 1.26:1</div></div>
+    <div class="card"><div class="label">(a) Improved olive — #f6dc9a on #3a3018</div>
+      <div class="row"><button class="addnote">+ add a note</button>
+        <button class="chip imp">💌 note to next year</button></div>
+      <div class="ratio">label 9.67:1 (AAA ✓) · chip vs card 1.03:1</div></div>
+    <div class="card"><div class="label">(b) Standard chip — accent-2 #ff9fba on pink-bg #4a2a38</div>
+      <div class="row"><button class="addnote">+ add a note</button>
+        <button class="chip std">💌 note to next year</button></div>
+      <div class="ratio">label 6.50:1 (AA ✓) · chip vs card 1.07:1</div></div>
+  </div>
+
+  <div class="theme candle"><h2>Candle</h2>
+    <div class="card"><div class="label">Current</div>
+      <div class="row"><button class="addnote">+ add a note</button>
+        <button class="chip cur">💌 note to next year</button></div>
+      <div class="ratio">label 6.70:1 · chip vs card 1.39:1</div></div>
+    <div class="card"><div class="label">(a) Improved olive</div>
+      <div class="row"><button class="addnote">+ add a note</button>
+        <button class="chip imp">💌 note to next year</button></div>
+      <div class="ratio">label 9.67:1</div></div>
+    <div class="card"><div class="label">(b) Standard chip</div>
+      <div class="row"><button class="addnote">+ add a note</button>
+        <button class="chip std">💌 note to next year</button></div>
+      <div class="ratio">label 6.50:1 · chip vs card 1.18:1</div></div>
+  </div>
+
+  <div class="theme twilight"><h2>Twilight</h2>
+    <div class="card"><div class="label">Current</div>
+      <div class="row"><button class="addnote">+ add a note</button>
+        <button class="chip cur">💌 note to next year</button></div>
+      <div class="ratio">label 6.70:1 · chip vs card 1.50:1</div></div>
+    <div class="card"><div class="label">(a) Improved olive</div>
+      <div class="row"><button class="addnote">+ add a note</button>
+        <button class="chip imp">💌 note to next year</button></div>
+      <div class="ratio">label 9.67:1</div></div>
+    <div class="card"><div class="label">(b) Standard chip</div>
+      <div class="row"><button class="addnote">+ add a note</button>
+        <button class="chip std">💌 note to next year</button></div>
+      <div class="ratio">label 6.50:1 · chip vs card 1.27:1</div></div>
+  </div>
+</div>
+
+<div class="note">
+  <p><b class="rec">Recommendation: keep the current chip, close the item as
+  "intentional — already on-palette".</b></p>
+  <p>The roadmap premise doesn't hold up against the CSS:</p>
+  <ul>
+    <li><b>It isn't the only olive/gold element.</b> <code>--butter-bg/--butter-fg</code>
+      is a first-class token used by <code>.chip.butter</code>, <code>.tier-pill</code>,
+      <code>.sticker-tag.butter</code>, <code>.tag.explore</code> and
+      <code>.mood-tag</code>. The capsule chip <i>is</i> the standard butter chip
+      (same vars, same pill recipe). Restyling it to "standard" (option b) would
+      just move it from the butter family to the pink family.</li>
+    <li><b>The label isn't dark-on-olive or borderline.</b> It's light gold
+      #eec97a on dark olive #4a3d22 — 6.70:1, comfortably past WCAG AA (4.5:1)
+      and past AAA for this bold 12px weight-700 text by the large-text rule's
+      spirit; it also beats option (b)'s 6.50:1.</li>
+    <li>Option (a) buys 9.67:1 nobody asked for at the cost of a near-invisible
+      chip edge (1.03:1 vs card) and a fourth gold shade in the system.</li>
+  </ul>
+  <p>The genuinely borderline chips are the Twilight vibe-suggestion chips —
+  already a separate medium backlog item; fix contrast there, not here.</p>
+</div>
