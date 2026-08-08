@@ -60,6 +60,7 @@ For designing a **new component or view** (not a tweak to an existing one), use 
 Three layers, all dependency-free, all text output. **Assert in text — never verify with screenshots** (screenshots are only for visual design review; they cost thousands of tokens each, text runs cost ~100–300).
 
 ```bash
+node test/run.mjs                 # one-shot: starts the server if needed, runs logic + smoke, tears down
 node --test test/logic.test.mjs   # pure logic: model/analytics/suggest/charts (~1s)
 node test/smoke.mjs               # UI smoke in headless Chrome; needs python -m http.server 8000
 node test/sync.mjs                # two-phone sync; needs the server AND the emulators (below)
@@ -71,6 +72,7 @@ node test/sync.mjs --prod         # same flow against the REAL Firebase backend 
 - **When touching `sync.js`, `store.js`, or `firestore.rules`:** also run the sync test. It simulates two phones as separate headless-Chrome profiles talking to the **Firebase Emulator Suite** — start it first with `firebase emulators:start --only auth,firestore,storage --project us-date-tracker-c988b` (firebase-tools + Java runtime, both installed on this machine; `storage` is required now that `useStorage:true` — the sync test exercises the Cloud Storage photo path). The `?emu=1` URL param is a dev hook in `sync.js` that routes Auth/Firestore/Storage to the emulators and swaps the Google popup for anonymous sign-in.
 - New feature with a genuinely new UI flow → add a check to `test/smoke.mjs` (plus a `?shot=` state in `js/dev-shots.js` if needed). New pure logic → a test in `test/logic.test.mjs`.
 - The shared headless-Chrome CDP client lives in `test/cdp.mjs` (also used by `design/capture.mjs`).
+- **Ad-hoc validation of a UI change** (not a permanent test): use `test/driver.mjs` — `openApp("home")` boots the real app headless and gives `tap`/`fill`/`viewText`/`count`/`visible`/`goTab`/`dates` helpers, instead of hand-writing raw CDP `evaluate()` strings. Needs the dev server (or just use `node test/run.mjs` for the standard suite).
 
 ## Finishing a task (required)
 
