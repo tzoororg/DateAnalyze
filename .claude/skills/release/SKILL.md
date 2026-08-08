@@ -41,7 +41,7 @@ After the validator returns, capture the FULL view catalog — including interac
 For each reject, investigate the code yourself and classify:
 
 - **not-real** — validator misunderstanding or works-as-intended. Record the reasoning.
-- **postpone** — real but not release-blocking. Append to `ROADMAP.md` under a `## Release triage backlog` section (create it above "Explicitly NOT doing" if missing): one bullet per item with priority (high/medium/low), description, and the release version it was found in.
+- **postpone** — real but not release-blocking. Add to `tracking/BOARD.md` under `## Goals`: one row per item with priority (high/med/low), description, and the release version it was found in (as the Source).
 - **blocker** — fix it now. Follow normal project rules (design-mock rule applies only if the fix changes UI beyond restoring intended behavior).
 
 After fixing blockers, `SendMessage` the SAME validator agent listing only the fixed reject ids to re-verify. **Max 2 fix→revalidate rounds.** If anything is still broken after round 2, stop and report to the user instead of looping.
@@ -70,7 +70,7 @@ Show the user: the release notes, the triage summary (each reject and its classi
    gh issue list --label next-release --state open --json number,title --repo tzoororg/DateAnalyze
    ```
    Sanity-check against `git log master..dev --format='%s%n%b' | grep -oE '#[0-9]+' | sort -u`: every labeled issue should have a real fix/feature commit in that range (use the sha for the close comment). If a `#N` appears in the log but has no `next-release` label, confirm it's mock/roadmap-only and leave it open.
-2. On `dev`: bump `CACHE` in `sw.js` to the approved version; commit (include any triage fixes + ROADMAP.md updates) and push `dev`.
+2. On `dev`: bump `CACHE` in `sw.js` to the approved version; commit (include any triage fixes + tracking/BOARD.md updates) and push `dev`.
 3. Merge `dev` into `master` (fast-forward is fine — the version was hand-bumped), push `master`.
 4. **Close the shipped issues.** For each labeled `#N` from step 1:
    ```
