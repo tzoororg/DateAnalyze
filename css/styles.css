@@ -708,6 +708,37 @@ details.more[open] > summary .chev { transform: rotate(180deg); }
 .intro-sheet .btn { margin-top: 20px; }
 .privacy-link { display: block; text-align: center; color: var(--muted); font-size: 12.5px; margin-top: 14px; text-decoration: underline; }
 
+/* New-user onboarding (design/welcome.html) — full-screen, replaces the app
+   chrome/tabbar for a brand-new local, signed-out, zero-date profile. */
+.welcome-view { position: fixed; inset: 0; z-index: 25; background: var(--bg); overflow-y: auto; }
+.welcome-view.hidden { display: none; }
+.ob { min-height: 100%; display: flex; flex-direction: column; padding: 0 26px calc(36px + var(--safe-b)); text-align: center; box-sizing: border-box; }
+.ob-hero { margin-top: 96px; }
+.ob-hero .w-heart { font-size: 54px; line-height: 1; margin-bottom: 12px; display: inline-block; transform: rotate(-6deg); filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .25)); }
+.ob-hero h1 { font: 700 34px var(--cursive); margin: 0 0 8px; color: var(--text); }
+.ob-hero h2 { font-size: 24px; margin: 0 0 6px; }
+.ob-hero .w-sub { color: var(--muted); font-size: 14.5px; line-height: 1.5; margin: 0 auto; max-width: 300px; }
+.ob-stack { margin-top: auto; }
+
+.w-choice { display: block; width: 100%; padding: 18px 16px; border-radius: 16px; border: none; cursor: pointer; text-align: left; box-shadow: var(--shadow); margin-bottom: 12px; box-sizing: border-box; }
+.w-choice .c-title { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 700; }
+.w-choice .c-desc { display: block; font-size: 13px; margin-top: 4px; }
+.w-choice.together { background: var(--accent); color: #fff; }
+.w-choice.alone { background: var(--card); color: var(--text); border: 1px solid var(--line); }
+.w-choice.alone .c-desc { color: var(--muted); }
+.w-privacy { color: var(--muted); font-size: 12px; margin: 8px 0 0; }
+.w-textlink { background: none; border: none; color: var(--muted); font-size: 13.5px; text-decoration: underline; cursor: pointer; margin-top: 14px; }
+.welcome-view .p-back { position: absolute; top: calc(14px + env(safe-area-inset-top, 0px)); left: 14px; width: auto; }
+
+/* share-code screen: sticker-ticket code tile, tap to copy */
+.code-big { font-size: 32px; letter-spacing: 6px; font-weight: 800; color: var(--text); background: var(--card); border: 2px dashed var(--accent); border-radius: 16px; padding: 20px 10px 8px; margin: 0 0 16px; transform: rotate(-1.5deg); box-shadow: var(--shadow); cursor: pointer; position: relative; }
+.code-big .c-tap { display: block; font-size: 11.5px; font-weight: 600; letter-spacing: .5px; color: var(--muted); margin-top: 6px; }
+.code-big .c-stamp { position: absolute; top: -12px; right: -8px; font-size: 26px; transform: rotate(12deg); }
+.code-hint { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+.code-wait { color: var(--muted); font-size: 13.5px; display: inline-flex; align-items: center; gap: 8px; background: var(--card-2); border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; margin-top: 16px; }
+.dotpulse { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: dotpulse 1.2s infinite; }
+@keyframes dotpulse { 50% { opacity: .3; } }
+
 /* Theme switcher row */
 .theme-row { display: flex; align-items: center; gap: 10px; }
 .theme-seg { display: flex; gap: 6px; flex: 1; }

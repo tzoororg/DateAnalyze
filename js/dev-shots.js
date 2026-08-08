@@ -53,6 +53,9 @@ const STATES = {
   async empty() { /* seed skipped for this one in app.js */ },
   async home() { await tab("home"); },
   async intro() { await tab("home"); },
+  // welcome: init() already shows screen 1 for this shot (app.js skips seeding,
+  // same as "empty") — nothing further to drive.
+  async welcome() {},
   async log() { click("#fab"); await sleep(300); },
   async menu() { click("#menuBtn"); await sleep(300); },
   async "history-list"() { await tab("history"); },

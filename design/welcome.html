@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mock — New-user welcome &amp; sync flow</title>
+<link rel="stylesheet" href="../css/styles.css" />
+<style>
+  body { padding: 20px 12px; }
+  .mocknote { color: var(--muted); font-size: 12px; max-width: 1300px; margin: 0 auto 14px; }
+  .frames { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; align-items: flex-start; }
+  .frame { width: 390px; height: 720px; background: var(--bg); border: 1px solid var(--line); border-radius: 28px; overflow: hidden; position: relative; display: flex; flex-direction: column; }
+  .frame-label { text-align: center; color: var(--muted); font-size: 12px; margin: 6px 0 8px; }
+  .frame-col { display: flex; flex-direction: column; }
+
+  /* shared: hero on a fixed baseline, choices anchored to the bottom third */
+  .ob { flex: 1; display: flex; flex-direction: column; padding: 0 26px 36px; text-align: center; }
+  .ob-hero { margin-top: 96px; }
+  .ob-hero .w-heart { font-size: 54px; line-height: 1; margin-bottom: 12px; display: inline-block; transform: rotate(-6deg); filter: drop-shadow(0 4px 10px rgba(0,0,0,.25)); }
+  .ob-hero h1 { font-family: var(--font-display, inherit); font-size: 34px; margin: 0 0 8px; color: var(--text); }
+  .ob-hero h2 { font-size: 24px; margin: 0 0 6px; }
+  .ob-hero .w-sub { color: var(--muted); font-size: 14.5px; line-height: 1.5; margin: 0 auto; max-width: 300px; }
+  .ob-stack { margin-top: auto; }
+
+  .w-choice { display: block; width: 100%; padding: 18px 16px; border-radius: 16px; border: none; cursor: pointer; text-align: left; box-shadow: var(--shadow); margin-bottom: 12px; box-sizing: border-box; }
+  .w-choice .c-title { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 700; }
+  .w-choice .c-desc { display: block; font-size: 13px; margin-top: 4px; }
+  .w-choice.together { background: var(--accent); color: var(--accent-ink, #fff); }
+  .w-choice.alone { background: var(--card); color: var(--text); border: 1px solid var(--line); }
+  .w-choice.alone .c-desc { color: var(--muted); }
+  .w-privacy { color: var(--muted); font-size: 12px; margin: 8px 0 0; }
+  .w-textlink { background: none; border: none; color: var(--muted); font-size: 13.5px; text-decoration: underline; cursor: pointer; margin-top: 14px; }
+  .p-back { position: absolute; top: 14px; left: 14px; }
+
+  /* share-code screen: sticker-ticket code tile, tap to copy */
+  .code-big { font-size: 32px; letter-spacing: 6px; font-weight: 800; color: var(--text); background: var(--card); border: 2px dashed var(--accent); border-radius: 16px; padding: 20px 10px 8px; margin: 0 0 16px; transform: rotate(-1.5deg); box-shadow: var(--shadow); cursor: pointer; position: relative; }
+  .code-big .c-tap { display: block; font-size: 11.5px; font-weight: 600; letter-spacing: .5px; color: var(--muted); margin-top: 6px; }
+  .code-big .c-stamp { position: absolute; top: -12px; right: -8px; font-size: 26px; transform: rotate(12deg); }
+  .code-hint { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+  .code-wait { color: var(--muted); font-size: 13.5px; display: inline-flex; align-items: center; gap: 8px; background: var(--card-2); border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; margin-top: 16px; }
+  .dotpulse { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: pulse 1.2s infinite; }
+  @keyframes pulse { 50% { opacity: .3; } }
+</style>
+</head>
+<body>
+<p class="mocknote">MOCK v2 (post-critic) — new-user onboarding. Shown instead of the empty Home tab when there are zero dates and sync is off. Frame 1: welcome choice; <b>Track together</b> opens the Google sign-in popup directly (no separate sign-in button). Frame 2: after sign-in, pick a side. Frame 3: "I'm first" — the code tile is tap-to-copy, one Share primary, auto-advances when the partner joins. "Just me" drops straight into the app. Sync stays reachable later via Settings → Partner sync.</p>
+
+<div class="frames">
+
+  <div class="frame-col">
+    <div class="frame">
+      <div class="ob">
+        <div class="ob-hero">
+          <div class="w-heart">💞</div>
+          <h1>Us</h1>
+          <p class="w-sub">A little book of your dates together — what you did, how it felt, and ideas for the next one.</p>
+        </div>
+        <div class="ob-stack">
+          <button class="w-choice together"><span class="c-title"><span>💑</span> Track together</span></button>
+          <button class="w-choice alone"><span class="c-title"><span>📔</span> Just me</span></button>
+          <p class="w-privacy">🔒 Private by default — no account needed, and syncing is end-to-end encrypted.</p>
+        </div>
+      </div>
+    </div>
+    <p class="frame-label">1 · First launch (no data)</p>
+  </div>
+
+  <div class="frame-col">
+    <div class="frame">
+      <button class="btn ghost small p-back">‹ Back</button>
+      <div class="ob">
+        <div class="ob-hero">
+          <div class="w-heart">👋</div>
+          <h2>You're in, Tzoor</h2>
+          <p class="w-sub">Connect your two phones — one of you starts, the other joins with a code.</p>
+        </div>
+        <div class="ob-stack">
+          <button class="w-choice together"><span class="c-title"><span>✨</span> I'm first — create our space</span></button>
+          <button class="w-choice alone">
+            <span class="c-title"><span>🔑</span> I have a code</span>
+            <span class="c-desc">Paste the code your partner sent you.</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    <p class="frame-label">2 · Right after Google sign-in</p>
+  </div>
+
+  <div class="frame-col">
+    <div class="frame">
+      <button class="btn ghost small p-back">‹ Back</button>
+      <div class="ob">
+        <div class="ob-hero">
+          <div class="w-heart">💌</div>
+          <h2>Send this to your partner</h2>
+          <p class="w-sub">They tap <b>Track together → I have a code</b> and paste it.</p>
+        </div>
+        <div class="ob-stack">
+          <div class="code-big">QX7-K2M<span class="c-tap">tap to copy</span><span class="c-stamp">💞</span></div>
+          <p class="code-hint">Valid for 7 days · includes your encryption key</p>
+          <button class="btn">📤 Share code</button>
+          <div class="code-wait"><span class="dotpulse"></span> Waiting for your partner…</div>
+          <div><button class="w-textlink">Skip for now — start logging</button></div>
+        </div>
+      </div>
+    </div>
+    <p class="frame-label">3 · "I'm first" — share the code</p>
+  </div>
+
+</div>
+</body>
+</html>

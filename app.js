@@ -47,7 +47,7 @@ async function forceRefreshIfStale(minCache) {
 }
 
 (async () => {
-  if (shot && shot !== "empty") await (await import("./js/dev-shots.js")).seed(shot);
+  if (shot && shot !== "empty" && shot !== "welcome") await (await import("./js/dev-shots.js")).seed(shot);
   if (!shot) {
     const v = await getVersionInfo();
     if (v?.syncDisabled) setSyncDisabled(true, v.message);

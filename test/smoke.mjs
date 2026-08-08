@@ -46,6 +46,23 @@ try {
   check("empty boot renders", (await t.evaluate(`document.querySelector("#view").innerText`)).length > 0);
   check("empty home shows .empty2 state", await t.evaluate(`!!document.querySelector("#view .empty2")`));
 
+  // new-user welcome onboarding (design/welcome.html): shows on a fresh empty
+  // profile, "Just me" dismisses it into Home, and it never returns after reload.
+  check("welcome view shows on a fresh empty profile",
+    await t.evaluate(`!document.getElementById("welcomeView").classList.contains("hidden")`));
+  await t.evaluate(`document.getElementById("wAloneBtn").click()`);
+  await sleep(200);
+  check("Just me dismisses welcome and shows normal Home",
+    await t.evaluate(`document.getElementById("welcomeView").classList.contains("hidden") && !!document.querySelector("#view .empty2")`));
+  t = await shotTab("empty");
+  check("welcome does not reappear after dismissal",
+    await t.evaluate(`document.getElementById("welcomeView").classList.contains("hidden")`));
+
+  t = await shotTab("welcome");
+  check("?shot=welcome forces screen 1", await t.evaluate(`
+    !document.getElementById("welcomeView").classList.contains("hidden") &&
+    !!document.getElementById("wTogetherBtn") && !!document.getElementById("wAloneBtn")`));
+
   // 2. home (seeded)
   t = await shotTab("home");
   const homeText = await t.evaluate(`document.querySelector("#view").innerText`);

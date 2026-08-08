@@ -56,7 +56,12 @@ export async function init() {
   // (for capture/smoke); suppressed under every other ?shot so captures stay clean.
   const shot = new URLSearchParams(location.search).get("shot");
   const seenIntro = await db.getSetting("seenIntro", false);
-  if (shot === "intro") showIntro();
+  let welcomeShown = false;
+  if (shot === "welcome") { renderWelcomeScreen(1); showWelcome(); welcomeShown = true; }
+  else welcomeShown = await maybeShowWelcome();
+  if (welcomeShown) {
+    await db.setSetting("seenIntro", true); // welcome supersedes the old intro sheet
+  } else if (shot === "intro") showIntro();
   else if (!shot && !seenIntro) {
     if (dates.length === 0) showIntro();
     else await db.setSetting("seenIntro", true); // existing user — never nag later
@@ -450,6 +455,139 @@ async function onDeleteAccount() {
     toast("Account deleted");
   } catch (err) { console.error(err); toast(err.message || "Couldn't delete account"); }
   finally { btn.disabled = false; }
+}
+
+// ---------- new-user onboarding (design/welcome.html) ----------
+// Full-screen welcome flow for a brand-new, local, signed-out, zero-date
+// profile. Once dismissed (any exit path) it never returns. Reuses the same
+// store.signIn/createSpace/joinSpace calls as the settings-menu sync rows.
+async function maybeShowWelcome() {
+  if (dates.length || db.getMode() !== "local") return false;
+  if (await db.getSetting("welcomeDismissed", false)) return false;
+  renderWelcomeScreen(db.getUser() ? 2 : 1);
+  showWelcome();
+  return true;
+}
+
+function showWelcome() { document.getElementById("welcomeView").classList.remove("hidden"); }
+function hideWelcome() { document.getElementById("welcomeView").classList.add("hidden"); }
+
+async function dismissWelcome(tab = "home") {
+  await db.setSetting("welcomeDismissed", true);
+  hideWelcome();
+  show(tab);
+}
+
+function welcomeFirstName() {
+  const u = db.getUser();
+  return u?.displayName?.split(" ")[0] || u?.email?.split("@")[0] || "";
+}
+
+function renderWelcomeScreen(screen, code = "") {
+  const el = document.getElementById("welcomeView");
+  if (screen === 1) {
+    el.innerHTML = `
+      <div class="ob">
+        <div class="ob-hero">
+          <div class="w-heart">💞</div>
+          <h1>Us</h1>
+          <p class="w-sub">A little book of your dates together — what you did, how it felt, and ideas for the next one.</p>
+        </div>
+        <div class="ob-stack">
+          <button class="w-choice together" id="wTogetherBtn"><span class="c-title"><span>💑</span> Track together</span></button>
+          <button class="w-choice alone" id="wAloneBtn"><span class="c-title"><span>📔</span> Just me</span></button>
+          <p class="w-privacy">🔒 Private by default — no account needed, and syncing is end-to-end encrypted.</p>
+        </div>
+      </div>`;
+    document.getElementById("wTogetherBtn").addEventListener("click", onWelcomeTogether);
+    document.getElementById("wAloneBtn").addEventListener("click", () => dismissWelcome());
+  } else if (screen === 2) {
+    const name = welcomeFirstName();
+    el.innerHTML = `
+      <button class="btn ghost small p-back" id="wBackBtn">‹ Back</button>
+      <div class="ob">
+        <div class="ob-hero">
+          <div class="w-heart">👋</div>
+          <h2>You're in${name ? `, ${name}` : ""}</h2>
+          <p class="w-sub">Connect your two phones — one of you starts, the other joins with a code.</p>
+        </div>
+        <div class="ob-stack">
+          <button class="w-choice together" id="wCreateBtn"><span class="c-title"><span>✨</span> I'm first — create our space</span></button>
+          <button class="w-choice alone" id="wJoinBtn">
+            <span class="c-title"><span>🔑</span> I have a code</span>
+            <span class="c-desc">Paste the code your partner sent you.</span>
+          </button>
+        </div>
+      </div>`;
+    document.getElementById("wBackBtn").addEventListener("click", () => renderWelcomeScreen(1));
+    document.getElementById("wCreateBtn").addEventListener("click", onWelcomeCreate);
+    document.getElementById("wJoinBtn").addEventListener("click", onWelcomeJoin);
+  } else {
+    const display = code.split(".")[0] || code;
+    el.innerHTML = `
+      <button class="btn ghost small p-back" id="wBackBtn">‹ Back</button>
+      <div class="ob">
+        <div class="ob-hero">
+          <div class="w-heart">💌</div>
+          <h2>Send this to your partner</h2>
+          <p class="w-sub">They tap <b>Track together → I have a code</b> and paste it.</p>
+        </div>
+        <div class="ob-stack">
+          <div class="code-big" id="wCodeTile">${display}<span class="c-tap">tap to copy</span><span class="c-stamp">💞</span></div>
+          <p class="code-hint">Valid for 7 days · includes your encryption key</p>
+          <button class="btn" id="wShareBtn">📤 Share code</button>
+          <div class="code-wait"><span class="dotpulse"></span> Waiting for your partner…</div>
+          <div><button class="w-textlink" id="wSkipBtn">Skip for now — start logging</button></div>
+        </div>
+      </div>`;
+    document.getElementById("wBackBtn").addEventListener("click", () => renderWelcomeScreen(2));
+    document.getElementById("wCodeTile").addEventListener("click", () => copyWelcomeCode(code));
+    document.getElementById("wShareBtn").addEventListener("click", () => shareWelcomeCode(code));
+    document.getElementById("wSkipBtn").addEventListener("click", () => dismissWelcome());
+  }
+}
+
+async function onWelcomeTogether() {
+  try {
+    await db.signIn();
+    renderWelcomeScreen(2);
+  } catch (err) { console.error(err); toast(err.message || "Sign-in failed"); }
+}
+
+async function onWelcomeCreate() {
+  try {
+    const code = await db.createSpace(false); // welcome only fires with zero dates — nothing to upload
+    await reload();
+    renderWelcomeScreen(3, code);
+  } catch (err) { console.error(err); toast(err.message || "Couldn't create space"); }
+}
+
+async function onWelcomeJoin() {
+  const code = prompt("Enter the code from your partner:");
+  if (!code) return;
+  try {
+    await db.joinSpace(code);
+    await reload();
+    await db.setSetting("welcomeDismissed", true);
+    hideWelcome();
+    show("home");
+    toast("Joined — syncing with your partner ♥");
+  } catch (err) { console.error(err); toast(err.message || "Couldn't join — check the code"); }
+}
+
+async function copyWelcomeCode(code) {
+  try { await navigator.clipboard.writeText(code); toast("Copied"); }
+  catch { toast("Couldn't copy — long-press the code above instead"); }
+}
+
+async function shareWelcomeCode(code) {
+  const text = `Join me on Us 💞 — code: ${code}`;
+  if (navigator.share) {
+    try { await navigator.share({ text }); } catch { /* user cancelled the share sheet */ }
+  } else {
+    try { await navigator.clipboard.writeText(code); toast("Copied"); }
+    catch { toast("Couldn't copy — long-press the code above instead"); }
+  }
 }
 
 function show(tab) {
