@@ -1294,8 +1294,9 @@ document.addEventListener("click", ev => {
   const entry = ev.target.closest(".hist-entry");
   if (entry && !entry.classList.contains("open")) return; // collapsed row = expand, not background
   // inside the open card, only interactive zones eat the tap (hero opens the
-  // lightbox, strip swaps photos, stars rate) — static content collapses too
-  if (entry && ev.target.closest("[data-hero], [data-strip], [data-rate]")) return;
+  // lightbox, stars rate; strip frames stopPropagation) — everything else,
+  // including the film strip's empty tail, collapses like background
+  if (entry && ev.target.closest("[data-hero], [data-rate]")) return;
   hist.expanded = null;
   renderHistoryList();
 });
