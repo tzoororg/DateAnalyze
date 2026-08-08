@@ -37,15 +37,19 @@ export function trendChart(points) {
   points.forEach((p, i) => {
     const h = (p.count / maxCount) * innerH;
     const bw = Math.max(6, innerW / n * 0.5);
-    bars += `<rect x="${xAt(i) - bw / 2}" y="${padT + innerH - h}" width="${bw}" height="${h}" rx="3" fill="var(--card-2)"/>`;
+    bars += `<rect x="${xAt(i) - bw / 2}" y="${padT + innerH - h}" width="${bw}" height="${h}" rx="3" fill="var(--muted)" opacity=".35"/>`;
   });
 
   const line = points.map((p, i) => `${i ? "L" : "M"}${xAt(i).toFixed(1)},${yAt(p.avgEnjoyment).toFixed(1)}`).join(" ");
   let dots = "", labels = "";
   points.forEach((p, i) => {
     dots += `<circle cx="${xAt(i)}" cy="${yAt(p.avgEnjoyment)}" r="3.5" fill="var(--accent)"/>`;
-    if (n <= 8 || i % Math.ceil(n / 6) === 0)
-      labels += `<text x="${xAt(i)}" y="${H - 8}" text-anchor="middle" font-size="10" fill="var(--muted)">${esc(p.label)}</text>`;
+    if (n <= 8 || i % Math.ceil(n / 6) === 0) {
+      // edge labels anchor inward so they never clip the viewBox
+      const anchor = i === 0 ? "start" : i === n - 1 ? "end" : "middle";
+      const lx = i === 0 ? Math.min(xAt(i), padL) : i === n - 1 ? W - 2 : xAt(i);
+      labels += `<text x="${lx}" y="${H - 8}" text-anchor="${anchor}" font-size="10" fill="var(--muted)">${esc(p.label)}</text>`;
+    }
   });
   // gridlines at 1..5
   let grid = "";

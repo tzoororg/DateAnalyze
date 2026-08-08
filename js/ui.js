@@ -1078,15 +1078,15 @@ function renderHistory() {
   v.innerHTML = `
     <section class="card tight">
       <div class="hist-row1">
-        <input class="h-search" id="h-search" type="text" placeholder="Search title, notes, place…" value="${escAttr(hist.query)}"/>
+        <input class="h-search" id="h-search" type="text" placeholder="Search dates…" value="${escAttr(hist.query)}"/>
         <select id="h-sort" title="Sort by">
-          <option value="date-desc" ${hist.sort === "date-desc" ? "selected" : ""}>Date (newest)</option>
-          <option value="date-asc" ${hist.sort === "date-asc" ? "selected" : ""}>Date (oldest)</option>
-          <option value="enjoy-desc" ${hist.sort === "enjoy-desc" ? "selected" : ""}>Enjoyment (high)</option>
-          <option value="enjoy-asc" ${hist.sort === "enjoy-asc" ? "selected" : ""}>Enjoyment (low)</option>
-          <option value="cost-desc" ${hist.sort === "cost-desc" ? "selected" : ""}>Cost (high)</option>
-          <option value="cost-asc" ${hist.sort === "cost-asc" ? "selected" : ""}>Cost (low)</option>
-          <option value="title-asc" ${hist.sort === "title-asc" ? "selected" : ""}>Title (A–Z)</option>
+          <option value="date-desc" ${hist.sort === "date-desc" ? "selected" : ""}>Newest</option>
+          <option value="date-asc" ${hist.sort === "date-asc" ? "selected" : ""}>Oldest</option>
+          <option value="enjoy-desc" ${hist.sort === "enjoy-desc" ? "selected" : ""}>Best rated</option>
+          <option value="enjoy-asc" ${hist.sort === "enjoy-asc" ? "selected" : ""}>Worst rated</option>
+          <option value="cost-desc" ${hist.sort === "cost-desc" ? "selected" : ""}>Priciest</option>
+          <option value="cost-asc" ${hist.sort === "cost-asc" ? "selected" : ""}>Cheapest</option>
+          <option value="title-asc" ${hist.sort === "title-asc" ? "selected" : ""}>Title A–Z</option>
         </select>
       </div>
       <div class="hist-row2">
