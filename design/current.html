@@ -147,9 +147,11 @@
   <span class="crumb">Empty state</span>
   <h2>First run — before any data</h2>
   <div class="pair">
+    <figure><img src="shots/welcome.png" alt="Welcome onboarding screen"/><figcaption>Welcome screen (fresh install)</figcaption></figure>
     <figure><img src="shots/intro.png" alt="First-run explainer sheet"/><figcaption>First-run explainer (one-time)</figcaption></figure>
     <figure><img src="shots/empty.png" alt="Empty first-run state"/><figcaption>Fresh install, after dismissing</figcaption></figure>
     <div class="notes"><ul>
+      <li><b>Welcome onboarding</b> (mock: <code>welcome.html</code>): full-screen choice on a fresh local profile (0 dates, signed out, <code>welcomeDismissed</code> unset) — "💑 Track together" opens Google sign-in directly, then create-space (sticker-ticket share-code tile, native share) or join-with-code; "📔 Just me" drops straight into the app. Never returns after dismissal; sync stays in Settings → Partner sync. Supersedes the intro sheet when it fires (sets <code>seenIntro</code>).</li>
       <li><b>First-run explainer</b> (PRODUCTION §2): a one-time bottom sheet over the app on the very first open (0 dates, <code>seenIntro</code> unset). States "your data stays on this phone unless you turn on sync" — doubles as the store-reviewer privacy statement. Dismissed only by "Get started" (sets <code>seenIntro</code>); links to privacy.html. Existing/returning users never see it.</li>
       <li>Empty states share one pattern (<code>.empty2</code>): tilted sticker-circle emoji, cursive title, quiet alt lines. Home (💌 "Your story starts here") points at the FAB and the sample-data menu item; Album (📸) points at the FAB; Stats (📊) and the empty Wishlist (☆) carry a "Find an idea →" pill that jumps to Ideas.</li>
       <li>Ideas works from day one via the ~49-idea seed catalog, framed by the dismissible cold-start banner.</li>
