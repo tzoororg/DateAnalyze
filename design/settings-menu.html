@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mock — Settings menu (grouped)</title>
+<link rel="stylesheet" href="../css/styles.css" />
+<style>
+  /* mock-only page frame */
+  body { padding: 0; }
+  .mockwrap { max-width: 420px; margin: 0 auto; }
+  .mocknote { color: var(--muted); font-size: 12px; padding: 10px 16px 0; }
+  .sheet { position: static; display: block; }
+  .sheet-backdrop { display: none; }
+  .sheet-body { max-height: none; border-radius: 24px; margin-top: 10px; }
+
+  /* ---- proposed: collapsible setting groups ---- */
+  .menu-group { margin-bottom: 8px; }
+  .menu-group > summary {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px; border-radius: 13px; background: var(--card); color: var(--text);
+    font-size: 15px; cursor: pointer; box-shadow: var(--shadow); list-style: none;
+  }
+  .menu-group > summary::-webkit-details-marker { display: none; }
+  .menu-group > summary .g-title { flex: 1; }
+  .menu-group > summary .g-hint { color: var(--muted); font-size: 12.5px; }
+  .menu-group > summary .g-chev { color: var(--muted); font-size: 13px; transition: transform .15s; }
+  .menu-group[open] > summary { border-radius: 13px 13px 0 0; margin-bottom: 0; }
+  .menu-group[open] > summary .g-chev { transform: rotate(90deg); }
+  .menu-group .g-body { padding: 8px 0 0; margin-left: 14px; }
+  .menu-group .g-body .menu-row { padding: 10px 12px; margin-bottom: 6px; }
+  .menu-group .g-body .menu-row:last-child { margin-bottom: 0; }
+  .menu-group.danger > summary { color: var(--bad); }
+  .idleseg { background: var(--card-2); color: var(--muted); }
+  .settings-divider { border: none; border-top: 1px dashed var(--line); margin: 14px 2px; }
+</style>
+</head>
+<body>
+<div class="mockwrap">
+  <p class="mocknote">MOCK — proposed settings menu. Header ⋯ → ⚙️. Theme + slideshow stay pinned; everything else collapses into four groups (shown here with the Data group open).</p>
+
+  <!-- header, for the cogwheel -->
+  <div class="app-chrome"><header class="app-header">
+    <h1 class="app-title">Us <span class="heart">♥</span></h1>
+    <button class="icon-btn" aria-label="Settings">⚙️</button>
+  </header></div>
+
+  <div class="sheet">
+    <div class="sheet-body">
+      <h2>Settings</h2>
+
+      <!-- pinned -->
+      <div class="menu-row theme-row">
+        <span>🎨</span>
+        <div class="theme-seg">
+          <button class="tseg tseg-plum on">🌆 Dusk</button>
+          <button class="tseg tseg-candle">🕯️ Candle</button>
+          <button class="tseg tseg-twilight">🌌 Twilight</button>
+        </div>
+      </div>
+      <div class="menu-row theme-row">
+        <span>🎞️</span>
+        <div class="theme-seg">
+          <button class="tseg idleseg">Off</button>
+          <button class="tseg idleseg">30s</button>
+          <button class="tseg idleseg on">1m</button>
+          <button class="tseg idleseg">2m</button>
+          <button class="tseg idleseg">5m</button>
+        </div>
+      </div>
+
+      <hr class="settings-divider" />
+
+      <details class="menu-group">
+        <summary><span>💞</span><span class="g-title">Partner sync</span><span class="g-hint">Local only</span><span class="g-chev">›</span></summary>
+        <div class="g-body">
+          <p class="muted small">Sync with your partner — end-to-end encrypted, optional.</p>
+          <button class="menu-row">🔗 Sign in with Google</button>
+          <button class="menu-row">💞 Create shared space</button>
+          <button class="menu-row">🔑 Join with a code</button>
+        </div>
+      </details>
+
+      <details class="menu-group" open>
+        <summary><span>💾</span><span class="g-title">Data &amp; backup</span><span class="g-hint">backed up 12d ago</span><span class="g-chev">›</span></summary>
+        <div class="g-body">
+          <button class="menu-row">⬇️ Export data (JSON backup)</button>
+          <label class="menu-row">⬆️ Import data (restore)</label>
+          <label class="menu-row">📷 Import from photos</label>
+          <button class="menu-row">🌱 Add sample dates (demo)</button>
+        </div>
+      </details>
+
+      <details class="menu-group">
+        <summary><span>💬</span><span class="g-title">Help &amp; about</span><span class="g-chev">›</span></summary>
+        <div class="g-body">
+          <a class="menu-row" href="#">🔒 Privacy policy</a>
+          <a class="menu-row" href="#">📄 Terms &amp; support</a>
+          <p class="muted small">App build: 1.4.2</p>
+        </div>
+      </details>
+
+      <details class="menu-group danger">
+        <summary><span>⚠️</span><span class="g-title">Danger zone</span><span class="g-chev">›</span></summary>
+        <div class="g-body">
+          <button class="menu-row danger">🗑️ Erase everything</button>
+        </div>
+      </details>
+
+      <button class="menu-row">💬 Send feedback</button>
+      <button class="menu-row ghost">Close</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
