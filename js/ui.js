@@ -1272,6 +1272,13 @@ async function renderHistoryList() {
     renderHistoryList();
   }));
   wireHistDetail(host);
+  // tap the background (gaps between cards) to collapse the expanded entry
+  host.onclick = ev => {
+    if (hist.expanded && !ev.target.closest(".hist-entry")) {
+      hist.expanded = null;
+      renderHistoryList();
+    }
+  };
   // load collapsed-row photo slabs
   host.querySelectorAll(".hist-ledge .shot[data-shot]").forEach(async el => {
     const id = el.dataset.shot;
