@@ -361,7 +361,7 @@ Found in the 2026-08-08 design-audit sweep (taste-critic):
 Found in the v2.6.0 release validation (2026-08-08, taste-critic on the Twilight theme):
 
 - **medium** — Twilight theme: Log-form vibe suggestion chips (cozy/spontaneous/…) are muted-on-muted, below AA. Do a dark-theme contrast pass over chip text across all three themes.
-- **medium** — Album list: photo-less entries render two ways — some get a gradient emoji tile, others a bare emoji in empty card space. Unify on the gradient tile. Needs a mock.
+- ~~**medium** — Album list: photo-less entries render two ways — some get a gradient emoji tile, others a bare emoji in empty card space. Unify on the gradient tile. Needs a mock.~~ ✅ Fixed 2026-08-08: one `.grad-tile` (accent wash over card gradient) for row slab + hero, redundant `.stk.cat` dropped on photo-less heroes. Mock: design/roadmap/album-tile-unify.html.
 - ~~**low** — Log form "note to next year" (capsule) chip olive/gold, decide accent vs restyle.~~ ✅ Closed 2026-08-08 as no-change: it IS the standard `--butter` token (used by tier-pill, mood-tag, explore tag, …) and label contrast is 6.70:1 (AA pass, verified). Mock: design/roadmap/capsule-chip.html.
 - **low** — Lightbox/slideshow caption scrim is tuned for dark photos; over light photos it renders mid-tan and caption contrast leans on the text-shadow. Consider an adaptive or stronger scrim.
 

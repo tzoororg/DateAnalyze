@@ -449,7 +449,12 @@ details.more[open] > summary .chev { transform: rotate(180deg); }
 .hist-ledge .shot { width: 148px; flex: none; position: relative; overflow: hidden; background: var(--card-2); }
 .hist-ledge .shot img.cover { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
 .hist-ledge .shot .count { position: absolute; right: 6px; bottom: 6px; background: rgba(15,6,12,.6); color: #fff; font-size: 11px; font-weight: 800; padding: 2px 7px; border-radius: 8px; z-index: 2; }
-.hist-ledge .shot .cat-emoji { display: grid; place-items: center; height: 100%; font-size: 34px; }
+/* shared gradient emoji tile for photo-less entries (row slab + expanded hero) —
+   accent wash layered ON TOP of the base gradient so it actually renders */
+.grad-tile { display: grid; place-items: center; height: 100%; font-size: 34px;
+  background: radial-gradient(80% 80% at 30% 20%, color-mix(in srgb, var(--accent) 15%, transparent), transparent),
+              linear-gradient(135deg, var(--card-2), var(--card) 60%); }
+.hist-hero .grad-tile { position: absolute; inset: 0; font-size: 48px; padding-bottom: 28px; filter: drop-shadow(0 3px 6px rgba(0,0,0,.4)); }
 .hist-ledge .body { flex: 1; min-width: 0; padding: 12px 16px 12px 14px; display: flex; flex-direction: column; justify-content: center; gap: 3px; }
 .hist-ledge .tape-sm { align-self: flex-start; background: rgba(253,246,238,.92); padding: 2px 10px; transform: rotate(-2deg); font: 400 11.5px var(--cursive); color: #5a4636; box-shadow: 0 2px 6px rgba(0,0,0,.3); margin-bottom: 2px; }
 .hist-ledge h4 { margin: 0; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -460,7 +465,6 @@ details.more[open] > summary .chev { transform: rotate(180deg); }
 .hist-hero.empty { height: 160px; }
 .hist-hero::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 110px; background: linear-gradient(180deg, transparent, rgba(15,6,12,.8)); pointer-events: none; }
 .hist-hero .hist-hero-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.hist-hero .hist-hero-emoji { position: absolute; inset: 0; display: grid; place-items: center; font-size: 40px; }
 .hist-hero .stk.tape { font: 400 12.5px var(--cursive); }
 .hist-hero .hist-hero-kebab { position: absolute; top: 60px; right: 14px; z-index: 2; background: rgba(15,6,12,.5); color: #fff; }
 .hist-hero-title { position: absolute; left: 16px; right: 16px; bottom: 14px; z-index: 2; cursor: pointer; }

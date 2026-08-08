@@ -65,12 +65,11 @@ body {
    + a soft accent wash so the tile reads deliberate, not "image failed to load" */
 .grad-tile {
   display: grid; place-items: center; height: 100%;
-  background: linear-gradient(135deg, var(--card-2), var(--card) 60%),
-              radial-gradient(80% 80% at 30% 20%, rgba(255,127,162,.18), transparent);
-  background-blend-mode: normal;
+  background: radial-gradient(80% 80% at 30% 20%, color-mix(in srgb, var(--accent) 15%, transparent), transparent),
+              linear-gradient(135deg, var(--card-2), var(--card) 60%);
 }
 .grad-tile .em { font-size: 34px; filter: drop-shadow(0 3px 6px rgba(0,0,0,.4)); }
-.pro .hist-hero .grad-tile { position: absolute; inset: 0; }
+.pro .hist-hero .grad-tile { position: absolute; inset: 0; padding-bottom: 28px; }
 .pro .hist-hero .grad-tile .em { font-size: 48px; }
 </style>
 </head>

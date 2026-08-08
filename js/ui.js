@@ -1254,7 +1254,7 @@ async function renderHistoryList() {
     <div class="card tight hist-entry">
       <div class="hist-ledge" data-toggle="${escAttr(e.id)}">
         <div class="shot" data-shot="${escAttr(pid)}">
-          ${pid ? "" : `<div class="cat-emoji">${catEmoji(e.category)}</div>`}
+          ${pid ? "" : `<div class="grad-tile">${catEmoji(e.category)}</div>`}
           ${extra > 0 ? `<span class="count">+${extra}</span>` : ""}
         </div>
         <div class="body">
@@ -1347,9 +1347,9 @@ function histDetail(e) {
     .filter(Boolean).join(" · ");
   const hero = `
     <div class="hist-hero${photos.length ? "" : " empty"}" data-hero data-photos="${escAttr(photos.join(","))}" data-active="0" data-title="${escAttr(e.title)}">
-      ${photos.length ? `<img class="hist-hero-img" data-hero-img src="" alt=""/>` : `<div class="hist-hero-emoji">${catEmoji(e.category)}</div>`}
+      ${photos.length ? `<img class="hist-hero-img" data-hero-img src="" alt=""/>` : `<div class="grad-tile">${catEmoji(e.category)}</div>`}
       <span class="stk tape">${fmtDateWeekday(e.date)}</span>
-      <span class="stk cat">${catEmoji(e.category)}</span>
+      ${photos.length ? `<span class="stk cat">${catEmoji(e.category)}</span>` : ""}
       <button class="kebab hist-hero-kebab" data-kebab="${escAttr(e.id)}">⋯</button>
       <div class="hist-hero-title" data-collapse="${escAttr(e.id)}">
         <h3>${escHtml(e.title)}</h3>
