@@ -530,7 +530,7 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); bo
 }
 /* Slideshow mode: gentle cross-fade between slides + tap-to-open affordance. */
 .lightbox.slideshow .lb-img { cursor: pointer; transition: opacity .6s ease; }
-.lightbox.slideshow .lb-caption::after { content: " · tap to open"; opacity: .6; }
+.lightbox.slideshow .lb-caption::after { content: " · tap to open"; opacity: .85; }
 
 /* Empty state */
 .empty { text-align: center; color: var(--muted); padding: 40px 20px; }

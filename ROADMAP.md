@@ -358,6 +358,13 @@ Found in the 2026-08-08 design-audit sweep (taste-critic):
 - **design** — Ideas result cards: titles truncate while the right half holds heart + "Log →" + a text "Favorite"/"New" badge. Candidate: icon/dot badge, title takes the width. Needs a mock.
 - **taste** — Log category strip edge: fade strengthened 2026-08-07, residual sliced-chip look at the meter column. Revisit only if a mock proposes a cleaner treatment.
 
+Found in the v2.6.0 release validation (2026-08-08, taste-critic on the Twilight theme):
+
+- **medium** — Twilight theme: Log-form vibe suggestion chips (cozy/spontaneous/…) are muted-on-muted, below AA. Do a dark-theme contrast pass over chip text across all three themes.
+- **medium** — Album list: photo-less entries render two ways — some get a gradient emoji tile, others a bare emoji in empty card space. Unify on the gradient tile. Needs a mock.
+- **low** — Log form "note to next year" (capsule) chip is the only olive/gold element outside the raspberry/plum/lavender palette, dark-on-olive label borderline. Decide: intentional time-capsule accent or restyle to standard chip.
+- **low** — Lightbox/slideshow caption scrim is tuned for dark photos; over light photos it renders mid-tan and caption contrast leans on the text-shadow. Consider an adaptive or stronger scrim.
+
 ## Explicitly NOT doing
 
 - **Booking / restaurant marketplace** (Cupla, Fever, OpenTable) — needs

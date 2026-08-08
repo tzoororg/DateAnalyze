@@ -37,7 +37,7 @@ export function trendChart(points) {
   points.forEach((p, i) => {
     const h = (p.count / maxCount) * innerH;
     const bw = Math.max(6, innerW / n * 0.5);
-    bars += `<rect x="${xAt(i) - bw / 2}" y="${padT + innerH - h}" width="${bw}" height="${h}" rx="3" fill="var(--muted)" opacity=".35"/>`;
+    bars += `<rect x="${xAt(i) - bw / 2}" y="${padT + innerH - h}" width="${bw}" height="${h}" rx="3" fill="var(--muted)" opacity=".5"/>`;
   });
 
   const line = points.map((p, i) => `${i ? "L" : "M"}${xAt(i).toFixed(1)},${yAt(p.avgEnjoyment).toFixed(1)}`).join(" ");
