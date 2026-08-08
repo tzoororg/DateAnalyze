@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>Album redesign — photo-ledge rows + hero/film-strip expanded (realistic)</title>
+<style>
+:root {
+  --bg: #2a1b26; --bg-soft: #33222e; --card: #3b2a37; --card-2: #4a3444;
+  --line: #54394c; --text: #f5e6ee; --muted: #c99bb0;
+  --accent: #ff7fa2; --accent-2: #ff9fba;
+  --good: #7ed3ab; --warn: #eec97a; --bad: #f08a8a;
+  --mint-bg: #2e4a3e; --mint-fg: #8fd6b5; --butter-bg: #4a3d22; --butter-fg: #eec97a;
+  --radius: 18px; --shadow: 0 6px 16px rgba(0,0,0,.35);
+  --cursive: "Segoe Script", "Comic Sans MS", cursive;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 24px; background: #1a1017; color: var(--text);
+  font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  display: flex; gap: 28px; flex-wrap: wrap; align-items: flex-start;
+}
+.frame { width: 390px; flex: none; }
+.frame-label { font: 700 15px var(--cursive); color: var(--accent); margin: 0 0 10px 4px; }
+.phone { background: radial-gradient(120% 60% at 50% 0%, var(--bg-soft), var(--bg)); border-radius: 28px; padding: 16px; border: 1px solid #000; }
+.card { background: var(--card); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); margin-bottom: 14px; position: relative; }
+.hearts { color: var(--accent); font-weight: 800; letter-spacing: 1px; white-space: nowrap; }
+.hearts .off { color: var(--muted); opacity: .7; }
+.chev { color: var(--muted); font-size: 18px; flex: none; }
+.tier-pill { display: inline-block; background: var(--butter-bg); color: var(--butter-fg); font-size: 11px; font-weight: 800; padding: 1px 7px; border-radius: 8px; vertical-align: 1px; letter-spacing: .5px; }
+.tier-pill.free { background: var(--mint-bg); color: var(--mint-fg); }
+img.cover { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+
+/* ---- search/filter bar (context, as shipped) ---- */
+.hist-bar { padding: 10px 12px; display: flex; gap: 8px; align-items: center; }
+.h-search { flex: 1; background: var(--card-2); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; color: var(--muted); font-size: 14px; }
+.seg { background: var(--card-2); border: 1px solid var(--line); border-radius: 10px; color: var(--muted); font-size: 14px; padding: 6px 10px; }
+.seg.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* ---- Option A: photo-ledge rows ---- */
+.ledge { padding: 0; overflow: hidden; display: flex; align-items: stretch; min-height: 96px; cursor: pointer; }
+.ledge .shot { width: 148px; flex: none; position: relative; overflow: hidden; }
+.ledge .shot .count { position: absolute; right: 6px; bottom: 6px; background: rgba(15,6,12,.6); color: #fff; font-size: 11px; font-weight: 800; padding: 2px 7px; border-radius: 8px; z-index: 2; }
+.ledge .shot .cat-emoji { display: grid; place-items: center; height: 100%; font-size: 34px; background: var(--card-2); }
+.ledge .body { flex: 1; min-width: 0; padding: 12px 16px 12px 14px; display: flex; flex-direction: column; justify-content: center; gap: 3px; }
+.ledge .tape { align-self: flex-start; background: rgba(253,246,238,.92); padding: 2px 10px; transform: rotate(-2deg); font: 400 11.5px var(--cursive); color: #5a4636; box-shadow: 0 2px 6px rgba(0,0,0,.3); margin-bottom: 2px; }
+.ledge h4 { margin: 0; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ledge .sub { color: var(--muted); font-size: 12.5px; }
+.ledge .sub .hearts { font-size: 13px; margin-left: 2px; }
+
+/* ---- Expanded: tall hero + film strip ---- */
+.xcard { padding: 0; overflow: hidden; }
+.xhero { height: 300px; position: relative; overflow: hidden; }
+.xhero::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 110px; background: linear-gradient(180deg, transparent, rgba(15,6,12,.8)); }
+.xhero .tape { position: absolute; top: 12px; left: 14px; transform: rotate(-2deg); background: rgba(253,246,238,.92); padding: 4px 12px; box-shadow: 0 3px 8px rgba(0,0,0,.3); font: 400 12.5px var(--cursive); color: #5a4636; z-index: 2; }
+.xhero .cat { position: absolute; top: 12px; right: 14px; transform: rotate(6deg); background: #fff; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-size: 20px; border: 2.5px solid var(--accent); box-shadow: 0 4px 10px rgba(0,0,0,.35); z-index: 2; }
+.xhero .kebab { position: absolute; top: 60px; right: 14px; z-index: 2; background: rgba(15,6,12,.5); color: #fff; border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 16px; }
+.xhero .title { position: absolute; left: 16px; right: 16px; bottom: 14px; z-index: 2; }
+.xhero .title h3 { margin: 0; color: #fff; font-size: 22px; text-shadow: 0 2px 8px rgba(0,0,0,.6); }
+.xhero .title .sub { color: #f0d9e2; font-size: 13px; font-weight: 600; }
+.strip { display: flex; gap: 6px; padding: 8px 0 4px 12px; overflow: hidden; }
+.strip .fr { width: 72px; height: 72px; border-radius: 10px; flex: none; position: relative; overflow: hidden; }
+.strip .fr.on { outline: 2.5px solid var(--accent); outline-offset: -2.5px; }
+.strip .fr .more { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(0,0,0,.5); color: #fff; font-size: 14px; font-weight: 800; border-radius: 10px; z-index: 2; }
+.xbody { padding: 10px 16px 16px; }
+.chip-flow { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+.chip { padding: 3px 9px; border-radius: 999px; font-size: 12px; background: var(--card-2); color: var(--text); }
+.rate-meta { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.rate-line { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.who { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 800; flex: none; }
+.who.me { background: var(--accent); color: #fff; }
+.who.them { background: var(--card-2); color: var(--muted); }
+.notes { color: var(--muted); font-size: 14px; margin: 12px 0 0; }
+.comments h5 { margin: 14px 0 8px; font-size: 13px; color: var(--muted); }
+.cmt { display: flex; gap: 8px; margin-bottom: 8px; }
+.cmt .bubble { background: var(--card-2); border-radius: 12px; padding: 7px 11px; font-size: 13.5px; }
+.cmt .when { font-size: 11px; color: var(--muted); margin: 2px 0 0 4px; }
+</style>
+</head>
+<body>
+
+<!-- FRAME 1: Album list, option A with real photos -->
+<div class="frame">
+  <p class="frame-label">Album — photo-ledge rows</p>
+  <div class="phone">
+    <div class="card hist-bar">
+      <div class="h-search">Search dates…</div>
+      <div class="seg on">☰</div><div class="seg">⊞</div><div class="seg">☆</div>
+    </div>
+    <div class="card ledge">
+      <div class="shot"><img class="cover" src="https://picsum.photos/seed/picnic7/320/240" alt=""/><span class="count">+3</span></div>
+      <div class="body">
+        <span class="tape">Jul 18</span>
+        <h4>Sunset picnic at the park</h4>
+        <div class="sub">Outdoors · <span class="tier-pill">₪₪</span> <span class="hearts">♥♥♥♥<span class="off">♥</span></span></div>
+      </div>
+    </div>
+    <div class="card ledge">
+      <div class="shot"><img class="cover" src="https://picsum.photos/seed/museum12/320/240" alt=""/></div>
+      <div class="body">
+        <span class="tape">Jul 5</span>
+        <h4>Night museum tour</h4>
+        <div class="sub">Culture · <span class="tier-pill">₪₪₪</span> <span class="hearts">♥♥♥♥♥</span></div>
+      </div>
+    </div>
+    <div class="card ledge">
+      <div class="shot"><img class="cover" src="https://picsum.photos/seed/forest3/320/240" alt=""/><span class="count">+5</span></div>
+      <div class="body">
+        <span class="tape">Jun 27</span>
+        <h4>Forest trail + coffee</h4>
+        <div class="sub">Active · <span class="tier-pill free">FREE</span> <span class="hearts">♥♥♥<span class="off">♥♥</span></span></div>
+      </div>
+    </div>
+    <div class="card ledge">
+      <div class="shot"><div class="cat-emoji">🍜</div></div>
+      <div class="body">
+        <span class="tape">Jun 14</span>
+        <h4>Ramen place downtown</h4>
+        <div class="sub">Food · <span class="tier-pill">₪₪</span> <span class="hearts">♥♥♥♥<span class="off">♥</span></span></div>
+      </div>
+    </div>
+    <div class="card ledge">
+      <div class="shot"><img class="cover" src="https://picsum.photos/seed/beach21/320/240" alt=""/><span class="count">+2</span></div>
+      <div class="body">
+        <span class="tape">Jun 6</span>
+        <h4>Beach morning + shakshuka</h4>
+        <div class="sub">Outdoors · <span class="tier-pill">₪</span> <span class="hearts">♥♥♥♥♥</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FRAME 2: expanded entry -->
+<div class="frame">
+  <p class="frame-label">Expanded — hero + film strip</p>
+  <div class="phone">
+    <div class="card xcard">
+      <div class="xhero">
+        <img class="cover" src="https://picsum.photos/seed/picnic7/780/600" alt=""/>
+        <span class="tape">Fri, Jul 18</span>
+        <span class="cat">🧺</span>
+        <button class="kebab">⋯</button>
+        <div class="title">
+          <h3>Sunset picnic at the park</h3>
+          <div class="sub">Outdoors · ₪₪ · 2h 30m · 📍 Gan Sacher</div>
+        </div>
+      </div>
+      <div class="strip">
+        <div class="fr on"><img class="cover" src="https://picsum.photos/seed/picnic7/160/160" alt=""/></div>
+        <div class="fr"><img class="cover" src="https://picsum.photos/seed/blanket4/160/160" alt=""/></div>
+        <div class="fr"><img class="cover" src="https://picsum.photos/seed/sunset9/160/160" alt=""/></div>
+        <div class="fr"><img class="cover" src="https://picsum.photos/seed/wine2/160/160" alt=""/></div>
+        <div class="fr"><img class="cover" src="https://picsum.photos/seed/city5/160/160" alt=""/></div>
+        <div class="fr"><img class="cover" src="https://picsum.photos/seed/cafe8/160/160" alt=""/></div>
+      </div>
+      <div class="xbody">
+        <div class="chip-flow"><span class="chip">😌 chill</span></div>
+        <div class="rate-meta">
+          <div class="rate-line"><span class="who me">T</span><span>You</span><span class="hearts">♥♥♥♥<span class="off">♥</span></span></div>
+          <div class="rate-line"><span class="who them">N</span><span>Noa</span><span class="hearts">♥♥♥♥♥</span></div>
+        </div>
+        <p class="notes">Golden hour was unreal. The hummus place next door is a keeper.</p>
+        <div class="comments">
+          <h5>Notes to each other</h5>
+          <div class="cmt"><span class="who them">N</span><div><div class="bubble">Next time we bring the good blanket 🙃</div><div class="when">2d ago</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1247,36 +1247,48 @@ async function renderHistoryList() {
   }
   host.innerHTML = list.map(e => {
     const isOpen = hist.expanded === e.id;
+    if (isOpen) return `<div class="card tight hist-entry open">${histDetail(e)}</div>`;
+    const pid = e.photos?.[0] || "";
+    const extra = (e.photos?.length || 0) - 1;
     return `
-    <div class="card tight hist-entry ${isOpen ? "open" : ""}">
-      <div class="entry hist-row" data-toggle="${escAttr(e.id)}">
-        <div class="thumb" data-thumb="${escAttr(e.photos?.[0] || "")}">${catEmoji(e.category)}</div>
-        <div class="meta">
-          <h4>${escHtml(e.title)}</h4>
-          <div class="sub">${fmtDate(e.date)} · ${catLabel(e.category)}${tierPill(e) ? " · " + tierPill(e) : ""}${isOpen && e.location ? " · 📍 " + escHtml(e.location) : ""}${e.durationMin ? " · " + fmtDuration(e.durationMin) : ""}</div>
+    <div class="card tight hist-entry">
+      <div class="hist-ledge" data-toggle="${escAttr(e.id)}">
+        <div class="shot" data-shot="${escAttr(pid)}">
+          ${pid ? "" : `<div class="cat-emoji">${catEmoji(e.category)}</div>`}
+          ${extra > 0 ? `<span class="count">+${extra}</span>` : ""}
         </div>
-        ${isOpen
-          ? `<button class="kebab" data-kebab="${escAttr(e.id)}">⋯</button>`
-          : `<div class="score">${heartsHtml(e.enjoyment)}</div><span class="chev">›</span>`}
+        <div class="body">
+          <span class="tape-sm">${fmtDateShort(e.date)}</span>
+          <h4>${escHtml(e.title)}</h4>
+          <div class="sub">${catLabel(e.category)}${tierPill(e) ? " · " + tierPill(e) : ""} ${heartsHtml(e.enjoyment)}</div>
+        </div>
       </div>
-      ${isOpen ? histDetail(e) : ""}
     </div>`;
   }).join("");
 
-  // wire expand/collapse (ignore taps inside the open detail)
-  host.querySelectorAll("[data-toggle]").forEach(row => row.addEventListener("click", e => {
-    if (e.target.closest(".kebab")) return;
-    hist.expanded = hist.expanded === row.dataset.toggle ? null : row.dataset.toggle;
+  // wire expand (collapse happens by tapping the expanded hero's title block)
+  host.querySelectorAll("[data-toggle]").forEach(row => row.addEventListener("click", () => {
+    hist.expanded = row.dataset.toggle;
     renderHistoryList();
   }));
   wireHistDetail(host);
-  // load collapsed-row thumbnails
-  host.querySelectorAll(".hist-row [data-thumb]").forEach(async el => {
-    const id = el.dataset.thumb;
+  // load collapsed-row photo slabs
+  host.querySelectorAll(".hist-ledge .shot[data-shot]").forEach(async el => {
+    const id = el.dataset.shot;
     if (!id) return;
     const url = await photoURL(id);
-    if (url) el.innerHTML = `<img src="${url}" alt=""/>`;
+    if (url) el.insertAdjacentHTML("afterbegin", `<img class="cover" src="${url}" alt=""/>`);
   });
+}
+
+// short "Jul 18" (collapsed tape) / weekday "Fri, Jul 18" (expanded hero tape)
+function fmtDateShort(iso) {
+  if (!iso) return "";
+  return new Date(iso + "T00:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+function fmtDateWeekday(iso) {
+  if (!iso) return "";
+  return new Date(iso + "T00:00:00").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
 }
 
 function histDetail(e) {
@@ -1294,13 +1306,12 @@ function histDetail(e) {
       <span class="big-stars hidden" data-rate="${escAttr(e.id)}">${[1, 2, 3, 4, 5].map(n => `<span class="rk off" data-k="${n}">♥</span>`).join("")}</span>
     </div>`;
 
-  // only mood chips + would-repeat flow below the photo; effort/location moved elsewhere
+  // only mood chips below the photo; wouldRepeat/effort/location moved elsewhere
   const chips = [];
   if (Array.isArray(e.mood)) e.mood.forEach((k, i) => {
     const m = MOOD_OPTIONS.find(o => o.key === k);
     if (m) chips.push(`<span class="chip ${i % 2 ? "butter" : "mint"}">${m.emoji} ${escHtml(m.label)}</span>`);
   });
-  if (e.wouldRepeat) chips.push(`<span class="chip">${e.wouldRepeat === "yes" ? "🔁 would repeat" : e.wouldRepeat === "maybe" ? "🤔 maybe again" : "🚫 not again"}</span>`);
 
   const comments = (e.comments || []).map(c => {
     const isMine = c.author === myKey();
@@ -1311,14 +1322,34 @@ function histDetail(e) {
     </div>`;
   }).join("");
 
+  const photos = e.photos || [];
+  const sub = [catLabel(e.category), costBadge(e), e.durationMin ? fmtDuration(e.durationMin) : "", e.location ? "📍 " + escHtml(e.location) : ""]
+    .filter(Boolean).join(" · ");
+  const hero = `
+    <div class="hist-hero${photos.length ? "" : " empty"}" data-hero data-photos="${escAttr(photos.join(","))}" data-active="0" data-title="${escAttr(e.title)}">
+      ${photos.length ? `<img class="hist-hero-img" data-hero-img src="" alt=""/>` : `<div class="hist-hero-emoji">${catEmoji(e.category)}</div>`}
+      <span class="stk tape">${fmtDateWeekday(e.date)}</span>
+      <span class="stk cat">${catEmoji(e.category)}</span>
+      <button class="kebab hist-hero-kebab" data-kebab="${escAttr(e.id)}">⋯</button>
+      <div class="hist-hero-title" data-collapse="${escAttr(e.id)}">
+        <h3>${escHtml(e.title)}</h3>
+        ${sub ? `<div class="sub">${sub}</div>` : ""}
+      </div>
+    </div>`;
+  const strip = photos.length > 1 ? `
+    <div class="hist-strip" data-strip>
+      ${photos.map((pid, i) => `<div class="fr ${i === 0 ? "on" : ""}" data-frame="${i}"><img data-strip-img="${escAttr(pid)}" src="" alt=""/></div>`).join("")}
+    </div>` : "";
+
   return `
-  <div class="hist-detail">
-    <div class="hero-photo"><div class="hist-photos mosaic-slot" data-hist-photos="${escAttr((e.photos || []).join(","))}" data-cat="${escAttr(e.category)}"></div></div>
+  ${hero}
+  ${strip}
+  <div class="hist-xbody">
     ${chips.length ? `<div class="chip-flow">${chips.join("")}</div>` : ""}
     <div class="rate-meta">${rateLines}${rateInput}</div>
     ${e.notes ? `<p class="notes">${escHtml(e.notes)}</p>` : ""}
     <div class="comments">
-      <h5>Notes to each other 💬</h5>
+      <h5>Notes to each other</h5>
       ${comments}
       <div class="cmt-input">
         <input placeholder="Add a note…" data-cmt="${escAttr(e.id)}"/><button data-cmt-send="${escAttr(e.id)}">➤</button>
@@ -1382,14 +1413,43 @@ function wireHistDetail(host) {
     host.querySelector(`[data-cmt="${id}"]`)?.focus();
   }));
 
-  // load detail photo mosaic (tap any tile → lightbox with ALL photos)
-  host.querySelectorAll("[data-hist-photos]").forEach(async el => {
-    const ids = el.dataset.histPhotos.split(",").filter(Boolean);
-    await fillMosaic(el, ids, el.dataset.cat, true);
-    if (!ids.length) return;
-    const urls = (await Promise.all(ids.map(id => photoURL(id)))).filter(Boolean);
-    el.querySelectorAll(".ph").forEach((tile, i) =>
-      tile.addEventListener("click", ev => { ev.stopPropagation(); openLightbox(urls.map(url => ({ url })), i); }));
+  // hero photo: load first photo, tap collapses via the title block, else opens the lightbox
+  host.querySelectorAll("[data-hero]").forEach(hero => {
+    const ids = hero.dataset.photos.split(",").filter(Boolean);
+    const imgEl = hero.querySelector("[data-hero-img]");
+    if (imgEl && ids.length) photoURL(ids[0]).then(url => { if (url) imgEl.src = url; });
+
+    hero.querySelector("[data-collapse]").addEventListener("click", ev => {
+      ev.stopPropagation();
+      hist.expanded = null;
+      renderHistoryList();
+    });
+    hero.addEventListener("click", async ev => {
+      if (ev.target.closest("[data-collapse]") || ev.target.closest(".kebab") || !ids.length) return;
+      const urls = (await Promise.all(ids.map(id => photoURL(id)))).filter(Boolean);
+      openLightbox(urls.map(url => ({ url, caption: hero.dataset.title })), Number(hero.dataset.active) || 0);
+    });
+  });
+
+  // film strip: load all thumbs, tapping one swaps the hero image (no re-render)
+  host.querySelectorAll("[data-strip]").forEach(strip => {
+    const hero = strip.previousElementSibling;
+    const heroImg = hero.querySelector("[data-hero-img]");
+    const frames = [...strip.querySelectorAll(".fr")];
+    frames.forEach(fr => {
+      const pid = fr.querySelector("img").dataset.stripImg;
+      photoURL(pid).then(url => { if (url) fr.querySelector("img").src = url; });
+    });
+    strip.addEventListener("click", async ev => {
+      const fr = ev.target.closest(".fr"); if (!fr) return;
+      ev.stopPropagation();
+      const i = Number(fr.dataset.frame);
+      const ids = hero.dataset.photos.split(",").filter(Boolean);
+      const url = await photoURL(ids[i]);
+      if (url) heroImg.src = url;
+      hero.dataset.active = i;
+      frames.forEach(f => f.classList.toggle("on", f === fr));
+    });
   });
 }
 

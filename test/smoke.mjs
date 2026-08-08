@@ -64,12 +64,21 @@ try {
 
   // 4. history detail / gallery / lightbox
   t = await shotTab("history-detail");
-  check("history detail expands", await t.evaluate(`!!document.querySelector(".hist-entry.open .hist-detail")`));
-  // guard the 190px full-bleed photo hero (design 8d13c83) — a regression to the
-  // old small-grid look loses .hero-photo or leaves the mosaic slot unfilled
-  await t.waitFor(`!!document.querySelector(".hist-detail .hero-photo .ph img, .hist-detail .hero-photo .detail-mosaic.empty, .hist-detail .hero-photo .home-banner")`);
-  check("expanded entry renders the photo hero", await t.evaluate(
-    `!!document.querySelector(".hist-detail .hero-photo") && getComputedStyle(document.querySelector(".hist-detail .hero-photo")).height === "190px"`));
+  check("history detail expands", await t.evaluate(`!!document.querySelector(".hist-entry.open .hist-hero")`));
+  // guard the album-cards redesign (design/album-cards.html) — a regression to the
+  // old header-row + small hero loses .hist-hero or leaves the film strip empty
+  await t.waitFor(`!!document.querySelector(".hist-entry.open .hist-hero")`);
+  check("expanded entry renders the hero", await t.evaluate(
+    `!!document.querySelector(".hist-entry.open .hist-hero") && getComputedStyle(document.querySelector(".hist-entry.open .hist-hero")).height === "300px"`));
+  const stripFrames = await t.evaluate(`(() => {
+    const hero = document.querySelector(".hist-entry.open .hist-hero");
+    const photoCount = hero.dataset.photos.split(",").filter(Boolean).length;
+    const frames = document.querySelectorAll(".hist-entry.open .hist-strip .fr").length;
+    return { photoCount, frames };
+  })()`);
+  check("film strip frame count matches the entry's photos",
+    stripFrames.photoCount <= 1 ? stripFrames.frames === 0 : stripFrames.frames === stripFrames.photoCount,
+    JSON.stringify(stripFrames));
   t = await shotTab("history-gallery");
   const tiles = await t.evaluate(`document.querySelectorAll(".gallery-tile").length`);
   check("gallery shows photo tiles", tiles > 0, `got ${tiles}`);
