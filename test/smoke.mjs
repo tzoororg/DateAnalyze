@@ -79,6 +79,25 @@ try {
   check("film strip frame count matches the entry's photos",
     stripFrames.photoCount <= 1 ? stripFrames.frames === 0 : stripFrames.frames === stripFrames.photoCount,
     JSON.stringify(stripFrames));
+  // background tap collapses the expanded entry: the expanded card fills
+  // #hist-list, so tap whatever element actually sits at the page margin
+  // (exactly what a finger hits on the phone) and expect a full collapse.
+  const bgCollapsed = await t.evaluate(`(async () => {
+    const el = document.elementFromPoint(2, Math.floor(window.innerHeight / 2));
+    el.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await new Promise(r => setTimeout(r, 300));
+    return { open: !!document.querySelector(".hist-entry.open"),
+             rows: document.querySelectorAll(".hist-entry").length,
+             hit: el.tagName + "." + el.className };
+  })()`);
+  check("tapping the page background collapses the expanded entry",
+    bgCollapsed.open === false && bgCollapsed.rows === SEEDED, JSON.stringify(bgCollapsed));
+  // ...and a row tap still re-expands afterwards
+  await t.evaluate(`document.querySelector("[data-toggle]").click()`);
+  await sleep(300);
+  check("row tap re-expands after a background collapse",
+    await t.evaluate(`!!document.querySelector(".hist-entry.open")`));
+
   t = await shotTab("history-gallery");
   const tiles = await t.evaluate(`document.querySelectorAll(".gallery-tile").length`);
   check("gallery shows photo tiles", tiles > 0, `got ${tiles}`);

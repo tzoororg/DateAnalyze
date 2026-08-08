@@ -1272,13 +1272,6 @@ async function renderHistoryList() {
     renderHistoryList();
   }));
   wireHistDetail(host);
-  // tap the background (gaps between cards) to collapse the expanded entry
-  host.onclick = ev => {
-    if (hist.expanded && !ev.target.closest(".hist-entry")) {
-      hist.expanded = null;
-      renderHistoryList();
-    }
-  };
   // load collapsed-row photo slabs
   host.querySelectorAll(".hist-ledge .shot[data-shot]").forEach(async el => {
     const id = el.dataset.shot;
@@ -1287,6 +1280,20 @@ async function renderHistoryList() {
     if (url) el.insertAdjacentHTML("afterbegin", `<img class="cover" src="${url}" alt=""/>`);
   });
 }
+
+// Tap anywhere in the background to collapse the expanded Album entry. The
+// expanded card fills the list, so the visible background (page margins, the
+// area below the list) sits OUTSIDE #hist-list — hence a document-level
+// listener. Taps on any control or overlay are left alone.
+document.addEventListener("click", ev => {
+  if (!hist.expanded || !document.querySelector(".hist-entry.open")) return;
+  // a detached target means another handler already re-rendered on this click
+  // (row expand, home-card jump) — that's never a background tap
+  if (!ev.target.isConnected) return;
+  if (ev.target.closest(".hist-entry, .lightbox, .menu-pop, .logsheet, .sheet, button, summary, a, input, textarea, select, label")) return;
+  hist.expanded = null;
+  renderHistoryList();
+});
 
 // short "Jul 18" (collapsed tape) / weekday "Fri, Jul 18" (expanded hero tape)
 function fmtDateShort(iso) {
