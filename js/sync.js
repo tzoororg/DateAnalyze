@@ -207,7 +207,7 @@ async function loadSpaceKey() {
 // Decrypt one raw Firestore date doc. Plaintext (legacy) docs pass through.
 async function decryptDate(doc) {
   if (!doc?.enc) return doc;
-  if (!spaceKey) return { id: doc.id, date: doc.date, title: "🔒 Encrypted (enter key in ⋯ menu)" };
+  if (!spaceKey) return { id: doc.id, date: doc.date, title: "🔒 Encrypted (enter key in ⚙️ menu)" };
   try {
     return { id: doc.id, date: doc.date, ...(await e2ee.decryptJSON(spaceKey, doc.enc)) };
   } catch {

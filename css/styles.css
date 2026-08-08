@@ -716,6 +716,25 @@ details.more[open] > summary .chev { transform: rotate(180deg); }
 .tseg-candle { background: #211511; color: #c8a48c; }
 .tseg-twilight { background: #141126; color: #a196c0; }
 .tseg.on { border-color: var(--accent); }
+.idleseg { background: var(--card-2); color: var(--muted); }
+
+.menu-group { margin-bottom: 8px; }
+.menu-group > summary {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px; border-radius: 13px; background: var(--card); color: var(--text);
+  font-size: 15px; cursor: pointer; box-shadow: var(--shadow); list-style: none;
+}
+.menu-group > summary::-webkit-details-marker { display: none; }
+.menu-group > summary .g-title { flex: 1; }
+.menu-group > summary .g-hint { color: var(--muted); font-size: 12.5px; }
+.menu-group > summary .g-chev { color: var(--muted); font-size: 13px; transition: transform .15s; }
+.menu-group[open] > summary { border-radius: 13px 13px 0 0; margin-bottom: 0; }
+.menu-group[open] > summary .g-chev { transform: rotate(90deg); }
+.menu-group .g-body { padding: 8px 0 0; margin-left: 14px; }
+.menu-group .g-body .menu-row { padding: 10px 12px; margin-bottom: 6px; }
+.menu-group .g-body .menu-row:last-child { margin-bottom: 0; }
+.menu-group.danger > summary { color: var(--bad); }
+.settings-divider { border: none; border-top: 1px dashed var(--line); margin: 14px 2px; }
 
 /* Photo-import triage overlay */
 .triage { position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column; background: var(--bg); }

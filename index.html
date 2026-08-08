@@ -10,13 +10,13 @@
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icons/icon-180.png" />
   <script src="js/theme-boot.js"></script>
-  <link rel="stylesheet" href="css/styles.css?v=25" />
+  <link rel="stylesheet" href="css/styles.css?v=26" />
 </head>
 <body>
   <div class="app-chrome">
     <header class="app-header">
       <h1 class="app-title">Us <span class="heart">♥</span></h1>
-      <button id="menuBtn" class="icon-btn" aria-label="Menu">⋯</button>
+      <button id="menuBtn" class="icon-btn" aria-label="Settings">⚙️</button>
     </header>
 
     <nav class="tabbar" role="tablist">
@@ -47,7 +47,7 @@
   <div id="sheet" class="sheet hidden">
     <div class="sheet-backdrop" data-close></div>
     <div class="sheet-body">
-      <h2>Menu</h2>
+      <h2>Settings</h2>
       <div class="menu-row theme-row">
         <span>🎨</span>
         <div class="theme-seg">
@@ -57,45 +57,68 @@
         </div>
       </div>
       <div class="menu-row theme-row">
-        <span>🎞️ Slideshow when idle</span>
-        <select id="idleSelect">
-          <option value="0">Off</option>
-          <option value="30000">30 s</option>
-          <option value="60000">1 min</option>
-          <option value="120000">2 min</option>
-          <option value="300000">5 min</option>
-        </select>
+        <span>🎞️</span>
+        <div class="theme-seg">
+          <button class="tseg idleseg" data-idle-pick="0">Off</button>
+          <button class="tseg idleseg" data-idle-pick="30000">30s</button>
+          <button class="tseg idleseg" data-idle-pick="60000">1m</button>
+          <button class="tseg idleseg" data-idle-pick="120000">2m</button>
+          <button class="tseg idleseg" data-idle-pick="300000">5m</button>
+        </div>
       </div>
-      <button class="menu-row" id="exportBtn">⬇️ Export data (JSON backup)</button>
-      <label class="menu-row" for="importInput">⬆️ Import data (restore)</label>
-      <input id="importInput" type="file" accept="application/json" hidden />
-      <label class="menu-row" for="importPhotosInput">📷 Import from photos</label>
-      <input id="importPhotosInput" type="file" accept="image/*" multiple hidden />
-      <button class="menu-row" id="seedBtn">🌱 Add sample dates (demo)</button>
+
+      <hr class="settings-divider" />
+
+      <details class="menu-group">
+        <summary><span>💞</span><span class="g-title">Partner sync</span><span class="g-hint" id="syncHint"></span><span class="g-chev">›</span></summary>
+        <div class="g-body">
+          <p class="muted small hidden" id="syncExplainer">Sync with your partner — end-to-end encrypted, optional.</p>
+          <p class="muted small hidden" id="syncStatus"></p>
+          <button class="menu-row hidden" id="syncSignInBtn">🔗 Sign in with Google</button>
+          <button class="menu-row hidden" id="syncCreateBtn">💞 Create shared space</button>
+          <button class="menu-row hidden" id="syncJoinBtn">🔑 Join with a code</button>
+          <button class="menu-row hidden" id="syncCopyCodeBtn">📋 Copy space code</button>
+          <button class="menu-row hidden" id="syncRegenBtn">🔁 New pairing code</button>
+          <button class="menu-row hidden" id="syncNotifyBtn">🔔 Notify me of new dates</button>
+          <button class="menu-row hidden" id="syncBackfillBtn">🖼️ Sync my photos to partner</button>
+          <button class="menu-row hidden" id="syncShowKeyBtn">🔑 Show encryption key</button>
+          <button class="menu-row hidden" id="syncEnterKeyBtn">🔑 Enter encryption key</button>
+          <button class="menu-row hidden" id="syncEncryptBtn">🔐 Encrypt cloud data</button>
+          <button class="menu-row hidden" id="syncSignOutBtn">🚪 Sign out (stop syncing)</button>
+        </div>
+      </details>
+
+      <details class="menu-group">
+        <summary><span>💾</span><span class="g-title">Data &amp; backup</span><span class="g-hint" id="storageStatus"></span><span class="g-chev">›</span></summary>
+        <div class="g-body">
+          <button class="menu-row" id="exportBtn">⬇️ Export data (JSON backup)</button>
+          <label class="menu-row" for="importInput">⬆️ Import data (restore)</label>
+          <input id="importInput" type="file" accept="application/json" hidden />
+          <label class="menu-row" for="importPhotosInput">📷 Import from photos</label>
+          <input id="importPhotosInput" type="file" accept="image/*" multiple hidden />
+          <button class="menu-row" id="seedBtn">🌱 Add sample dates (demo)</button>
+        </div>
+      </details>
+
+      <details class="menu-group">
+        <summary><span>💬</span><span class="g-title">Help &amp; about</span><span class="g-chev">›</span></summary>
+        <div class="g-body">
+          <a class="menu-row" href="privacy.html" target="_blank" rel="noopener">🔒 Privacy policy</a>
+          <a class="menu-row" href="terms.html" target="_blank" rel="noopener">📄 Terms &amp; support</a>
+          <p class="muted small" id="swVersion"></p>
+        </div>
+      </details>
+
+      <details class="menu-group danger">
+        <summary><span>⚠️</span><span class="g-title">Danger zone</span><span class="g-chev">›</span></summary>
+        <div class="g-body">
+          <button class="menu-row danger" id="wipeBtn">🗑️ Erase everything</button>
+          <button class="menu-row danger hidden" id="syncDeleteAcctBtn">⚠️ Delete account</button>
+        </div>
+      </details>
+
       <button class="menu-row" id="feedbackBtn">💬 Send feedback</button>
-      <a class="menu-row" href="privacy.html" target="_blank" rel="noopener">🔒 Privacy policy</a>
-      <a class="menu-row" href="terms.html" target="_blank" rel="noopener">📄 Terms &amp; support</a>
-
-      <p class="muted small hidden" id="syncStatus"></p>
-      <p class="muted small hidden" id="syncExplainer">Sync with your partner — end-to-end encrypted, optional.</p>
-      <p class="muted small" id="storageStatus"></p>
-      <button class="menu-row hidden" id="syncSignInBtn">🔗 Sign in with Google</button>
-      <button class="menu-row hidden" id="syncCreateBtn">💞 Create shared space</button>
-      <button class="menu-row hidden" id="syncJoinBtn">🔑 Join with a code</button>
-      <button class="menu-row hidden" id="syncCopyCodeBtn">📋 Copy space code</button>
-      <button class="menu-row hidden" id="syncRegenBtn">🔁 New pairing code</button>
-      <button class="menu-row hidden" id="syncNotifyBtn">🔔 Notify me of new dates</button>
-      <button class="menu-row hidden" id="syncBackfillBtn">🖼️ Sync my photos to partner</button>
-      <button class="menu-row hidden" id="syncShowKeyBtn">🔑 Show encryption key</button>
-      <button class="menu-row hidden" id="syncEnterKeyBtn">🔑 Enter encryption key</button>
-      <button class="menu-row hidden" id="syncEncryptBtn">🔐 Encrypt cloud data</button>
-      <button class="menu-row hidden" id="syncSignOutBtn">🚪 Sign out (stop syncing)</button>
-      <button class="menu-row danger hidden" id="syncDeleteAcctBtn">⚠️ Delete account</button>
-
-      <button class="menu-row danger" id="wipeBtn">🗑️ Erase everything</button>
       <button class="menu-row ghost" data-close>Close</button>
-      <p class="muted small">Local-only by default — sync with a partner is opt-in above.</p>
-      <p class="muted small" id="swVersion"></p>
     </div>
   </div>
 

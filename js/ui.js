@@ -159,14 +159,16 @@ function wireChrome() {
   });
   sheet.querySelectorAll("[data-close]").forEach(el => el.addEventListener("click", () => sheet.classList.add("hidden")));
 
-  const idleSel = document.getElementById("idleSelect");
-  idleSel.value = String(idleMs);
-  idleSel.addEventListener("change", () => {
-    idleMs = +idleSel.value;
-    localStorage.setItem("idleMs", idleSel.value);
+  const idleBtns = document.querySelectorAll("[data-idle-pick]");
+  const markIdleBtn = () => idleBtns.forEach(b => b.classList.toggle("on", +b.dataset.idlePick === idleMs));
+  markIdleBtn();
+  idleBtns.forEach(b => b.addEventListener("click", () => {
+    idleMs = +b.dataset.idlePick;
+    localStorage.setItem("idleMs", String(idleMs));
+    markIdleBtn();
     resetIdle();
     toast(idleMs ? "Slideshow starts after idle" : "Idle slideshow off");
-  });
+  }));
 
   document.getElementById("exportBtn").addEventListener("click", onExport);
   document.getElementById("importInput").addEventListener("change", onImport);
@@ -226,14 +228,12 @@ async function maybeRequestPersist() {
 
 async function renderStorageStatus() {
   const el = document.getElementById("storageStatus");
-  if (!el || !navigator.storage?.estimate) return;
+  if (!el) return;
   try {
-    const { usage = 0 } = await navigator.storage.estimate();
     const last = await db.getSetting("lastExportAt", 0);
-    const backupStr = last
+    el.textContent = last
       ? `backed up ${Math.max(0, Math.floor((Date.now() - last) / 86400e3))}d ago`
-      : "no backup yet — export below";
-    el.textContent = `Storage: ${(usage / 1048576).toFixed(1)} MB used · ${backupStr}`;
+      : "no backup yet";
   } catch { el.textContent = ""; }
 }
 
@@ -269,6 +269,8 @@ async function renderSyncStatus() {
   const mode = db.getMode();
   const user = db.getUser();
   renderStorageStatus();
+  const hint = document.getElementById("syncHint");
+  if (hint) hint.textContent = mode === "cloud" ? "Syncing" : "Local only";
 
   const keyB64 = mode === "cloud" ? await db.getSpaceKeyB64() : null;
   showKey.classList.toggle("hidden", !keyB64);
