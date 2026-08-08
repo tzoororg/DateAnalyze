@@ -102,6 +102,14 @@ Data flows one direction: `store.js` (→ `db.js` or `sync.js`) → domain logic
 - **`js/feedback.js`** / **`js/feedback-config.js`** — In-app "Send feedback" modal (⋯ menu). POSTs text + optional photo to a Cloudflare Worker (`worker/feedback-worker.js`) that opens a `feedback`-labeled GitHub issue. The issue number is the serial referenced later as "implement feedback #N" — the rewording, plan, and implementation happen here in Claude Code with full repo context (no GitHub Action / API call). Feature-request feedback must clear the `taste-critic` design gate (max two passes) before implementing; the fix/feature commit references `(#N)`, gets the `next-release` label on dev, and is closed by the release process on the production merge. Setup/ops: `plans/done/FEEDBACK_PLAN.md`.
 - **`app.js`** — Bootstrap: calls `store.autoEnableSync()` (restores a returning cloud user's space before first render, no-ops if no `spaceId` setting exists) then `ui.init()`, and registers the service worker.
 
+## Interaction-surface rule (tap/click/dismiss zones)
+
+Learned the hard way (album-card collapse, 2026-08-08: 3 sessions, 6 commits for one tap zone). When adding or fixing *where* a tap/click lands — collapse-on-background, hit areas, event delegation:
+
+1. **Write the rule as a one-sentence invariant first, phrased as a whitelist**: "everything triggers X except these interactive elements". Never fix by excluding the reported spot — exclusion lists of "content" zones create new dead zones, and each one becomes the next bug report.
+2. **Test the property, not the example**: the smoke check sweeps the surface (`elementFromPoint` over each region / direct child of the container) and asserts every point either is a whitelisted interactive element or triggers the behavior. A single hand-picked coordinate proves nothing.
+3. **Before declaring done, sweep the whole surface once yourself** — the second and third reports of a hit-area bug are always neighbors of the first.
+
 ## Key conventions
 
 - All modules use ES module `import`/`export`. No CommonJS, no globals.
