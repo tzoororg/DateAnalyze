@@ -1877,11 +1877,10 @@ function renderSugCards(results) {
       ${isSaved ? `<span class="sticker-tag butter">saved ♡</span>` : ""}
       <div class="sug-body">
         <div class="sug-head">
-          <h3>${catEmoji(r.category)} ${escHtml(r.title)} ${tierPill({ cost: r.estCost })}</h3>
-          <span class="tag ${r.kind}">${r.kind === "explore" ? "New" : "Favorite"}</span>
+          <h3><span class="sug-dot ${r.kind}" aria-hidden="true">${r.kind === "explore" ? "✦" : "♥"}</span> ${catEmoji(r.category)} ${escHtml(r.title)} ${tierPill({ cost: r.estCost })}</h3>
         </div>
         ${r.photos?.length ? `<div class="sug-photos" data-sug-photos="${escAttr(r.photos.join(","))}"></div>` : ""}
-        <p class="sug-reason">${escHtml(reason)}</p>
+        <p class="sug-reason">${r.kind === "explore" ? `<span class="sug-kind">New</span> · ` : ""}${escHtml(reason)}</p>
       </div>
       <div class="sug-actions">
         ${isSaved

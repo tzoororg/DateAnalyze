@@ -62,17 +62,15 @@ body {
 .tag.exploit { background: var(--mint-bg); color: var(--mint-fg); display: inline-block; transform: rotate(-2deg); }
 
 /* ---- PROPOSED: dot badge, title takes full width ---- */
-.pro .sug-head h3 { margin: 0; font-size: 15px; line-height: 1.3; min-height: calc(1.3em * 2); display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.pro .sug-head h3 { margin: 0; font-size: 15px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .dot {
-  display: inline-grid; place-items: center; width: 16px; height: 16px;
-  border-radius: 50%; font-size: 10px; line-height: 1;
-  vertical-align: 1px; margin-right: 2px;
+  display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%;
+  font: 700 12px/1 "Segoe UI Symbol", "Arial Unicode MS", sans-serif;
+  transform: rotate(-3deg); vertical-align: -2px;
 }
-.dot.exploit { background: var(--mint-bg); color: var(--mint-fg); }   /* ⭐ = Favorite */
-.dot.explore { background: var(--butter-bg); color: var(--butter-fg); } /* • = New */
-.pro .sug-reason .kind { font: 700 11px var(--cursive); }
-.pro .sug-reason .kind.exploit { color: var(--mint-fg); }
-.pro .sug-reason .kind.explore { color: var(--butter-fg); }
+.dot.exploit { background: var(--mint-bg); color: var(--mint-fg); }   /* ♥ = Favorite */
+.dot.explore { background: var(--butter-bg); color: var(--butter-fg); } /* ✦ = New */
+.pro .sug-reason .kind { font: 700 11px var(--cursive); color: var(--butter-fg); }
 .note { color: var(--muted); font-size: 12px; margin: 10px 6px 0; }
 </style>
 </head>
@@ -131,15 +129,15 @@ body {
 
 <div class="frame pro">
   <h2>Proposed</h2>
-  <p>Dot badge inline with the title (⭐ Favorite / • New); title takes the full width. Kind word echoed in the reason line so no meaning is lost.</p>
+  <p>Dot badge inline with the title (♥ Favorite / ✦ New); title takes the full width. "New" echoed in the reason line; Favorite cards lead with the rating.</p>
   <div class="phone">
 
     <div class="card sug-card">
       <div class="sug-body">
         <div class="sug-head">
-          <h3><span class="dot exploit" title="Favorite">⭐</span> 🍽️ Candlelit tasting-menu dinner at that tiny bistro downtown <span class="tier-pill">₪₪₪</span></h3>
+          <h3><span class="dot exploit" aria-hidden="true">♥</span> 🍽️ Candlelit tasting-menu dinner at that tiny bistro downtown <span class="tier-pill">₪₪₪</span></h3>
         </div>
-        <p class="sug-reason"><span class="kind exploit">Favorite</span> · 4.8♥ · last done 2 months ago</p>
+        <p class="sug-reason">4.8♥ · last done 2 months ago</p>
       </div>
       <div class="sug-actions">
         <button class="heart-btn">♡</button>
@@ -151,9 +149,9 @@ body {
       <span class="sticker-tag butter">saved ♡</span>
       <div class="sug-body">
         <div class="sug-head">
-          <h3><span class="dot explore" title="New">•</span> 🌅 Sunrise hot-air balloon ride over the valley <span class="tier-pill">₪₪</span></h3>
+          <h3><span class="dot explore" aria-hidden="true">✦</span> 🌅 Sunrise hot-air balloon ride over the valley <span class="tier-pill">₪₪</span></h3>
         </div>
-        <p class="sug-reason"><span class="kind explore">New</span> · A whole new kind of date.</p>
+        <p class="sug-reason"><span class="kind">New</span> · A whole new kind of date.</p>
       </div>
       <div class="sug-actions">
         <button class="heart-btn">✓</button>
@@ -164,9 +162,9 @@ body {
     <div class="card sug-card">
       <div class="sug-body">
         <div class="sug-head">
-          <h3><span class="dot exploit" title="Favorite">⭐</span> 🎲 Board-game café night <span class="tier-pill free">FREE</span></h3>
+          <h3><span class="dot exploit" aria-hidden="true">♥</span> 🎲 Board-game café night <span class="tier-pill free">FREE</span></h3>
         </div>
-        <p class="sug-reason"><span class="kind exploit">Favorite</span> · 4.5♥ · done 3×</p>
+        <p class="sug-reason">4.5♥ · done 3×</p>
       </div>
       <div class="sug-actions">
         <button class="heart-btn">♡</button>
@@ -175,7 +173,7 @@ body {
     </div>
 
   </div>
-  <p class="note">Badge kinds: mint dot ⭐ = Favorite (exploit), butter dot • = New (explore) — same token pairs as the old pills. Tooltip via title=""; the reason-line word is the accessible label.</p>
+  <p class="note">Final: mint ♥ dot = Favorite (exploit), butter ✦ dot = New (explore) — same token pairs as the old pills, 18px circle, sticker rotate. No tooltips; meaning survives in text: New cards echo "New" at the start of the reason, Favorite cards lead with the rating. "saved ♡" sticker stays butter — dot vs sticker differ in shape and position, no real collision.</p>
 </div>
 
 </body>
