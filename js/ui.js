@@ -1,18 +1,25 @@
-// UI layer: renders the three tabs, handles the form, photos, charts and suggestions.
+// UI layer: app chrome, the Home and History tabs, the log form and photos.
+// The Insights and Suggest tabs live in ui-insights.js / ui-suggest.js — they read
+// the date list and own their own view state, so they get a small ctx from here
+// rather than importing this module back. Leaf helpers are in ui-shared.js.
 
 import * as db from "./store.js";
 import {
   CATEGORIES, MOOD_OPTIONS, COST_TIERS, METER, catLabel, catEmoji,
-  blankEntry, fmtDate, entryTimeMs, tierLabel, tierForCost, repeatForEnjoyment,
+  blankEntry, fmtDate, entryTimeMs, tierForCost, repeatForEnjoyment,
   normTitle, todayISO, fmtDuration,
 } from "./model.js";
 import * as A from "./analytics.js";
-import * as C from "./charts.js";
-import { suggest, humanGap } from "./suggest.js";
-import { CATALOG } from "./catalog.js";
+import { suggest } from "./suggest.js";   // Home's "tonight's idea" card
 import * as push from "./push.js";
+import { renderInsights } from "./ui-insights.js";
+import { renderSuggest } from "./ui-suggest.js";
+import {
+  viewEl, bind, setOn, escHtml, escAttr, safeUrl, costBadge, tierPill, heartsHtml,
+  emptyState2, wireEmpty2Cta, toast, photoURL, clearPhotoCache,
+  attachSwipe, attachSwipeDown, downscale,
+} from "./ui-shared.js";
 
-const viewEl = () => document.getElementById("view");
 const formEl = () => document.getElementById("logSheetBody");
 let dates = [];
 // Wishlist ideas (status:"idea") live in the same `dates` array so History can show
@@ -27,13 +34,8 @@ let draftSnapshot = null;        // JSON snapshot of draft when an edit was open
 // untouched default. Also set by the auto-fill itself, so it fires at most once.
 let dateTouched = false;
 let currentTab = "home";
-const sug = { explore: 0.5, budget: null, budgetTier: null, maxEffort: null, category: null, moods: [] };
-// Upper $ bound per cost tier (mirrors tierForCost's own boundaries) — "$$$" has no cap.
-const BUDGET_TIER_MAX = { free: 0, low: 100, mid: 300, high: null };
 const hist = { sort: "date-desc", category: null, moods: [], query: "", view: "list", expanded: null };
-let wrapPeriod = "year";
 let memoryDismissed = false;
-const urlCache = new Map();      // photoId -> objectURL
 
 // ---------- Date Night mode (Roadmap #7) ----------
 // activeDate: { startedAt: <ms>, photoIds: [<uuid>...] } | null. Device-local setting;
@@ -85,46 +87,6 @@ async function onRemoteChange() {
 
 async function reload() { dates = await db.getAllDates(); }
 
-// Swipe-left → onLeft(), swipe-right → onRight(). Ignores mostly-vertical drags
-// and gestures that start inside a horizontally scrollable element.
-function attachSwipe(el, onLeft, onRight) {
-  let sx = null, sy = null;
-  el.addEventListener("touchstart", e => {
-    sx = e.touches[0].clientX; sy = e.touches[0].clientY;
-    // don't hijack elements that scroll sideways themselves
-    for (let n = e.target; n && n !== el; n = n.parentElement)
-      if (n.scrollWidth > n.clientWidth + 5) { sx = null; return; }
-  }, { passive: true });
-  el.addEventListener("touchend", e => {
-    if (sx == null) return;
-    const dx = e.changedTouches[0].clientX - sx;
-    const dy = e.changedTouches[0].clientY - sy;
-    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5)
-      (dx < 0 ? onLeft : onRight)();
-    sx = null;
-  }, { passive: true });
-}
-
-// Swipe-down → onDown(). Used by the lightbox to dismiss on a downward drag,
-// dragging the photo along with the finger for feedback.
-function attachSwipeDown(el, onDown) {
-  let sy = null;
-  const img = el.querySelector(".lb-img");
-  el.addEventListener("touchstart", e => { sy = e.touches[0].clientY; }, { passive: true });
-  el.addEventListener("touchmove", e => {
-    if (sy == null) return;
-    const dy = e.touches[0].clientY - sy;
-    if (dy > 0 && img) img.style.transform = `translateY(${dy}px)`;
-  }, { passive: true });
-  el.addEventListener("touchend", e => {
-    if (sy == null) return;
-    const dy = e.changedTouches[0].clientY - sy;
-    sy = null;
-    if (dy > 90) onDown();
-    else if (img) img.style.transform = "";
-  }, { passive: true });
-}
-
 // ---------- tab + chrome wiring ----------
 const THEME_COLORS = { plum: "#2a1b26", candle: "#211511", twilight: "#141126" };
 
@@ -139,7 +101,7 @@ function applyTheme(pick) {
   document.querySelectorAll("[data-theme-pick]").forEach(b =>
     b.classList.toggle("on", b.dataset.themePick === eff));
   // The Wrapped card bakes the theme into literal SVG colors; re-render it on switch.
-  if (pick && currentTab === "insights") renderInsights();
+  if (pick && currentTab === "insights") renderInsights(insightsCtx);
 }
 
 function wireChrome() {
@@ -448,7 +410,7 @@ async function onDeleteAccount() {
   try {
     await db.deleteAccount();
     await reload();
-    urlCache.clear();
+    clearPhotoCache();
     renderSyncStatus();
     document.getElementById("sheet").classList.add("hidden");
     show("home");
@@ -590,6 +552,23 @@ async function shareWelcomeCode(code) {
   }
 }
 
+// Context handed to the split-out tab modules. They render from the date list and
+// their own view state; anything that belongs to the app shell (navigation, the
+// log sheet, the shared `dates` array) comes back through here.
+const insightsCtx = { done, goSuggest: () => show("suggest") };
+const suggestCtx = {
+  done,
+  all: () => dates,
+  reload,
+  logSeed(seed) {
+    draft = blankEntry();
+    Object.assign(draft, { title: seed.title, category: seed.category, cost: seed.cost, effort: seed.effort || 3 });
+    editingId = null;
+    openLogSheet();
+    toast("Pre-filled — save it after your date");
+  },
+};
+
 function show(tab) {
   if (!["home", "history", "insights", "suggest"].includes(tab)) tab = "home"; // migrates stale "log"
   currentTab = tab;
@@ -597,8 +576,8 @@ function show(tab) {
     b.setAttribute("aria-selected", String(b.dataset.tab === tab)));
   if (tab === "home") renderHome();
   else if (tab === "history") renderHistory();
-  else if (tab === "insights") renderInsights();
-  else renderSuggest();
+  else if (tab === "insights") renderInsights(insightsCtx);
+  else renderSuggest(suggestCtx);
   renderDnBanner();
   viewEl().scrollTo?.(0, 0);
   window.scrollTo(0, 0);
@@ -1650,7 +1629,7 @@ function renderWishlist(host, countEl) {
       sub: `Tap <b style="color:var(--accent)">♡ Wishlist</b> on any idea to keep it here.`,
       cta: "Find an idea →",
     });
-    wireEmpty2Cta(host);
+    wireEmpty2Cta(host, () => show("suggest"));
     return;
   }
   host.innerHTML = `<h3 class="section-title">Want to try (${ideas.length})</h3>` + ideas.map(e => `
@@ -1689,477 +1668,6 @@ async function removeIdea(id) {
   await reload();
   toast("Removed");
   show("history");
-}
-
-// ---------- INSIGHTS tab ----------
-// Most-used vibe words for the "our vibe" line: prefers the free-text `vibe`
-// field, falling back to the legacy `mood` array for pre-v2 entries.
-function topVibeWords(list, n) {
-  const freq = new Map();
-  for (const d of list) {
-    const w = (d.vibe || "").trim().toLowerCase();
-    if (w) freq.set(w, (freq.get(w) || 0) + 1);
-  }
-  if (!freq.size) {
-    for (const d of list) for (const m of (Array.isArray(d.mood) ? d.mood : [])) {
-      const label = (MOOD_OPTIONS.find(o => o.key === m)?.label || m).toLowerCase();
-      freq.set(label, (freq.get(label) || 0) + 1);
-    }
-  }
-  return [...freq.entries()].sort((a, b) => b[1] - a[1]).slice(0, n).map(([w]) => w);
-}
-
-// Full month name only ("June"), not a specific date — Release triage backlog, v2.1.0.
-function fullMonthName(ym) {
-  const [y, m] = ym.split("-");
-  return new Date(Number(y), Number(m) - 1, 1).toLocaleDateString(undefined, { month: "long" });
-}
-
-function wrappedStats(period) {
-  const year = new Date().getFullYear();
-  let effPeriod = period;
-  let list = period === "year" ? done().filter(d => new Date(entryTimeMs(d)).getFullYear() === year) : done();
-  let fallbackNote = null;
-  if (period === "year" && !list.length && done().length) {
-    list = done();
-    effPeriod = "all";
-    fallbackNote = `No dates in ${year} yet — showing all time`;
-  }
-  const periodLabel = effPeriod === "year" ? `${year} SO FAR` : "ALL TIME";
-  const s = A.summary(list);
-  if (!s.count) return { periodLabel, count: 0 };
-  const cats = A.byCategory(list);
-  // most-dated category wins "favorite" (tie-break by avg enjoyment) — sorting
-  // purely by avg enjoyment let a single 5-heart outlier beat a real favorite.
-  const favCat = cats.length
-    ? [...cats].sort((a, b) => b.count - a.count || b.avgEnjoyment - a.avgEnjoyment)[0]
-    : null;
-  const bestMonth = A.monthlyTrend(list).reduce((a, b) => (b.count > a.count ? b : a));
-  const repeats = A.repeatWorthy(list, list.length);
-  const mostRepeated = repeats.length ? repeats.reduce((a, b) => (b.count > a.count ? b : a)) : null;
-  const td = A.tierDistribution(list);
-  return {
-    periodLabel,
-    fallbackNote,
-    count: s.count,
-    avgEnjoyment: s.avgEnjoyment,
-    usualTier: td ? { label: tierLabel(td.usual), pct: td.pct } : null,
-    distinctCategories: s.distinctCategories,
-    totalCategories: s.totalCategories,
-    favCategory: favCat ? { emoji: favCat.emoji, label: favCat.label, count: favCat.count } : null,
-    mostRepeated: mostRepeated && mostRepeated.count > 1
-      ? { emoji: catEmoji(mostRepeated.category), title: mostRepeated.title, avgEnjoyment: mostRepeated.avgEnjoyment }
-      : null,
-    bestMonth: { label: fullMonthName(bestMonth.month), count: bestMonth.count },
-    vibes: topVibeWords(list, 3),
-  };
-}
-
-async function onShareWrapped() {
-  const svgStr = C.wrappedCard(wrappedStats(wrapPeriod), document.documentElement.dataset.theme || "plum");
-  const url = URL.createObjectURL(new Blob([svgStr], { type: "image/svg+xml" }));
-  const img = new Image();
-  await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
-  URL.revokeObjectURL(url);
-
-  const scale = 2;
-  const canvas = document.createElement("canvas");
-  canvas.width = C.WRAPPED_W * scale;
-  canvas.height = C.WRAPPED_H * scale;
-  canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
-
-  canvas.toBlob(async blob => {
-    if (!blob) return;
-    const file = new File([blob], "us-wrapped.png", { type: "image/png" });
-    if (navigator.canShare?.({ files: [file] })) {
-      try {
-        await navigator.share({ files: [file] });
-        return;
-      } catch (err) {
-        if (err?.name === "AbortError") return; // user cancelled — stay silent
-        // any other rejection (e.g. share sheet failed) falls through to download below
-      }
-    }
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "us-wrapped.png";
-    a.click();
-    URL.revokeObjectURL(a.href);
-    toast("Wrapped card downloaded");
-  }, "image/png");
-}
-
-function setWrapPeriod(period) {
-  wrapPeriod = period;
-  renderInsights();
-}
-
-function wireInsights() {
-  viewEl().querySelectorAll("[data-wrap-period]").forEach(b =>
-    b.addEventListener("click", () => setWrapPeriod(b.dataset.wrapPeriod)));
-  bind("wrap-share", "click", onShareWrapped);
-  const wrapCard = viewEl().querySelector(".wrap-card");
-  if (wrapCard) attachSwipe(wrapCard, () => setWrapPeriod("all"), () => setWrapPeriod("year"));
-}
-
-// Dense ranked list: top-3 visible, rest behind a native <details> expander.
-// rows: [{ emoji, title, metric(html) }]
-function rankRows(rows) {
-  const row = (r, i) => `
-    <div class="rank-row">
-      <span class="rank r${i + 1}">${i + 1}</span>
-      <span class="emoji">${r.emoji}</span>
-      <span class="title">${escHtml(r.title)}</span>
-      <span class="metric">${r.metric}</span>
-    </div>`;
-  const top = rows.slice(0, 3).map(row).join("");
-  const rest = rows.slice(3);
-  if (!rest.length) return top;
-  return `${top}
-    <details class="more">
-      <summary><span class="more-pill">${rest.length} more <span class="chev">▾</span></span></summary>
-      ${rest.map((r, i) => row(r, i + 3)).join("")}
-    </details>`;
-}
-
-function renderInsights() {
-  const v = viewEl();
-  const d = done();  // exclude wishlist ideas from every analytic below
-  if (!d.length) {
-    v.innerHTML = emptyState2("📊", "Charts need a little fuel", {
-      sub: "Find something to do, log it, and this fills with what you two love.",
-      cta: "Find an idea →",
-    });
-    wireEmpty2Cta(v);
-    return;
-  }
-  const wStats = wrappedStats(wrapPeriod);
-  // Scope the whole tab to the selected period, same "year" definition wrappedStats uses
-  // (fall back to all-time if the year has no entries, matching wrappedStats' own fallback).
-  const year = new Date().getFullYear();
-  let scoped = wrapPeriod === "year" ? d.filter(e => new Date(entryTimeMs(e)).getFullYear() === year) : d;
-  if (wrapPeriod === "year" && !scoped.length) scoped = d;
-  const s = A.summary(scoped);
-  const cats = A.byCategory(scoped);
-  const moods = A.byMood(scoped);
-  const trend = A.monthlyTrend(scoped);
-  const vfm = A.valueForMoney(scoped, 5);
-  const rep = A.repeatWorthy(scoped, 5);
-  const exp = A.explorationStats(scoped);
-
-  const moodSection = moods.length ? (() => {
-    const maxCount = moods[0].count;
-    return `
-    <h3 class="section-title">Your vibes</h3>
-    <div class="card tight">${moods.map(m => {
-      const opt = MOOD_OPTIONS.find(o => o.key === m.key);
-      const topCat = m.topCategory ? catEmoji(m.topCategory) : "";
-      return `<div class="vibe-row">
-        <div class="emo">${opt?.emoji ?? "🎭"}</div>
-        <div class="meta2"><h4>${opt?.label ?? m.key}</h4><div class="sub">avg ${m.avgEnjoyment.toFixed(1)}♥${topCat ? ` · ${topCat}` : ""}</div></div>
-        <div class="bar"><div class="track"><div class="fill" style="width:${(m.count / maxCount) * 100}%"></div></div></div>
-        <div class="n">${m.count}</div>
-      </div>`;
-    }).join("")}</div>`;
-  })() : "";
-
-  v.innerHTML = `
-    <h3 class="section-title" style="margin-top:0">Your Wrapped ✨</h3>
-    <div class="card wrap-card">
-      <div class="seg-row">
-        <button class="seg ${wrapPeriod === "year" ? "on" : ""}" data-wrap-period="year">This year</button>
-        <button class="seg ${wrapPeriod === "all" ? "on" : ""}" data-wrap-period="all">All time</button>
-      </div>
-      <div class="chart-wrap">${C.wrappedCard(wStats, document.documentElement.dataset.theme || "plum")}</div>
-      ${wStats.fallbackNote ? `<p class="muted small" style="margin:6px 0 0">${escHtml(wStats.fallbackNote)}</p>` : ""}
-      <button class="btn" id="wrap-share" style="margin-top:12px" ${wStats.count ? "" : "disabled"}>Share this card ↗</button>
-    </div>
-
-    <div class="stat-grid">
-      <div class="stat"><div class="num">${wStats.usualTier ? wStats.usualTier.label : "—"}</div><div class="lbl">Typical date</div></div>
-      <div class="stat"><div class="num">${wStats.distinctCategories ?? 0}/${wStats.totalCategories ?? 0}</div><div class="lbl">Categories tried</div></div>
-    </div>
-
-    <h3 class="section-title">Enjoyment by category</h3>
-    <div class="card chart-wrap">${C.barChart(cats.map(c => ({ label: `${c.emoji} ${c.label}`, value: c.avgEnjoyment })))}</div>
-    ${moodSection}
-
-    <h3 class="section-title">Trend over time</h3>
-    <div class="card chart-wrap">${C.trendChart(trend)}
-      <div class="legend"><span style="color:var(--accent)">avg enjoyment</span><span style="color:var(--muted)">how many dates</span></div></div>
-
-    <h3 class="section-title">Best value for money</h3>
-    <div class="card tight">
-      ${vfm.length ? `<span class="sticker-tag mint">smart spender!</span>` + rankRows(vfm.map(d => {
-        const tier = d.costTier || tierForCost(d.cost);
-        return { emoji: catEmoji(d.category), title: d.title, metric: `<span class="hot">♥${d.enjoyment.toFixed(1)}</span>${tier ? ` · <span class="val">${tier === "free" ? "free" : tierLabel(tier)}</span>` : ""}` };
-      })) : `<p class="muted small">Add cost to your dates to rank value.</p>`}
-    </div>
-
-    <h3 class="section-title">Most repeat-worthy</h3>
-    <div class="card tight">
-      <span class="sticker-tag butter">do it again!</span>
-      ${rankRows(rep.map(r => ({ emoji: catEmoji(r.category), title: r.title, metric: `<span class="hot">♥${r.avgEnjoyment.toFixed(1)}</span> · ${r.count}×` })))}
-    </div>
-
-    <h3 class="section-title">Adventure balance</h3>
-    <div class="card" style="display:flex;align-items:center;gap:16px">
-      <div style="width:120px;flex:none">${C.balanceDonut(exp.novelCount, Math.max(0, s.count - exp.novelCount))}</div>
-      <div><strong>${exp.recentNew}/${exp.recentTotal}</strong> of your recent dates explored a new category.
-      <p class="muted small" style="margin:6px 0 0">You've tried ${exp.novelCount} of ${s.totalCategories} categories. The Suggest tab keeps this balanced.</p></div>
-    </div>
-  `;
-  wireInsights();
-}
-
-// ---------- SUGGEST tab ----------
-function renderSuggest() {
-  const v = viewEl();
-  const results = suggest(done(), { ...sug, jitter: false });
-  const coldStart = done().length === 0;
-
-  v.innerHTML = `
-    <section class="card">
-      <h2 style="margin:0 0 10px">Date night ideas</h2>
-      <div class="slider-row" style="${coldStart ? "opacity:.45" : ""}">
-        <span title="repeat favorites">🛋️</span>
-        <input id="s-explore" type="range" min="0" max="100" value="${Math.round(sug.explore * 100)}" ${coldStart ? "disabled" : ""}/>
-        <span title="try new things">🧭</span>
-      </div>
-      ${coldStart
-        ? `<div class="slider-ends"><span class="muted-hint">unlocks after your first logged date</span></div>`
-        : `<div class="slider-ends"><span>Comfort (favorites)</span><span>Adventure (new)</span></div>`}
-
-      <div class="sug-filters">
-        <div class="seg4" id="s-budget">
-          ${COST_TIERS.map(t => `<button class="${sug.budgetTier === t.key ? "on" : ""}" data-btier="${t.key}">${t.label}</button>`).join("")}
-        </div>
-        <details class="filter-group effort" id="s-effort-group">
-          <summary>
-            <span class="fg-right"><span class="fg-badge${sug.maxEffort ? "" : " muted"}">${sug.maxEffort ? "⚡".repeat(sug.maxEffort) : "Any"}</span></span>
-            <span class="fg-arrow">▼</span>
-          </summary>
-          <div class="chips-row" id="s-effort">
-            <button class="chip-sm ${sug.maxEffort == null ? "on" : ""}" data-seffort="">Any</button>
-            <button class="chip-sm ${sug.maxEffort === 1 ? "on" : ""}" data-seffort="1">⚡</button>
-            <button class="chip-sm ${sug.maxEffort === 2 ? "on" : ""}" data-seffort="2">⚡⚡</button>
-            <button class="chip-sm ${sug.maxEffort === 3 ? "on" : ""}" data-seffort="3">⚡⚡⚡</button>
-          </div>
-        </details>
-
-        <details class="filter-group" id="s-cat-group">
-          <summary>
-            <span class="fg-label">Category</span>
-            <span class="fg-right">
-              ${sug.category ? `<span class="fg-badge">${CATEGORIES.find(c => c.key === sug.category)?.emoji} ${CATEGORIES.find(c => c.key === sug.category)?.label}</span>` : ""}
-              <span class="fg-arrow">▼</span>
-            </span>
-          </summary>
-          <div class="chips" id="s-cat">
-            <button class="chip ${!sug.category ? "on" : ""}" data-scat="">Any</button>
-            ${CATEGORIES.map(c => `<button class="chip ${sug.category === c.key ? "on" : ""}" data-scat="${c.key}">${c.emoji} ${c.label}</button>`).join("")}
-          </div>
-        </details>
-
-        <details class="filter-group" id="s-mood-group">
-          <summary>
-            <span class="fg-label">Vibe</span>
-            <span class="fg-right">
-              ${sug.moods.length ? `<span class="fg-badge">${sug.moods.length === 1 ? (MOOD_OPTIONS.find(m => m.key === sug.moods[0])?.emoji + " " + MOOD_OPTIONS.find(m => m.key === sug.moods[0])?.label) : sug.moods.length + " selected"}</span>` : ""}
-              <span class="fg-arrow">▼</span>
-            </span>
-          </summary>
-          <div class="chips" id="s-mood">
-            ${MOOD_OPTIONS.map(m => `<button class="chip ${sug.moods.includes(m.key) ? "on" : ""}" data-smood="${m.key}">${m.emoji} ${m.label}</button>`).join("")}
-          </div>
-        </details>
-      </div>
-
-      <div class="btn-row">
-        <button class="btn secondary" id="s-shuffle">🎲 Surprise us</button>
-        <button class="btn secondary" id="s-nearby">📍 Find nearby</button>
-      </div>
-    </section>
-
-    <div id="sug-results">${renderSugCards(results)}</div>
-  `;
-  wireSuggest();
-  loadSugPhotos();
-}
-
-let coldBannerDismissed = false; // ponytail: module-level, resets on reload — fine while user has zero dates
-
-function shortReason(r) {
-  if (r.kind === "exploit") {
-    const gap = r.daysSince > 21 ? ` · last done ${humanGap(r.daysSince)} ago` : ` · done ${r.actTimes}×`;
-    return `${r.avgEnj.toFixed(1)}♥${gap}`;
-  }
-  if (r.catTimes > 0 && r.catAvg != null) return `New in ${catLabel(r.category)} · you rate it ${r.catAvg.toFixed(1)}♥`;
-  return "A whole new kind of date — pure adventure.";
-}
-
-function renderSugCards(results) {
-  const coldStart = done().length === 0;
-  const banner = (coldStart && !coldBannerDismissed) ? `
-    <div class="card cold-banner">
-      <button class="banner-x" data-dismiss-cold>✕</button>
-      <h3>${CATALOG.length} hand-picked ideas 🎁</h3>
-      <p>Log dates and this tab learns your taste.</p>
-    </div>` : "";
-  if (!results.length) return banner + emptyState("✨", "No ideas match", "Loosen your filters a little.");
-  const saved = new Set(dates.filter(e => e.status === "idea").map(e => normTitle(e.title)));
-  return banner + results.map(r => {
-    const payload = escAttr(JSON.stringify({ title: r.title, category: r.category, cost: r.estCost ?? null, effort: r.effort }));
-    const isSaved = saved.has(normTitle(r.title));
-    const reason = coldStart ? (r.desc || r.reason) : shortReason(r);
-    return `
-    <div class="card sug-card ${r.kind}" data-norm-title="${escAttr(normTitle(r.title))}">
-      ${isSaved ? `<span class="sticker-tag butter">saved ♡</span>` : ""}
-      <div class="sug-body">
-        <div class="sug-head">
-          <h3><span class="sug-dot ${r.kind}" aria-hidden="true">${r.kind === "explore" ? "✦" : "♥"}</span> ${catEmoji(r.category)} ${escHtml(r.title)} ${tierPill({ cost: r.estCost })}</h3>
-        </div>
-        ${r.photos?.length ? `<div class="sug-photos" data-sug-photos="${escAttr(r.photos.join(","))}"></div>` : ""}
-        <p class="sug-reason">${r.kind === "explore" ? `<span class="sug-kind">New</span> · ` : ""}${escHtml(reason)}</p>
-      </div>
-      <div class="sug-actions">
-        ${isSaved
-          ? `<button class="heart-btn" data-unsave='${payload}' aria-label="Remove from wishlist">✓</button>`
-          : `<button class="heart-btn" data-save='${payload}' aria-label="Wishlist">♡</button>`}
-        <button class="btn secondary small" data-log='${payload}'>Log →</button>
-      </div>
-    </div>`;
-  }).join("");
-}
-
-async function loadSugPhotos() {
-  for (const el of viewEl().querySelectorAll("[data-sug-photos]")) {
-    const ids = el.dataset.sugPhotos.split(",").filter(Boolean);
-    if (!ids.length) continue;
-    const imgs = await Promise.all(ids.map(async id => {
-      const url = await photoURL(id);
-      return url ? `<img src="${url}" alt=""/>` : "";
-    }));
-    el.innerHTML = imgs.filter(Boolean).join("");
-  }
-}
-
-function wireSuggest() {
-  const v = viewEl();
-  const rerun = (jitter = false) => {
-    v.querySelector("#sug-results").innerHTML = renderSugCards(suggest(done(), { ...sug, jitter }));
-    wireLogButtons();
-    loadSugPhotos();
-  };
-  v.querySelector("#s-explore").addEventListener("input", e => { sug.explore = e.target.value / 100; rerun(); });
-  v.querySelector("#s-budget").addEventListener("click", e => {
-    const b = e.target.closest("[data-btier]"); if (!b) return;
-    const key = b.dataset.btier;
-    if (sug.budgetTier === key) { sug.budgetTier = null; sug.budget = null; }
-    else { sug.budgetTier = key; sug.budget = BUDGET_TIER_MAX[key]; }
-    setOn(v.querySelectorAll("#s-budget button"), sug.budgetTier ? b : null);
-    rerun();
-  });
-  v.querySelector("#s-effort").addEventListener("click", e => {
-    const b = e.target.closest("[data-seffort]"); if (!b) return;
-    sug.maxEffort = b.dataset.seffort === "" ? null : Number(b.dataset.seffort);
-    setOn(v.querySelectorAll("#s-effort .chip-sm"), b);
-    const badge = v.querySelector("#s-effort-group summary .fg-badge");
-    if (badge) { badge.textContent = sug.maxEffort ? "⚡".repeat(sug.maxEffort) : "Any"; badge.classList.toggle("muted", !sug.maxEffort); }
-    v.querySelector("#s-effort-group").open = false;
-    rerun();
-  });
-  v.querySelector("#s-cat").addEventListener("click", e => {
-    const b = e.target.closest("[data-scat]"); if (!b) return;
-    sug.category = b.dataset.scat || null;
-    setOn(v.querySelectorAll("#s-cat .chip"), b);
-    const cat = CATEGORIES.find(c => c.key === sug.category);
-    const badge = v.querySelector("#s-cat-group summary .fg-badge");
-    if (badge) badge.remove();
-    if (cat) {
-      const span = document.createElement("span");
-      span.className = "fg-badge";
-      span.textContent = `${cat.emoji} ${cat.label}`;
-      v.querySelector("#s-cat-group summary .fg-right").prepend(span);
-    }
-    rerun();
-  });
-  v.querySelector("#s-mood").addEventListener("click", e => {
-    const b = e.target.closest("[data-smood]"); if (!b) return;
-    const key = b.dataset.smood;
-    if (sug.moods.includes(key)) sug.moods = sug.moods.filter(m => m !== key);
-    else sug.moods = [...sug.moods, key];
-    v.querySelectorAll("#s-mood .chip").forEach(chip => {
-      chip.classList.toggle("on", sug.moods.includes(chip.dataset.smood));
-    });
-    const badge = v.querySelector("#s-mood-group summary .fg-badge");
-    if (badge) badge.remove();
-    if (sug.moods.length) {
-      const span = document.createElement("span");
-      span.className = "fg-badge";
-      const m0 = MOOD_OPTIONS.find(m => m.key === sug.moods[0]);
-      span.textContent = sug.moods.length === 1 ? `${m0.emoji} ${m0.label}` : `${sug.moods.length} selected`;
-      v.querySelector("#s-mood-group summary .fg-right").prepend(span);
-    }
-    rerun();
-  });
-  bind("s-shuffle", "click", () => rerun(true));
-  bind("s-nearby", "click", () => {
-    if (!navigator.geolocation) { toast("Location not supported on this device"); return; }
-    toast("Getting your location…");
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        const { latitude: lat, longitude: lng } = pos.coords;
-        const categoryQueries = {
-          dining: "restaurants", outdoors: "parks outdoor activities",
-          movie: "cinema", nightlife: "bars nightlife", culture: "museums",
-          active: "activities", creative: "art classes workshops",
-          travel: "attractions", wellness: "spa massage", special: "unique experiences",
-          athome: "activities",
-        };
-        const q = (sug.category && categoryQueries[sug.category]) || "date ideas";
-        window.open(`https://www.google.com/maps/search/${encodeURIComponent(q)}/@${lat},${lng},14z`, "_blank");
-      },
-      () => toast("Couldn't get location — check browser permissions")
-    );
-  });
-  wireLogButtons();
-}
-
-function wireLogButtons() {
-  const v = viewEl();
-  v.querySelector("[data-dismiss-cold]")?.addEventListener("click", e => {
-    coldBannerDismissed = true;
-    e.target.closest(".cold-banner").remove();
-  });
-  v.querySelectorAll("[data-log]").forEach(b => b.addEventListener("click", () => {
-    const seed = JSON.parse(b.dataset.log);
-    draft = blankEntry();
-    Object.assign(draft, { title: seed.title, category: seed.category, cost: seed.cost, effort: seed.effort || 3 });
-    editingId = null;
-    openLogSheet();
-    toast("Pre-filled — save it after your date");
-  }));
-  v.querySelectorAll("[data-save]").forEach(b => b.addEventListener("click", async () => {
-    const seed = JSON.parse(b.dataset.save);
-    const idea = blankEntry();
-    Object.assign(idea, { title: seed.title, category: seed.category, cost: seed.cost, effort: seed.effort || 3, status: "idea" });
-    await db.putDate(idea);
-    await reload();
-    toast("Saved to wishlist ♡");
-    const host = v.querySelector("#sug-results");
-    if (host) { host.innerHTML = renderSugCards(suggest(done(), { ...sug, jitter: false })); wireLogButtons(); loadSugPhotos(); }
-  }));
-  v.querySelectorAll("[data-unsave]").forEach(b => b.addEventListener("click", async () => {
-    const seed = JSON.parse(b.dataset.unsave);
-    const k = normTitle(seed.title);
-    const idea = dates.find(e => e.status === "idea" && normTitle(e.title) === k);
-    if (idea) await db.deleteDate(idea.id);
-    await reload();
-    toast("Removed from wishlist");
-    const host = v.querySelector("#sug-results");
-    if (host) { host.innerHTML = renderSugCards(suggest(done(), { ...sug, jitter: false })); wireLogButtons(); loadSugPhotos(); }
-  }));
 }
 
 // ---------- menu actions ----------
@@ -2227,7 +1735,7 @@ async function onWipe() {
   if (cloud && !confirm("This erases the shared space for BOTH partners. Continue?")) return;
   await db.wipeAll();
   await reload();
-  urlCache.clear();
+  clearPhotoCache();
   document.getElementById("sheet").classList.add("hidden");
   toast("Everything erased");
   show("home");
@@ -2413,39 +1921,6 @@ function relTime(ts) {
   return `${Math.floor(s / 86400)}d ago`;
 }
 
-// ---------- small helpers ----------
-// ids are unique app-wide (form ids live in the log sheet, tab ids in #view)
-function bind(id, ev, fn) { const el = document.getElementById(id); if (el) el.addEventListener(ev, fn); }
-// One coarse Free/$/$$/$$$ badge everywhere costs show — kills the mixed
-// "Free" / shekel-glyph renderings (Release triage backlog, v2.1.0).
-function costBadge(e) {
-  const key = e.costTier || tierForCost(e.cost);
-  return key ? tierLabel(key) : "";
-}
-// cost tier as the pill component (design/sprint1-cost-card.html frame 3)
-function tierPill(e) {
-  const key = e.costTier || tierForCost(e.cost);
-  return key ? `<span class="tier-pill${key === "free" ? " free" : ""}">${tierLabel(key)}</span>` : "";
-}
-// rating as hearts (♥ filled, ♡ unfilled) — never ★
-function heartsHtml(n) {
-  return `<span class="hearts">${"♥".repeat(n)}<span class="off">${"♡".repeat(5 - n)}</span></span>`;
-}
-function setOn(nodes, active) { nodes.forEach(n => n.classList.toggle("on", n === active)); }
-
-async function photoURL(id) {
-  if (!id) return "";
-  if (urlCache.has(id)) return urlCache.get(id);
-  // ponytail: a transient Cloud Storage/CORS read error must degrade to a missing
-  // thumbnail, not reject the caller's Promise.all and blank the whole view.
-  let blob;
-  try { blob = await db.getPhoto(id); } catch { return ""; }
-  if (!blob) return "";
-  const url = URL.createObjectURL(blob);
-  urlCache.set(id, url);
-  return url;
-}
-
 // Full-screen photo viewer. items: [{ url, caption, entryId? }]. Supports prev/next
 // + swipe. opts.autoAdvanceMs turns it into a slideshow; opts.onTap(item) fires when
 // a slide is tapped (used to jump to that date) instead of dismissing.
@@ -2546,49 +2021,5 @@ function wireIdle() {
   window.addEventListener("focus", resetIdle);   // returning from a picker/other app restarts the clock
   resetIdle();
 }
-
-// createImageBitmap decodes off the main thread (an <img> + drawImage decodes on
-// it, freezing the UI on a 12MP phone photo). imageOrientation keeps EXIF-rotated
-// phone shots upright, which <img> did for us for free.
-export async function downscale(file, maxDim, quality) {
-  const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
-  const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
-  const w = Math.round(bitmap.width * scale), h = Math.round(bitmap.height * scale);
-  const canvas = document.createElement("canvas");
-  canvas.width = w; canvas.height = h;
-  canvas.getContext("2d").drawImage(bitmap, 0, 0, w, h);
-  bitmap.close?.();
-  return new Promise((resolve, reject) =>
-    canvas.toBlob(b => b ? resolve(b) : reject(new Error("encode failed")), "image/jpeg", quality));
-}
-
-let toastTimer = null;
-export function toast(msg) {
-  const t = document.getElementById("toast");
-  t.textContent = msg;
-  t.classList.remove("hidden");
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.add("hidden"), 2200);
-}
-
-function emptyState(big, title, sub) {
-  return `<div class="empty"><div class="big">${big}</div><h3 style="margin:8px 0 4px">${title}</h3><p class="muted">${sub}</p></div>`;
-}
-// v2 empty state: sticker emoji, cursive title, quiet alt line(s) or a pill CTA to Suggest.
-function emptyState2(big, title, { alts, sub, cta } = {}) {
-  const altHtml = (alts || []).map(a => `<span class="alt">${a}</span>`).join("");
-  const subHtml = sub ? `<p>${sub}</p>` : "";
-  const ctaHtml = cta ? `<button class="cta" data-empty2-cta="suggest">${cta}</button>` : "";
-  return `<div class="empty2"><div class="big">${big}</div><h3>${title}</h3>${subHtml}${ctaHtml}${altHtml}</div>`;
-}
-function wireEmpty2Cta(root) {
-  root.querySelector("[data-empty2-cta]")?.addEventListener("click", () => show("suggest"));
-}
-function escHtml(s) { return String(s ?? "").replace(/[<>&]/g, c => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c])); }
+// ---------- small helpers ----------
 const catShort = k => catLabel(k).split("/")[0].trim();
-function escAttr(s) { return String(s ?? "").replace(/[<>&"]/g, c => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c])); }
-// ponytail: ids are app-generated UUIDs; escaping + CSP is belt-and-suspenders vs a hostile partner client.
-function safeUrl(u) {
-  try { const p = new URL(u, location.origin); return (p.protocol === "http:" || p.protocol === "https:") ? p.href : "#"; }
-  catch { return "#"; }
-}

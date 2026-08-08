@@ -370,3 +370,140 @@ test("cacheOutdated: garbage input -> false", () => {
 test("cacheOutdated: running newer than min -> false", () => {
   assert.equal(cacheOutdated("us-date-tracker-v2.2.0", "us-date-tracker-v2.1.1"), false);
 });
+
+// ================= sync-codec.js (cloud wire format) =================
+// The round trip a couple's data takes through Firestore. Previously reachable
+// only via the emulator suite (test/sync.mjs); these run on every commit.
+import {
+  CODE_CHARS, CODE_LEN, LOCKED_NO_KEY, LOCKED_BAD_KEY,
+  genCode, parseInviteCode, inviteExpired, encodeDateDoc, decodeDateDoc, dataURLToBlob,
+} from "../js/sync-codec.js";
+import { genKey as newSpaceKey } from "../js/crypto.js";
+
+test("genCode: right length, only unambiguous chars", () => {
+  for (let i = 0; i < 50; i++) {
+    const c = genCode();
+    assert.equal(c.length, CODE_LEN);
+    assert.match(c, new RegExp(`^[${CODE_CHARS}]+$`));
+    assert.ok(!/[01OI]/.test(c), `ambiguous char in ${c}`);
+  }
+});
+
+test("parseInviteCode: uppercases the code, preserves the key's case", () => {
+  assert.deepEqual(parseInviteCode(" abc23xyz.aB-_9k "), { code: "ABC23XYZ", keyB64: "aB-_9k" });
+});
+
+test("parseInviteCode: a bare code (pre-E2EE invite) has no key", () => {
+  assert.deepEqual(parseInviteCode("abc23xyz"), { code: "ABC23XYZ", keyB64: null });
+});
+
+test("parseInviteCode: empty/nullish input doesn't throw", () => {
+  assert.deepEqual(parseInviteCode(null), { code: "", keyB64: null });
+  assert.deepEqual(parseInviteCode(""), { code: "", keyB64: null });
+});
+
+test("inviteExpired: past expiry is expired, future is not", () => {
+  const now = Date.now();
+  assert.equal(inviteExpired({ expiresAt: new Date(now - 1000) }, now), true);
+  assert.equal(inviteExpired({ expiresAt: new Date(now + 1000) }, now), false);
+});
+
+test("inviteExpired: accepts a Firestore Timestamp (toDate())", () => {
+  const now = Date.now();
+  const ts = ms => ({ toDate: () => new Date(ms) });
+  assert.equal(inviteExpired({ expiresAt: ts(now - 1) }, now), true);
+  assert.equal(inviteExpired({ expiresAt: ts(now + 1) }, now), false);
+});
+
+test("inviteExpired: no expiry field -> not expired", () => {
+  assert.equal(inviteExpired({}, Date.now()), false);
+  assert.equal(inviteExpired(null, Date.now()), false);
+});
+
+const dateEntry = { ...blankEntry(), id: "e1", date: "2026-03-04", title: "Sushi night", enjoyment: 5, notes: "🍣" };
+
+test("encodeDateDoc: no key -> plaintext doc, unchanged fields", async () => {
+  const doc = await encodeDateDoc(null, dateEntry);
+  assert.equal(doc.title, "Sushi night");
+  assert.equal(doc.enc, undefined);
+});
+
+test("encodeDateDoc: with a key, only id + date stay in the clear", async () => {
+  const doc = await encodeDateDoc(await newSpaceKey(), dateEntry);
+  assert.deepEqual(Object.keys(doc).sort(), ["date", "enc", "id"]);
+  assert.equal(doc.id, "e1");
+  assert.equal(doc.date, "2026-03-04");
+  assert.ok(!JSON.stringify(doc).includes("Sushi"), "title leaked into the ciphertext doc");
+});
+
+test("encode -> decode round trip restores every field", async () => {
+  const key = await newSpaceKey();
+  const back = await decodeDateDoc(key, await encodeDateDoc(key, dateEntry));
+  assert.deepEqual(back, dateEntry);
+});
+
+test("decodeDateDoc: plaintext (legacy) doc passes straight through", async () => {
+  const plain = { id: "e1", date: "2026-03-04", title: "Old entry" };
+  assert.deepEqual(await decodeDateDoc(await newSpaceKey(), plain), plain);
+});
+
+test("decodeDateDoc: no key -> locked placeholder, entry still listable", async () => {
+  const doc = await encodeDateDoc(await newSpaceKey(), dateEntry);
+  const back = await decodeDateDoc(null, doc);
+  assert.equal(back.title, LOCKED_NO_KEY);
+  assert.equal(back.id, "e1");
+  assert.equal(back.date, "2026-03-04");
+});
+
+test("decodeDateDoc: wrong key -> placeholder, never throws", async () => {
+  const doc = await encodeDateDoc(await newSpaceKey(), dateEntry);
+  const back = await decodeDateDoc(await newSpaceKey(), doc);
+  assert.equal(back.title, LOCKED_BAD_KEY);
+  assert.equal(back.id, "e1");
+});
+
+test("dataURLToBlob: decodes mime + bytes without fetch()", async () => {
+  const blob = dataURLToBlob("data:image/png;base64,aGk=");
+  assert.equal(blob.type, "image/png");
+  assert.equal(await blob.text(), "hi");
+});
+
+// ================= backend interface conformance =================
+// db.js (local) and sync.js (cloud) are two implementations of one interface, and
+// store.js routes between them. Nothing in the language enforces that — a function
+// missing from sync.js is a runtime crash that only cloud users hit. This asserts
+// the three agree, so the failure is a red test instead of a bug report.
+import * as dbBackend from "../js/db.js";
+import * as syncBackend from "../js/sync.js";
+import * as storeFacade from "../js/store.js";
+
+const DATA_INTERFACE = [
+  "getAllDates", "putDate", "getDate", "deleteDate",
+  "putPhoto", "getPhoto", "deletePhoto",
+  "exportAll", "importAll", "wipeAll",
+];
+
+test("db.js implements the whole data interface", () => {
+  for (const fn of DATA_INTERFACE) assert.equal(typeof dbBackend[fn], "function", `db.js is missing ${fn}`);
+});
+
+test("sync.js mirrors db.js's data interface", () => {
+  for (const fn of DATA_INTERFACE) assert.equal(typeof syncBackend[fn], "function", `sync.js is missing ${fn}`);
+});
+
+test("store.js exposes the data interface it routes", () => {
+  for (const fn of DATA_INTERFACE) assert.equal(typeof storeFacade[fn], "function", `store.js is missing ${fn}`);
+});
+
+test("store.js exposes every cloud-only function it delegates to sync.js", () => {
+  // store.js calls these on the lazily-imported sync module; a rename on one side
+  // only shows up in cloud mode at runtime.
+  const CLOUD_ONLY = [
+    "signIn", "signOut", "createSpace", "joinSpace", "restoreSession", "deleteAccount",
+    "getCurrentUser", "getInviteCode", "regenerateInviteCode", "waitForAuthUser",
+    "setRemoteChangeHandler", "migrateLocalData", "completeRedirectSignIn",
+    "getPushToken", "setMyPushToken", "getSpaceId", "getIdToken", "backfillPhotos",
+    "getSpaceKeyB64", "setSpaceKeyB64", "encryptExistingData",
+  ];
+  for (const fn of CLOUD_ONLY) assert.equal(typeof syncBackend[fn], "function", `sync.js is missing ${fn}`);
+});

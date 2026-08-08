@@ -8,6 +8,10 @@
 import { firebaseConfig } from "./firebase-config.js";
 import * as local from "./db.js";
 import * as e2ee from "./crypto.js";
+import {
+  INVITE_TTL_MS, genCode, parseInviteCode, inviteExpired,
+  encodeDateDoc, decodeDateDoc, blobToDataURL, dataURLToBlob,
+} from "./sync-codec.js";
 
 const SDK_VERSION = "12.15.0";
 const CDN = `https://www.gstatic.com/firebasejs/${SDK_VERSION}`;
@@ -18,8 +22,6 @@ const EMU = typeof location !== "undefined" && new URLSearchParams(location.sear
 // popup for anonymous sign-in, so the release sync test can run headless
 // against the deployed project (see test/sync.mjs --prod).
 const ANON = typeof location !== "undefined" && new URLSearchParams(location.search).has("anon");
-const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O/1/I
-const INVITE_TTL_MS = 7 * 24 * 3600 * 1000;
 
 let sdk = null;          // { app, auth, fs, ...firebase fns }
 let storageSdk = null;   // { storage, ...firebase-storage fns } — only when useStorage
@@ -204,16 +206,8 @@ async function loadSpaceKey() {
   spaceKey = b64 ? await e2ee.importKeyB64(b64) : null;
 }
 
-// Decrypt one raw Firestore date doc. Plaintext (legacy) docs pass through.
-async function decryptDate(doc) {
-  if (!doc?.enc) return doc;
-  if (!spaceKey) return { id: doc.id, date: doc.date, title: "🔒 Encrypted (enter key in ⚙️ menu)" };
-  try {
-    return { id: doc.id, date: doc.date, ...(await e2ee.decryptJSON(spaceKey, doc.enc)) };
-  } catch {
-    return { id: doc.id, date: doc.date, title: "🔒 Encrypted (wrong key?)" };
-  }
-}
+// Decrypt one raw Firestore date doc against the currently-loaded space key.
+const decryptDate = doc => decodeDateDoc(spaceKey, doc);
 
 async function applySnapshot(docs) {
   lastSnapshot = docs;
@@ -243,12 +237,6 @@ function attachSpace(id) {
     }, err => { if (!resolved) { resolved = true; reject(err); } });
   }));
   return firstSnapshot;
-}
-
-function genCode() {
-  let code = "";
-  for (let i = 0; i < 8; i++) code += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
-  return code;
 }
 
 export async function createSpace() {
@@ -285,13 +273,10 @@ export async function joinSpace(codeRaw) {
   const user = await waitForAuthUser();
   if (!user) throw new Error("Sign in first");
 
-  // Combined code: `${serverCode}.${keyB64}`. Only the server part is
-  // case-insensitive — the key is base64url and must keep its case.
-  const [serverPart, keyPart] = codeRaw.trim().split(".");
-  const code = serverPart.trim().toUpperCase();
-  if (keyPart) {
-    await e2ee.importKeyB64(keyPart); // validate before saving
-    await local.setSetting("spaceKey", keyPart);
+  const { code, keyB64 } = parseInviteCode(codeRaw);
+  if (keyB64) {
+    await e2ee.importKeyB64(keyB64); // validate before saving
+    await local.setSetting("spaceKey", keyB64);
   }
   const inviteRef = s.doc(s.fs, "invites", code);
   const inviteSnap = await s.getDoc(inviteRef);
@@ -300,7 +285,7 @@ export async function joinSpace(codeRaw) {
   if (invite.usedBy && invite.usedBy !== user.uid) {
     throw new Error("That code was already used — ask your partner for a new one");
   }
-  if (invite.expiresAt?.toDate?.() < new Date()) throw new Error("That code has expired");
+  if (inviteExpired(invite)) throw new Error("That code has expired");
 
   // An invite is one-time: re-consuming it is denied by the rules. If THIS device
   // already consumed it, an earlier attempt got past the batch and then failed
@@ -404,13 +389,8 @@ export async function getAllDates() {
 }
 
 export async function putDate(entry) {
-  const clean = JSON.parse(JSON.stringify(entry));
-  let doc = clean;
-  if (spaceKey) {
-    const { id, date, ...rest } = clean;
-    doc = { id, date, enc: await e2ee.encryptJSON(spaceKey, rest) };
-  }
-  await sdk.setDoc(sdk.doc(sdk.fs, "spaces", spaceId, "dates", clean.id), doc);
+  const doc = await encodeDateDoc(spaceKey, entry);
+  await sdk.setDoc(sdk.doc(sdk.fs, "spaces", spaceId, "dates", doc.id), doc);
 }
 
 export async function getDate(id) {
@@ -670,23 +650,4 @@ export async function encryptExistingData(onProgress) {
     onProgress?.(++done, total);
   }
   return done;
-}
-
-function blobToDataURL(blob) {
-  return new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(r.result);
-    r.onerror = reject;
-    r.readAsDataURL(blob);
-  });
-}
-function dataURLToBlob(dataUrl) {
-  // Decode directly rather than fetch(dataUrl) — the app's CSP connect-src does
-  // not allow data:, so fetching a data URL throws "Failed to fetch".
-  const [head, b64] = dataUrl.split(",");
-  const mime = head.slice(5, head.indexOf(";")); // "data:<mime>;base64"
-  const bin = atob(b64);
-  const bytes = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-  return new Blob([bytes], { type: mime });
 }

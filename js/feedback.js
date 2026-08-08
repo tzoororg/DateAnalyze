@@ -4,7 +4,7 @@
 //
 // Reuses downscale() + toast() from ui.js and the existing .sheet / .menu-row styles.
 
-import { downscale, toast } from "./ui.js";
+import { downscale, toast } from "./ui-shared.js";
 import { FEEDBACK_ENDPOINT, FEEDBACK_KEY } from "./feedback-config.js";
 import * as store from "./store.js";
 
