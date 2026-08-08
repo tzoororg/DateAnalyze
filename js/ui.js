@@ -1,4 +1,4 @@
-// UI layer: renders the three tabs, handles the form, photos, charts and suggestions.
+﻿// UI layer: renders the three tabs, handles the form, photos, charts and suggestions.
 
 import * as db from "./store.js";
 import {
@@ -17,18 +17,18 @@ const formEl = () => document.getElementById("logSheetBody");
 let dates = [];
 // Wishlist ideas (status:"idea") live in the same `dates` array so History can show
 // them, but every analytics/suggest/memory consumer reads done() to exclude them.
-// Legacy entries have no status → treated as done.
+// Legacy entries have no status â†’ treated as done.
 const done = () => dates.filter(e => e.status !== "idea");
 let draft = blankEntry();        // the entry currently being composed/edited
 let editingId = null;
 let draftSnapshot = null;        // JSON snapshot of draft when an edit was opened, to detect no-op edits on close
 // True once the "When" date is deliberately set (manual edit, editing an entry,
-// a date-night session) — blocks the EXIF auto-fill so it only ever replaces the
+// a date-night session) â€” blocks the EXIF auto-fill so it only ever replaces the
 // untouched default. Also set by the auto-fill itself, so it fires at most once.
 let dateTouched = false;
 let currentTab = "home";
 const sug = { explore: 0.5, budget: null, budgetTier: null, maxEffort: null, category: null, moods: [] };
-// Upper $ bound per cost tier (mirrors tierForCost's own boundaries) — "$$$" has no cap.
+// Upper $ bound per cost tier (mirrors tierForCost's own boundaries) â€” "$$$" has no cap.
 const BUDGET_TIER_MAX = { free: 0, low: 100, mid: 300, high: null };
 const hist = { sort: "date-desc", category: null, moods: [], query: "", view: "list", expanded: null };
 let wrapPeriod = "year";
@@ -59,7 +59,7 @@ export async function init() {
   if (shot === "intro") showIntro();
   else if (!shot && !seenIntro) {
     if (dates.length === 0) showIntro();
-    else await db.setSetting("seenIntro", true); // existing user — never nag later
+    else await db.setSetting("seenIntro", true); // existing user â€” never nag later
   }
   db.subscribe(onRemoteChange);
   push.refreshToken();
@@ -80,7 +80,7 @@ async function onRemoteChange() {
 
 async function reload() { dates = await db.getAllDates(); }
 
-// Swipe-left → onLeft(), swipe-right → onRight(). Ignores mostly-vertical drags
+// Swipe-left â†’ onLeft(), swipe-right â†’ onRight(). Ignores mostly-vertical drags
 // and gestures that start inside a horizontally scrollable element.
 function attachSwipe(el, onLeft, onRight) {
   let sx = null, sy = null;
@@ -100,7 +100,7 @@ function attachSwipe(el, onLeft, onRight) {
   }, { passive: true });
 }
 
-// Swipe-down → onDown(). Used by the lightbox to dismiss on a downward drag,
+// Swipe-down â†’ onDown(). Used by the lightbox to dismiss on a downward drag,
 // dragging the photo along with the finger for feedback.
 function attachSwipeDown(el, onDown) {
   let sy = null;
@@ -194,7 +194,7 @@ function wireChrome() {
   renderSyncStatus();
 }
 
-// First-run explainer (PRODUCTION §2): one-time welcome/privacy sheet, dismissed
+// First-run explainer (PRODUCTION Â§2): one-time welcome/privacy sheet, dismissed
 // only by its CTA. Gating lives in init().
 function showIntro() {
   const el = document.getElementById("introSheet");
@@ -213,7 +213,7 @@ function renderSwVersion() {
   navigator.serviceWorker.controller.postMessage("GET_VERSION", [channel.port2]);
 }
 
-// ---------- storage persistence (plan §3.1) ----------
+// ---------- storage persistence (plan Â§3.1) ----------
 
 // Ask the browser to protect IndexedDB from eviction. Once per install.
 async function maybeRequestPersist() {
@@ -232,8 +232,8 @@ async function renderStorageStatus() {
     const last = await db.getSetting("lastExportAt", 0);
     const backupStr = last
       ? `backed up ${Math.max(0, Math.floor((Date.now() - last) / 86400e3))}d ago`
-      : "no backup yet — export below";
-    el.textContent = `Storage: ${(usage / 1048576).toFixed(1)} MB used · ${backupStr}`;
+      : "no backup yet â€” export below";
+    el.textContent = `Storage: ${(usage / 1048576).toFixed(1)} MB used Â· ${backupStr}`;
   } catch { el.textContent = ""; }
 }
 
@@ -280,10 +280,10 @@ async function renderSyncStatus() {
     if (lastInviteCode) {
       const exp = await db.getSetting("spaceInviteCodeExp", null);
       const daysLeft = exp ? Math.ceil((exp - Date.now()) / 86_400_000) : null;
-      const validity = daysLeft == null ? "" : daysLeft > 0 ? ` (valid ${daysLeft}d)` : " (expired — tap New pairing code)";
-      status.textContent = `🔄 Syncing as ${user.email} — space code ${lastInviteCode}${validity}`;
+      const validity = daysLeft == null ? "" : daysLeft > 0 ? ` (valid ${daysLeft}d)` : " (expired â€” tap New pairing code)";
+      status.textContent = `ðŸ”„ Syncing as ${user.email} â€” space code ${lastInviteCode}${validity}`;
     } else {
-      status.textContent = `🔄 Syncing as ${user.email}`;
+      status.textContent = `ðŸ”„ Syncing as ${user.email}`;
     }
     status.classList.remove("hidden");
     explainer.classList.add("hidden");
@@ -295,7 +295,7 @@ async function renderSyncStatus() {
     signOut.classList.remove("hidden");
     deleteAcct.classList.remove("hidden");
   } else if (user) {
-    status.textContent = `Signed in as ${user.email} — set up a shared space:`;
+    status.textContent = `Signed in as ${user.email} â€” set up a shared space:`;
     status.classList.remove("hidden");
     explainer.classList.add("hidden");
     signIn.classList.add("hidden"); create.classList.remove("hidden"); join.classList.remove("hidden");
@@ -328,18 +328,18 @@ async function onSyncNotify() {
 async function onSyncBackfill() {
   const btn = document.getElementById("syncBackfillBtn");
   btn.disabled = true;
-  toast("Uploading photos…");
+  toast("Uploading photosâ€¦");
   try {
-    const n = await db.backfillPhotos((done, total) => { btn.textContent = `🖼️ Uploading ${done}/${total}…`; });
+    const n = await db.backfillPhotos((done, total) => { btn.textContent = `ðŸ–¼ï¸ Uploading ${done}/${total}â€¦`; });
     toast(n ? `Uploaded ${n} photo${n > 1 ? "s" : ""} to your partner` : "No local photos to upload");
   } catch (err) { console.error(err); toast(err.message || "Couldn't upload photos"); }
-  finally { btn.disabled = false; btn.textContent = "🖼️ Sync my photos to partner"; }
+  finally { btn.disabled = false; btn.textContent = "ðŸ–¼ï¸ Sync my photos to partner"; }
 }
 
 async function onSyncShowKey() {
   const keyB64 = await db.getSpaceKeyB64();
   if (!keyB64) return;
-  prompt("Your encryption key — store this safely. Lost key = lost cloud data.\nYour partner needs it too (it's part of the invite code).", keyB64);
+  prompt("Your encryption key â€” store this safely. Lost key = lost cloud data.\nYour partner needs it too (it's part of the invite code).", keyB64);
 }
 
 async function onSyncEnterKey() {
@@ -350,20 +350,20 @@ async function onSyncEnterKey() {
     await reload();
     renderSyncStatus();
     show(currentTab);
-    toast("Key saved — data decrypted");
+    toast("Key saved â€” data decrypted");
   } catch (err) { console.error(err); toast("That key doesn't look right"); }
 }
 
 async function onSyncEncrypt() {
   const btn = document.getElementById("syncEncryptBtn");
   btn.disabled = true;
-  toast("Encrypting cloud data…");
+  toast("Encrypting cloud dataâ€¦");
   try {
-    const n = await db.encryptExistingData((done, total) => { btn.textContent = `🔐 Encrypting ${done}/${total}…`; });
+    const n = await db.encryptExistingData((done, total) => { btn.textContent = `ðŸ” Encrypting ${done}/${total}â€¦`; });
     toast(n ? `Encrypted ${n} item${n > 1 ? "s" : ""}` : "Everything already encrypted");
     renderSyncStatus();
   } catch (err) { console.error(err); toast(err.message || "Couldn't encrypt"); }
-  finally { btn.disabled = false; btn.textContent = "🔐 Encrypt cloud data"; }
+  finally { btn.disabled = false; btn.textContent = "ðŸ” Encrypt cloud data"; }
 }
 
 async function onSyncCopyCode() {
@@ -371,7 +371,7 @@ async function onSyncCopyCode() {
   try {
     await navigator.clipboard.writeText(lastInviteCode);
     toast(`Copied ${lastInviteCode} to clipboard`);
-  } catch (err) { console.error(err); toast("Couldn't copy — long-press the code above instead"); }
+  } catch (err) { console.error(err); toast("Couldn't copy â€” long-press the code above instead"); }
 }
 
 async function onSyncRegen() {
@@ -381,7 +381,7 @@ async function onSyncRegen() {
     if (!combined) return;
     try { await navigator.clipboard.writeText(combined); } catch { /* clipboard optional */ }
     renderSyncStatus();
-    toast("New code ready — copied to clipboard");
+    toast("New code ready â€” copied to clipboard");
   } catch (err) { console.error(err); toast(err.message || "Couldn't make a new code"); }
 }
 
@@ -401,7 +401,7 @@ async function onSyncCreate() {
     await reload();
     renderSyncStatus();
     show(currentTab);
-    toast(`Space created — share code ${code} with your partner`);
+    toast(`Space created â€” share code ${code} with your partner`);
   } catch (err) { console.error(err); toast(err.message || "Couldn't create space"); }
 }
 
@@ -413,8 +413,8 @@ async function onSyncJoin() {
     await reload();
     renderSyncStatus();
     show(currentTab);
-    toast("Joined — syncing with your partner ♥");
-  } catch (err) { console.error(err); toast(err.message || "Couldn't join — check the code"); }
+    toast("Joined â€” syncing with your partner â™¥");
+  } catch (err) { console.error(err); toast(err.message || "Couldn't join â€” check the code"); }
 }
 
 async function onSyncSignOut() {
@@ -467,7 +467,7 @@ function show(tab) {
 // ---------- Date Night banner (pinned above the view content, every tab) ----------
 function updateFab() {
   const fab = document.getElementById("fab");
-  fab.textContent = activeDate ? "📷" : "＋";
+  fab.textContent = activeDate ? "ðŸ“·" : "ï¼‹";
   fab.setAttribute("aria-label", activeDate ? "Take a photo" : "Log a date");
 }
 
@@ -484,8 +484,8 @@ function renderDnBanner() {
   const n = activeDate.photoIds.length;
   host.innerHTML = `
     <section class="dn-banner" id="dn-banner-body">
-      <span class="moon">🌙</span>
-      <div class="txt"><b>Date night</b><div class="sub">${elapsedMin < 1 ? "just started" : fmtDuration(elapsedMin)} · ${n} photo${n === 1 ? "" : "s"}</div></div>
+      <span class="moon">ðŸŒ™</span>
+      <div class="txt"><b>Date night</b><div class="sub">${elapsedMin < 1 ? "just started" : fmtDuration(elapsedMin)} Â· ${n} photo${n === 1 ? "" : "s"}</div></div>
       <button class="end" id="dn-end">End</button>
     </section>`;
   host.querySelector("#dn-banner-body").addEventListener("click", () => document.getElementById("dnCameraInput").click());
@@ -512,7 +512,7 @@ async function onDnPhotoPick(e) {
   }
   await db.setSetting("activeDate", activeDate);
   renderDnBanner();
-  toast("Photo added 📸");
+  toast("Photo added ðŸ“¸");
 }
 
 async function onDnEnd() {
@@ -544,17 +544,17 @@ function renderHome() {
   const memoryCard = memories.length ? `
     <section class="card memory-card">
       <div class="memory-header">
-        <span class="memory-title">On this day${singleAgo !== null ? ` · ${singleAgo} year${singleAgo !== 1 ? "s" : ""} ago` : ""} ✨</span>
-        <button class="memory-dismiss" id="memory-dismiss">✕</button>
+        <span class="memory-title">On this day${singleAgo !== null ? ` Â· ${singleAgo} year${singleAgo !== 1 ? "s" : ""} ago` : ""} âœ¨</span>
+        <button class="memory-dismiss" id="memory-dismiss">âœ•</button>
       </div>
       ${memories.map(e => {
         const yearsAgo = new Date().getFullYear() - new Date(entryTimeMs(e)).getFullYear();
         return `<div class="memory-item">
           ${singleAgo === null ? `<div class="memory-ago">${yearsAgo} year${yearsAgo !== 1 ? "s" : ""} ago</div>` : ""}
-          <div class="memory-line">${catEmoji(e.category)} <b>${escHtml(e.title)}</b> <span class="sub">${fmtDate(e.date)} · ${heartsHtml(e.enjoyment)}</span></div>
-          ${e.capsule ? `<div class="capsule-memory"><span class="from">💌 From you:</span><span class="msg">${escHtml(e.capsule)}</span></div>` : ""}
+          <div class="memory-line">${catEmoji(e.category)} <b>${escHtml(e.title)}</b> <span class="sub">${fmtDate(e.date)} Â· ${heartsHtml(e.enjoyment)}</span></div>
+          ${e.capsule ? `<div class="capsule-memory"><span class="from">ðŸ’Œ From you:</span><span class="msg">${escHtml(e.capsule)}</span></div>` : ""}
         </div>`;
-        // ponytail: label is always "From you" — date docs carry no author uid; add author names when sync stamps one
+        // ponytail: label is always "From you" â€” date docs carry no author uid; add author names when sync stamps one
       }).join("")}
     </section>` : "";
 
@@ -562,24 +562,24 @@ function renderHome() {
     ${top ? `
     <h3 class="section-title">Tonight's pick</h3>
     <section class="card hero-card">
-      <span class="sticker-tag ${top.kind === "explore" ? "butter" : "mint"}">${top.kind === "explore" ? "new!" : "favorite ♥"}</span>
+      <span class="sticker-tag ${top.kind === "explore" ? "butter" : "mint"}">${top.kind === "explore" ? "new!" : "favorite â™¥"}</span>
       <h3>${catEmoji(top.category)} ${escHtml(top.title)}</h3>
       <p class="sug-reason">${escHtml(top.reason)}</p>
-      <button class="mini-btn" id="home-plan">Plan it →</button>
+      <button class="mini-btn" id="home-plan">Plan it â†’</button>
     </section>` : ""}
     ${!activeDate ? `
     <section class="card dn-invite">
-      <div class="moon">🌙</div>
-      <div class="txt"><h3>Date night?</h3><div class="sub">Start a timer, snap photos as you go — log it when you're done.</div></div>
+      <div class="moon">ðŸŒ™</div>
+      <div class="txt"><h3>Date night?</h3><div class="sub">Start a timer, snap photos as you go â€” log it when you're done.</div></div>
       <button class="mini-btn" id="dn-start">Start</button>
     </section>` : ""}
     ${memoryCard}
     ${showBackupBanner ? `
     <div class="backup-banner" id="backup-banner">
-      <span class="em">☁️</span>
-      <span class="msg">It's been a while — <b>back up your dates</b></span>
-      <span class="chev">›</span>
-      <button class="x" id="backup-dismiss" title="Dismiss">✕</button>
+      <span class="em">â˜ï¸</span>
+      <span class="msg">It's been a while â€” <b>back up your dates</b></span>
+      <span class="chev">â€º</span>
+      <button class="x" id="backup-dismiss" title="Dismiss">âœ•</button>
     </div>` : ""}
     <h3 class="section-title">Recent memories</h3>
     <div id="date-list"></div>
@@ -607,7 +607,7 @@ function planIt(title) {
   setTimeout(() => card.classList.remove("flash"), 1500);
 }
 
-// ---------- log sheet (opened from the ＋ button) ----------
+// ---------- log sheet (opened from the ï¼‹ button) ----------
 function openLogSheet() {
   document.getElementById("logSheet").classList.remove("hidden");
   document.body.style.overflow = "hidden";
@@ -645,15 +645,15 @@ function renderLog() {
   const vibeSugs = pastVibes().filter(w => w !== (draft.vibe || "").trim().toLowerCase()).slice(0, 4);
   v.innerHTML = `
     <section class="card logform">
-      ${draft.durationMin != null ? `<span class="dn-fromtonight">✨ From tonight — ${fmtDuration(draft.durationMin)} · ${draft.photos.length} photo${draft.photos.length === 1 ? "" : "s"}</span>` : ""}
+      ${draft.durationMin != null ? `<span class="dn-fromtonight">âœ¨ From tonight â€” ${fmtDuration(draft.durationMin)} Â· ${draft.photos.length} photo${draft.photos.length === 1 ? "" : "s"}</span>` : ""}
       <div class="polaroid">
         <button class="pshot empty" id="f-add-photo" type="button"></button>
         <div class="photo-menu hidden" id="f-photo-menu">
-          <button class="photo-menu-item" data-src="camera">📷 Camera</button>
-          <button class="photo-menu-item" data-src="gallery">🖼️ Gallery</button>
-          <button class="photo-menu-item" data-src="google">📸 Google Photos</button>
+          <button class="photo-menu-item" data-src="camera">ðŸ“· Camera</button>
+          <button class="photo-menu-item" data-src="gallery">ðŸ–¼ï¸ Gallery</button>
+          <button class="photo-menu-item" data-src="google">ðŸ“¸ Google Photos</button>
         </div>
-        <input id="f-title" class="pol-caption" type="text" placeholder="write a caption…" value="${escAttr(draft.title)}"/>
+        <input id="f-title" class="pol-caption" type="text" placeholder="write a captionâ€¦" value="${escAttr(draft.title)}"/>
       </div>
       <div class="photo-strip" id="f-photos"></div>
       <input id="f-photo-camera" type="file" accept="image/*" capture="environment" hidden/>
@@ -665,7 +665,7 @@ function renderLog() {
             <input id="f-date" type="date" value="${draft.date}"/>
             <span class="cat-current" id="f-cat-current">${draft.category ? catShort(draft.category) : ""}</span>
           </div>
-          <span class="from-photo hidden" id="f-from-photo">📷 Date set from photo · <button type="button">undo</button></span>
+          <span class="from-photo hidden" id="f-from-photo">ðŸ“· Date set from photo Â· <button type="button">undo</button></span>
           <div class="cat-strip-wrap">
             <div class="cat-strip" id="f-category">
               ${CATEGORIES.map(c => `<button type="button" class="cat-chip ${draft.category === c.key ? "on" : ""}" data-cat="${c.key}"><span class="em">${c.emoji}</span>${c.label}</button>`).join("")}
@@ -683,39 +683,39 @@ function renderLog() {
           </div>
         </div>
         <div class="meter-col">
-          <span class="end">😍</span>
+          <span class="end">ðŸ˜</span>
           <span class="end-lbl">again<br/>ASAP</span>
           <div class="vtrack" id="f-meter">
             <div class="fill" id="f-meter-fill"></div>
             <div class="thumb" id="f-meter-thumb"></div>
           </div>
           <span class="end-lbl">never<br/>again</span>
-          <span class="end">😵</span>
+          <span class="end">ðŸ˜µ</span>
         </div>
       </div>
       <div class="verdict-word" id="f-verdict"></div>
 
       <div class="link-row">
         <button class="addnote-link" id="f-note-toggle" type="button">+ add a note</button>
-        <button class="capsule-toggle" id="f-capsule-toggle" type="button">💌 note to next year</button>
+        <button class="capsule-toggle" id="f-capsule-toggle" type="button">ðŸ’Œ note to next year</button>
       </div>
       <label class="field ${draft.notes ? "" : "hidden"}" id="f-notes-wrap"><span>Notes / memories</span>
         <textarea id="f-notes" placeholder="What made it good (or not)?">${escHtml(draft.notes)}</textarea></label>
 
       <div class="capsule-wrap ${draft.capsule ? "" : "hidden"}" id="f-capsule-wrap">
         <div class="capsule-field">
-          <div class="capsule-head">💌 To future us <span class="when">opens ${fmtDate(capsuleOpenDate(draft.date))}</span></div>
-          <textarea id="f-capsule" placeholder="If you're reading this…">${escHtml(draft.capsule)}</textarea>
+          <div class="capsule-head">ðŸ’Œ To future us <span class="when">opens ${fmtDate(capsuleOpenDate(draft.date))}</span></div>
+          <textarea id="f-capsule" placeholder="If you're reading thisâ€¦">${escHtml(draft.capsule)}</textarea>
         </div>
       </div>
 
       <button class="addnote-link" id="f-link-toggle" type="button">+ add a link</button>
-      <label class="field ${draft.url ? "" : "hidden"}" id="f-link-wrap"><span>Link <span class="muted" style="font-weight:400">(optional — booking page, Pinterest…)</span></span>
-        <input id="f-url" type="url" inputmode="url" placeholder="https://…" value="${escAttr(draft.url || "")}"/></label>
+      <label class="field ${draft.url ? "" : "hidden"}" id="f-link-wrap"><span>Link <span class="muted" style="font-weight:400">(optional â€” booking page, Pinterestâ€¦)</span></span>
+        <input id="f-url" type="url" inputmode="url" placeholder="https://â€¦" value="${escAttr(draft.url || "")}"/></label>
 
       <div class="btn-row">
         ${isEdit ? `<button class="btn ghost" id="f-cancel">Cancel</button>` : ""}
-        <button class="btn" id="f-save">${isEdit ? "Save changes" : "Save date ♥"}</button>
+        <button class="btn" id="f-save">${isEdit ? "Save changes" : "Save date â™¥"}</button>
       </div>
     </section>
   `;
@@ -748,7 +748,7 @@ function pastVibes() {
 }
 
 // History "Vibe" filter chips: legacy MOOD_OPTIONS actually present in data, plus
-// free-text vibe words from v2 entries — so new-entry vibes are filterable too.
+// free-text vibe words from v2 entries â€” so new-entry vibes are filterable too.
 function historyVibeChips() {
   const present = new Set();
   done().forEach(e => { if (Array.isArray(e.mood)) e.mood.forEach(k => present.add(k)); });
@@ -756,7 +756,7 @@ function historyVibeChips() {
   const moodLabels = new Set(moodChips.map(m => m.label.toLowerCase()));
   const vibeChips = rawVibeWords()
     .filter(w => !moodLabels.has(w))
-    .map(w => ({ key: w, label: w, emoji: "💬" }));
+    .map(w => ({ key: w, label: w, emoji: "ðŸ’¬" }));
   return [...moodChips, ...vibeChips];
 }
 
@@ -768,7 +768,7 @@ function histVibeMatches(e, k) {
   return (e.vibe || "").trim().toLowerCase() === label;
 }
 
-// Paint the again-o-meter from draft.enjoyment (1–5).
+// Paint the again-o-meter from draft.enjoyment (1â€“5).
 function paintMeter() {
   const v = formEl();
   const m = METER[draft.enjoyment - 1] || METER[3];
@@ -777,7 +777,7 @@ function paintMeter() {
   const thumb = v.querySelector("#f-meter-thumb");
   thumb.style.top = (100 - pct) + "%";
   thumb.textContent = m.face;
-  v.querySelector("#f-verdict").textContent = `“${m.word}”`;
+  v.querySelector("#f-verdict").textContent = `â€œ${m.word}â€`;
 }
 
 function wireForm() {
@@ -803,7 +803,7 @@ function wireForm() {
     v.querySelector("#f-cat-current").textContent = catShort(b.dataset.cat);
   });
 
-  // cost tiers — the tier is canonical; a representative ₪ lands in `cost` so
+  // cost tiers â€” the tier is canonical; a representative â‚ª lands in `cost` so
   // spend analytics keep working (approximate by design)
   v.querySelector("#f-cost").addEventListener("click", e => {
     const b = e.target.closest("[data-tier]"); if (!b) return;
@@ -878,10 +878,10 @@ async function renderPhotoStrip() {
   shot.classList.toggle("empty", !thumbs.length);
   shot.innerHTML = thumbs.length
     ? `<img src="${thumbs[0].url}" alt=""/>${thumbs.length > 1 ? `<span class="count-badge">+${thumbs.length - 1}</span>` : ""}`
-    : `<span class="pshot-empty"><span class="big">📸</span><span class="hint">Tap to add photos</span><span class="srcs">Camera · Gallery · Google Photos</span></span>`;
+    : `<span class="pshot-empty"><span class="big">ðŸ“¸</span><span class="hint">Tap to add photos</span><span class="srcs">Camera Â· Gallery Â· Google Photos</span></span>`;
 
   strip.innerHTML = thumbs.map(t =>
-    `<div class="photo-thumb"><img src="${t.url}" alt=""/><button data-rm="${t.id}">✕</button></div>`).join("");
+    `<div class="photo-thumb"><img src="${t.url}" alt=""/><button data-rm="${t.id}">âœ•</button></div>`).join("");
   strip.querySelectorAll("[data-rm]").forEach(b => b.addEventListener("click", () => {
     draft.photos = draft.photos.filter(p => p !== b.dataset.rm);
     renderPhotoStrip();
@@ -905,7 +905,7 @@ async function onPhotoPick(e) {
 }
 
 // Set "When" from the photo's EXIF capture date, but only while the date is still
-// the untouched default — never clobber a date the user picked.
+// the untouched default â€” never clobber a date the user picked.
 async function dateFromPhoto(file) {
   if (dateTouched) return;
   const { readExif } = await import("./exif.js");
@@ -928,7 +928,7 @@ async function dateFromPhoto(file) {
   };
 }
 
-// Google Photos Picker — cloud photos the file input can't see. Lazy-loaded.
+// Google Photos Picker â€” cloud photos the file input can't see. Lazy-loaded.
 let gpModule = null;
 async function pickGooglePhotos() {
   try {
@@ -957,7 +957,7 @@ async function saveDraft() {
   if (draft.url && !/^https?:\/\//i.test(draft.url)) draft.url = "https://" + draft.url;
   if (draft.url) {
     // Chrome's URL parser percent-encodes spaces instead of throwing, so a bare
-    // try/new URL lets "https://not a url" through — also require a dotted host.
+    // try/new URL lets "https://not a url" through â€” also require a dotted host.
     let ok = !/\s/.test(draft.url);
     try { ok = ok && new URL(draft.url).hostname.includes("."); } catch { ok = false; }
     if (!ok) { toast("That link doesn't look right"); return; }
@@ -968,9 +968,9 @@ async function saveDraft() {
   draft.ratings = { ...(draft.ratings || {}), [myKey()]: draft.enjoyment };
   await db.putDate(draft);
   if (isNew) push.sendNewDatePush(draft.title); // fire-and-forget; no-op unless syncing
-  maybeRequestPersist(); // first date saved → ask browser to protect our storage
+  maybeRequestPersist(); // first date saved â†’ ask browser to protect our storage
   await reload();
-  toast(editingId ? "Updated ♥" : "Date saved ♥");
+  toast(editingId ? "Updated â™¥" : "Date saved â™¥");
   resetDraft();
   closeLogSheet();
   show(currentTab);
@@ -1002,9 +1002,9 @@ async function renderList() {
   if (!host) return;
   const logged = done();
   if (!logged.length) {
-    host.innerHTML = `<div class="empty2"><div class="big">💌</div><h3>Your story starts here</h3>
-      <span class="alt">tap <b class="fab-hint">＋</b> to log your first date ↘</span>
-      <span class="alt">just looking? <b>Add sample dates</b> from the ⋯ menu</span></div>`;
+    host.innerHTML = `<div class="empty2"><div class="big">ðŸ’Œ</div><h3>Your story starts here</h3>
+      <span class="alt">tap <b class="fab-hint">ï¼‹</b> to log your first date â†˜</span>
+      <span class="alt">just looking? <b>Add sample dates</b> from the â‹¯ menu</span></div>`;
     return;
   }
   const sorted = [...logged].sort((a, b) => entryTimeMs(b) - entryTimeMs(a)).slice(0, 5);
@@ -1019,8 +1019,8 @@ async function renderList() {
       <span class="stk tape">${fmtDate(e.date)}</span>
       <span class="stk cat">${catEmoji(e.category)}</span>
       ${e.vibe ? `<span class="stk vibe">${escHtml(e.vibe)}</span>` : ""}
-      ${r ? `<span class="stk hearts">${"♥".repeat(r.value)}${"♡".repeat(5 - r.value)}</span>` : ""}
-      <span class="stk caption">${escHtml(e.title)}<span class="sub">${catLabel(e.category)}${cost ? " · " + cost : ""}</span></span>
+      ${r ? `<span class="stk hearts">${"â™¥".repeat(r.value)}${"â™¡".repeat(5 - r.value)}</span>` : ""}
+      <span class="stk caption">${escHtml(e.title)}<span class="sub">${catLabel(e.category)}${cost ? " Â· " + cost : ""}</span></span>
     </div>`;
   }).join("");
   host.querySelectorAll("[data-open]").forEach(card =>
@@ -1071,14 +1071,14 @@ async function fillMosaic(el, ids, cat, detail) {
 function renderHistory() {
   const v = viewEl();
   if (!dates.length) {
-    v.innerHTML = emptyState2("📸", "No memories yet", { alts: [`tap <b class="fab-hint">＋</b> to log a date — photos welcome ↘`] });
+    v.innerHTML = emptyState2("ðŸ“¸", "No memories yet", { alts: [`tap <b class="fab-hint">ï¼‹</b> to log a date â€” photos welcome â†˜`] });
     return;
   }
 
   v.innerHTML = `
     <section class="card tight">
       <div class="hist-row1">
-        <input class="h-search" id="h-search" type="text" placeholder="Search dates…" value="${escAttr(hist.query)}"/>
+        <input class="h-search" id="h-search" type="text" placeholder="Search datesâ€¦" value="${escAttr(hist.query)}"/>
         <select id="h-sort" title="Sort by">
           <option value="date-desc" ${hist.sort === "date-desc" ? "selected" : ""}>Newest</option>
           <option value="date-asc" ${hist.sort === "date-asc" ? "selected" : ""}>Oldest</option>
@@ -1086,22 +1086,22 @@ function renderHistory() {
           <option value="enjoy-asc" ${hist.sort === "enjoy-asc" ? "selected" : ""}>Worst rated</option>
           <option value="cost-desc" ${hist.sort === "cost-desc" ? "selected" : ""}>Priciest</option>
           <option value="cost-asc" ${hist.sort === "cost-asc" ? "selected" : ""}>Cheapest</option>
-          <option value="title-asc" ${hist.sort === "title-asc" ? "selected" : ""}>Title A–Z</option>
+          <option value="title-asc" ${hist.sort === "title-asc" ? "selected" : ""}>Title Aâ€“Z</option>
         </select>
       </div>
       <div class="hist-row2">
         <div class="hist-view-toggle">
-          <button class="seg ${hist.view === "list" ? "on" : ""}" data-view="list" title="List">☰</button>
-          <button class="seg ${hist.view === "gallery" ? "on" : ""}" data-view="gallery" title="Gallery">⊞</button>
-          <button class="seg ${hist.view === "wishlist" ? "on" : ""}" data-view="wishlist" title="Wishlist">☆</button>
+          <button class="seg ${hist.view === "list" ? "on" : ""}" data-view="list" title="List">â˜°</button>
+          <button class="seg ${hist.view === "gallery" ? "on" : ""}" data-view="gallery" title="Gallery">âŠž</button>
+          <button class="seg ${hist.view === "wishlist" ? "on" : ""}" data-view="wishlist" title="Wishlist">â˜†</button>
         </div>
-        <button class="seg slideshow-btn" id="h-slideshow" title="Play a slideshow of your highlights">▶</button>
+        <button class="seg slideshow-btn" id="h-slideshow" title="Play a slideshow of your highlights">â–¶</button>
         <details class="filter-group" id="h-cat-group">
           <summary>
             <span class="fg-label">Category</span>
             <span class="fg-right">
               ${hist.category ? `<span class="fg-badge">${CATEGORIES.find(c => c.key === hist.category)?.emoji} ${CATEGORIES.find(c => c.key === hist.category)?.label}</span>` : ""}
-              <span class="fg-arrow">▼</span>
+              <span class="fg-arrow">â–¼</span>
             </span>
           </summary>
           <div class="chips" id="h-cat">
@@ -1114,7 +1114,7 @@ function renderHistory() {
             <span class="fg-label">Vibe</span>
             <span class="fg-right">
               ${hist.moods.length ? `<span class="fg-badge">${hist.moods.length === 1 ? (historyVibeChips().find(m => m.key === hist.moods[0])?.emoji + " " + historyVibeChips().find(m => m.key === hist.moods[0])?.label) : hist.moods.length + " selected"}</span>` : ""}
-              <span class="fg-arrow">▼</span>
+              <span class="fg-arrow">â–¼</span>
             </span>
           </summary>
           <div class="chips" id="h-mood">
@@ -1217,7 +1217,7 @@ async function renderHistoryList() {
     const photoEntries = list.flatMap(e => (e.photos || []).map(pid => ({ pid, e })));
     if (countEl) countEl.textContent = `${photoEntries.length} photo${photoEntries.length !== 1 ? "s" : ""}`;
     if (!photoEntries.length) {
-      host.innerHTML = `<div class="empty"><div class="big">📷</div>No photos for this filter.</div>`;
+      host.innerHTML = `<div class="empty"><div class="big">ðŸ“·</div>No photos for this filter.</div>`;
       return;
     }
     host.innerHTML = `<div class="hist-gallery">${photoEntries.map(({ pid, e }, i) =>
@@ -1242,7 +1242,7 @@ async function renderHistoryList() {
 
   if (countEl) countEl.textContent = `${list.length} date${list.length !== 1 ? "s" : ""}`;
   if (!list.length) {
-    host.innerHTML = `<div class="empty"><div class="big">🔍</div>No dates match this filter.</div>`;
+    host.innerHTML = `<div class="empty"><div class="big">ðŸ”</div>No dates match this filter.</div>`;
     return;
   }
   host.innerHTML = list.map(e => {
@@ -1260,7 +1260,7 @@ async function renderHistoryList() {
         <div class="body">
           <span class="tape-sm">${fmtDateShort(e.date)}</span>
           <h4>${escHtml(e.title)}</h4>
-          <div class="sub">${catLabel(e.category)}${tierPill(e) ? " · " + tierPill(e) : ""} ${heartsHtml(e.enjoyment)}</div>
+          <div class="sub">${catLabel(e.category)}${tierPill(e) ? " Â· " + tierPill(e) : ""} ${heartsHtml(e.enjoyment)}</div>
         </div>
       </div>
     </div>`;
@@ -1283,12 +1283,12 @@ async function renderHistoryList() {
 
 // Tap anywhere in the background to collapse the expanded Album entry. The
 // expanded card fills the list, so the visible background (page margins, the
-// area below the list) sits OUTSIDE #hist-list — hence a document-level
+// area below the list) sits OUTSIDE #hist-list â€” hence a document-level
 // listener. Taps on any control or overlay are left alone.
 document.addEventListener("click", ev => {
   if (!hist.expanded || !document.querySelector(".hist-entry.open")) return;
   // a detached target means another handler already re-rendered on this click
-  // (row expand, home-card jump) — that's never a background tap
+  // (row expand, home-card jump) â€” that's never a background tap
   if (!ev.target.isConnected) return;
   if (ev.target.closest(".hist-entry, .lightbox, .menu-pop, .logsheet, .sheet, button, summary, a, input, textarea, select, label")) return;
   hist.expanded = null;
@@ -1309,15 +1309,15 @@ function histDetail(e) {
   const { lines, mineRated } = resolveRatings(e);
   const rateLines = lines.map(l => `
     <div class="rate-line">
-      ${l.initial === "★" ? "" : `<span class="who ${l.mine ? "me" : "them"}">${escHtml(l.initial)}</span>`}
+      ${l.initial === "â˜…" ? "" : `<span class="who ${l.mine ? "me" : "them"}">${escHtml(l.initial)}</span>`}
       ${l.name ? `<span class="name">${escHtml(l.name)}</span>` : ""}
       <span class="stars">${heartsHtml(l.value)}</span>
     </div>`).join("");
   const rateInput = mineRated ? "" : `
     <div class="rate-line">
       <span class="who me">${escHtml(myInitial())}</span><span class="name">You</span>
-      <button class="btn rate-cta" style="width:auto;padding:5px 14px;font-size:13px" data-rate-cta="${escAttr(e.id)}">Rate ♥</button>
-      <span class="big-stars hidden" data-rate="${escAttr(e.id)}">${[1, 2, 3, 4, 5].map(n => `<span class="rk off" data-k="${n}">♥</span>`).join("")}</span>
+      <button class="btn rate-cta" style="width:auto;padding:5px 14px;font-size:13px" data-rate-cta="${escAttr(e.id)}">Rate â™¥</button>
+      <span class="big-stars hidden" data-rate="${escAttr(e.id)}">${[1, 2, 3, 4, 5].map(n => `<span class="rk off" data-k="${n}">â™¥</span>`).join("")}</span>
     </div>`;
 
   // only mood chips below the photo; wouldRepeat/effort/location moved elsewhere
@@ -1337,14 +1337,14 @@ function histDetail(e) {
   }).join("");
 
   const photos = e.photos || [];
-  const sub = [catLabel(e.category), costBadge(e), e.durationMin ? fmtDuration(e.durationMin) : "", e.location ? "📍 " + escHtml(e.location) : ""]
-    .filter(Boolean).join(" · ");
+  const sub = [catLabel(e.category), costBadge(e), e.durationMin ? fmtDuration(e.durationMin) : "", e.location ? "ðŸ“ " + escHtml(e.location) : ""]
+    .filter(Boolean).join(" Â· ");
   const hero = `
     <div class="hist-hero${photos.length ? "" : " empty"}" data-hero data-photos="${escAttr(photos.join(","))}" data-active="0" data-title="${escAttr(e.title)}">
       ${photos.length ? `<img class="hist-hero-img" data-hero-img src="" alt=""/>` : `<div class="hist-hero-emoji">${catEmoji(e.category)}</div>`}
       <span class="stk tape">${fmtDateWeekday(e.date)}</span>
       <span class="stk cat">${catEmoji(e.category)}</span>
-      <button class="kebab hist-hero-kebab" data-kebab="${escAttr(e.id)}">⋯</button>
+      <button class="kebab hist-hero-kebab" data-kebab="${escAttr(e.id)}">â‹¯</button>
       <div class="hist-hero-title" data-collapse="${escAttr(e.id)}">
         <h3>${escHtml(e.title)}</h3>
         ${sub ? `<div class="sub">${sub}</div>` : ""}
@@ -1366,7 +1366,7 @@ function histDetail(e) {
       <h5>Notes to each other</h5>
       ${comments}
       <div class="cmt-input">
-        <input placeholder="Add a note…" data-cmt="${escAttr(e.id)}"/><button data-cmt-send="${escAttr(e.id)}">➤</button>
+        <input placeholder="Add a noteâ€¦" data-cmt="${escAttr(e.id)}"/><button data-cmt-send="${escAttr(e.id)}">âž¤</button>
       </div>
     </div>
   </div>`;
@@ -1380,7 +1380,7 @@ function wireHistDetail(host) {
     const id = btn.dataset.kebab;
     const pop = document.createElement("div");
     pop.className = "menu-pop";
-    pop.innerHTML = `<div data-edit="${escAttr(id)}">✎ Edit</div><div class="danger" data-del="${escAttr(id)}">🗑 Delete</div>`;
+    pop.innerHTML = `<div data-edit="${escAttr(id)}">âœŽ Edit</div><div class="danger" data-del="${escAttr(id)}">ðŸ—‘ Delete</div>`;
     btn.closest(".hist-entry").appendChild(pop);
     pop.querySelector("[data-edit]").addEventListener("click", ev2 => { ev2.stopPropagation(); editEntry(id); });
     pop.querySelector("[data-del]").addEventListener("click", async ev2 => {
@@ -1393,7 +1393,7 @@ function wireHistDetail(host) {
     setTimeout(() => document.addEventListener("click", close), 0);
   }));
 
-  // "Rate ♥" pill swaps inline into the 5-heart input
+  // "Rate â™¥" pill swaps inline into the 5-heart input
   host.querySelectorAll("[data-rate-cta]").forEach(btn => btn.addEventListener("click", ev => {
     ev.stopPropagation();
     const stars = btn.nextElementSibling;
@@ -1483,14 +1483,14 @@ function wishlistIdeas() {
       (e.location || "").toLowerCase().includes(q)
     );
   }
-  // vibe filter has no meaning for un-rated ideas — ignored rather than matching nothing
+  // vibe filter has no meaning for un-rated ideas â€” ignored rather than matching nothing
   const cmp = {
     "date-desc": (a, b) => entryTimeMs(b) - entryTimeMs(a),
     "date-asc":  (a, b) => entryTimeMs(a) - entryTimeMs(b),
     "cost-desc": (a, b) => (b.cost ?? -1) - (a.cost ?? -1) || entryTimeMs(b) - entryTimeMs(a),
     "cost-asc":  (a, b) => (a.cost ?? Infinity) - (b.cost ?? Infinity) || entryTimeMs(b) - entryTimeMs(a),
     "title-asc": (a, b) => a.title.localeCompare(b.title),
-    // enjoy-* is meaningless for un-rated ideas — fall back to newest-first
+    // enjoy-* is meaningless for un-rated ideas â€” fall back to newest-first
   };
   ideas.sort(cmp[hist.sort] || cmp["date-desc"]);
   return ideas;
@@ -1500,24 +1500,24 @@ function renderWishlist(host, countEl) {
   const ideas = wishlistIdeas();
   if (countEl) countEl.textContent = `${ideas.length} idea${ideas.length !== 1 ? "s" : ""}`;
   if (!ideas.length) {
-    host.innerHTML = emptyState2("☆", "Nothing saved yet", {
-      sub: `Tap <b style="color:var(--accent)">♡ Wishlist</b> on any idea to keep it here.`,
-      cta: "Find an idea →",
+    host.innerHTML = emptyState2("â˜†", "Nothing saved yet", {
+      sub: `Tap <b style="color:var(--accent)">â™¡ Wishlist</b> on any idea to keep it here.`,
+      cta: "Find an idea â†’",
     });
     wireEmpty2Cta(host);
     return;
   }
   host.innerHTML = `<h3 class="section-title">Want to try (${ideas.length})</h3>` + ideas.map(e => `
     <div class="card tight" style="position:relative">
-      <button class="card-x" title="Remove" data-rmidea="${escAttr(e.id)}">✕</button>
+      <button class="card-x" title="Remove" data-rmidea="${escAttr(e.id)}">âœ•</button>
       <div class="entry">
         <div class="thumb">${catEmoji(e.category)}</div>
         <div class="meta">
           <h4>${escHtml(e.title)}</h4>
-          <div class="sub">${catLabel(e.category)}${tierPill(e) ? " · " + tierPill(e) : ""}${e.effort ? " · " + "⚡".repeat(e.effort) : ""}</div>
-          ${e.url ? `<a class="url-link" href="${escAttr(safeUrl(e.url))}" target="_blank" rel="noopener">🔗 ${escHtml(prettyUrl(e.url))}</a>` : ""}
+          <div class="sub">${catLabel(e.category)}${tierPill(e) ? " Â· " + tierPill(e) : ""}${e.effort ? " Â· " + "âš¡".repeat(e.effort) : ""}</div>
+          ${e.url ? `<a class="url-link" href="${escAttr(safeUrl(e.url))}" target="_blank" rel="noopener">ðŸ”— ${escHtml(prettyUrl(e.url))}</a>` : ""}
         </div>
-        <button class="row-cta" data-didit="${escAttr(e.id)}">Log it →</button>
+        <button class="row-cta" data-didit="${escAttr(e.id)}">Log it â†’</button>
       </div>
     </div>`).join("");
   host.querySelectorAll("[data-didit]").forEach(b => b.addEventListener("click", () => logIdea(b.dataset.didit)));
@@ -1525,7 +1525,7 @@ function renderWishlist(host, countEl) {
 }
 
 // Turn a wishlist idea into a real logged date: same doc (keeps id + url), status
-// flips to done on save. editingId set so saveDraft updates in place — no duplicate.
+// flips to done on save. editingId set so saveDraft updates in place â€” no duplicate.
 async function logIdea(id) {
   const idea = await db.getDate(id);
   if (!idea) return;
@@ -1534,7 +1534,7 @@ async function logIdea(id) {
   draft.date = todayISO();
   editingId = id;
   openLogSheet();
-  toast("Fill in how it went, then save ♥");
+  toast("Fill in how it went, then save â™¥");
 }
 
 async function removeIdea(id) {
@@ -1563,7 +1563,7 @@ function topVibeWords(list, n) {
   return [...freq.entries()].sort((a, b) => b[1] - a[1]).slice(0, n).map(([w]) => w);
 }
 
-// Full month name only ("June"), not a specific date — Release triage backlog, v2.1.0.
+// Full month name only ("June"), not a specific date â€” Release triage backlog, v2.1.0.
 function fullMonthName(ym) {
   const [y, m] = ym.split("-");
   return new Date(Number(y), Number(m) - 1, 1).toLocaleDateString(undefined, { month: "long" });
@@ -1577,13 +1577,13 @@ function wrappedStats(period) {
   if (period === "year" && !list.length && done().length) {
     list = done();
     effPeriod = "all";
-    fallbackNote = `No dates in ${year} yet — showing all time`;
+    fallbackNote = `No dates in ${year} yet â€” showing all time`;
   }
   const periodLabel = effPeriod === "year" ? `${year} SO FAR` : "ALL TIME";
   const s = A.summary(list);
   if (!s.count) return { periodLabel, count: 0 };
   const cats = A.byCategory(list);
-  // most-dated category wins "favorite" (tie-break by avg enjoyment) — sorting
+  // most-dated category wins "favorite" (tie-break by avg enjoyment) â€” sorting
   // purely by avg enjoyment let a single 5-heart outlier beat a real favorite.
   const favCat = cats.length
     ? [...cats].sort((a, b) => b.count - a.count || b.avgEnjoyment - a.avgEnjoyment)[0]
@@ -1630,7 +1630,7 @@ async function onShareWrapped() {
         await navigator.share({ files: [file] });
         return;
       } catch (err) {
-        if (err?.name === "AbortError") return; // user cancelled — stay silent
+        if (err?.name === "AbortError") return; // user cancelled â€” stay silent
         // any other rejection (e.g. share sheet failed) falls through to download below
       }
     }
@@ -1660,7 +1660,7 @@ function wireInsights() {
     el.addEventListener("click", () => openEntryByNormTitle(el.dataset.normTitle)));
 }
 
-// Most repeat-worthy rows are grouped by normalized title (no single entry id) —
+// Most repeat-worthy rows are grouped by normalized title (no single entry id) â€”
 // jump to the most recent logged entry that matches, same detail-expand path as
 // Home's Recent Memories / History's openEntry.
 function openEntryByNormTitle(normT) {
@@ -1673,9 +1673,9 @@ function renderInsights() {
   const v = viewEl();
   const d = done();  // exclude wishlist ideas from every analytic below
   if (!d.length) {
-    v.innerHTML = emptyState2("📊", "Charts need a little fuel", {
+    v.innerHTML = emptyState2("ðŸ“Š", "Charts need a little fuel", {
       sub: "Find something to do, log it, and this fills with what you two love.",
-      cta: "Find an idea →",
+      cta: "Find an idea â†’",
     });
     wireEmpty2Cta(v);
     return;
@@ -1702,8 +1702,8 @@ function renderInsights() {
       const opt = MOOD_OPTIONS.find(o => o.key === m.key);
       const topCat = m.topCategory ? catEmoji(m.topCategory) : "";
       return `<div class="vibe-row">
-        <div class="emo">${opt?.emoji ?? "🎭"}</div>
-        <div class="meta2"><h4>${opt?.label ?? m.key}</h4><div class="sub">avg ${m.avgEnjoyment.toFixed(1)}♥${topCat ? ` · ${topCat}` : ""}</div></div>
+        <div class="emo">${opt?.emoji ?? "ðŸŽ­"}</div>
+        <div class="meta2"><h4>${opt?.label ?? m.key}</h4><div class="sub">avg ${m.avgEnjoyment.toFixed(1)}â™¥${topCat ? ` Â· ${topCat}` : ""}</div></div>
         <div class="bar"><div class="track"><div class="fill" style="width:${(m.count / maxCount) * 100}%"></div></div></div>
         <div class="n">${m.count}</div>
       </div>`;
@@ -1711,7 +1711,7 @@ function renderInsights() {
   })() : "";
 
   v.innerHTML = `
-    <h3 class="section-title" style="margin-top:0">Your Wrapped ✨</h3>
+    <h3 class="section-title" style="margin-top:0">Your Wrapped âœ¨</h3>
     <div class="card wrap-card">
       <div class="seg-row">
         <button class="seg ${wrapPeriod === "year" ? "on" : ""}" data-wrap-period="year">This year</button>
@@ -1719,11 +1719,11 @@ function renderInsights() {
       </div>
       <div class="chart-wrap">${C.wrappedCard(wStats, document.documentElement.dataset.theme || "plum")}</div>
       ${wStats.fallbackNote ? `<p class="muted small" style="margin:6px 0 0">${escHtml(wStats.fallbackNote)}</p>` : ""}
-      <button class="btn" id="wrap-share" style="margin-top:12px" ${wStats.count ? "" : "disabled"}>Share this card ↗</button>
+      <button class="btn" id="wrap-share" style="margin-top:12px" ${wStats.count ? "" : "disabled"}>Share this card â†—</button>
     </div>
 
     <div class="stat-grid">
-      <div class="stat"><div class="num">${wStats.usualTier ? wStats.usualTier.label : "—"}</div><div class="lbl">Typical date</div></div>
+      <div class="stat"><div class="num">${wStats.usualTier ? wStats.usualTier.label : "â€”"}</div><div class="lbl">Typical date</div></div>
       <div class="stat"><div class="num">${wStats.distinctCategories ?? 0}/${wStats.totalCategories ?? 0}</div><div class="lbl">Categories tried</div></div>
     </div>
 
@@ -1738,8 +1738,8 @@ function renderInsights() {
     <h3 class="section-title">Best value for money</h3>
     <div class="card tight">${vfm.length ? vfm.map(d => {
       const tier = d.costTier || tierForCost(d.cost);
-      const pill = tier ? `<span class="tier-pill${tier === "free" ? " free" : ""}">${tierLabel(tier)}</span> · ` : "";
-      const hearts = `<span class="hearts">${"♥".repeat(d.enjoyment)}<span class="off">${"♡".repeat(5 - d.enjoyment)}</span></span>`;
+      const pill = tier ? `<span class="tier-pill${tier === "free" ? " free" : ""}">${tierLabel(tier)}</span> Â· ` : "";
+      const hearts = `<span class="hearts">${"â™¥".repeat(d.enjoyment)}<span class="off">${"â™¡".repeat(5 - d.enjoyment)}</span></span>`;
       return `
       <div class="entry" style="padding:6px 0;cursor:pointer" data-open="${escAttr(d.id)}">
         <div class="thumb">${catEmoji(d.category)}</div>
@@ -1751,7 +1751,7 @@ function renderInsights() {
     <div class="card tight">${rep.map(r => `
       <div class="entry" style="padding:6px 0;cursor:pointer" data-norm-title="${escAttr(normTitle(r.title))}">
         <div class="thumb">${catEmoji(r.category)}</div>
-        <div class="meta"><h4>${escHtml(r.title)}</h4><div class="sub">${r.avgEnjoyment.toFixed(1)}♥ · done ${r.count}×</div></div>
+        <div class="meta"><h4>${escHtml(r.title)}</h4><div class="sub">${r.avgEnjoyment.toFixed(1)}â™¥ Â· done ${r.count}Ã—</div></div>
       </div>`).join("")}</div>
 
     <h3 class="section-title">Adventure balance</h3>
@@ -1774,9 +1774,9 @@ function renderSuggest() {
     <section class="card">
       <h2 style="margin:0 0 10px">Date night ideas</h2>
       <div class="slider-row" style="${coldStart ? "opacity:.45" : ""}">
-        <span title="repeat favorites">🛋️</span>
+        <span title="repeat favorites">ðŸ›‹ï¸</span>
         <input id="s-explore" type="range" min="0" max="100" value="${Math.round(sug.explore * 100)}" ${coldStart ? "disabled" : ""}/>
-        <span title="try new things">🧭</span>
+        <span title="try new things">ðŸ§­</span>
       </div>
       ${coldStart
         ? `<div class="slider-ends"><span class="muted-hint">unlocks after your first logged date</span></div>`
@@ -1788,14 +1788,14 @@ function renderSuggest() {
         </div>
         <details class="filter-group effort" id="s-effort-group">
           <summary>
-            <span class="fg-right"><span class="fg-badge${sug.maxEffort ? "" : " muted"}">${sug.maxEffort ? "⚡".repeat(sug.maxEffort) : "Any"}</span></span>
-            <span class="fg-arrow">▼</span>
+            <span class="fg-right"><span class="fg-badge${sug.maxEffort ? "" : " muted"}">${sug.maxEffort ? "âš¡".repeat(sug.maxEffort) : "Any"}</span></span>
+            <span class="fg-arrow">â–¼</span>
           </summary>
           <div class="chips-row" id="s-effort">
             <button class="chip-sm ${sug.maxEffort == null ? "on" : ""}" data-seffort="">Any</button>
-            <button class="chip-sm ${sug.maxEffort === 1 ? "on" : ""}" data-seffort="1">⚡</button>
-            <button class="chip-sm ${sug.maxEffort === 2 ? "on" : ""}" data-seffort="2">⚡⚡</button>
-            <button class="chip-sm ${sug.maxEffort === 3 ? "on" : ""}" data-seffort="3">⚡⚡⚡</button>
+            <button class="chip-sm ${sug.maxEffort === 1 ? "on" : ""}" data-seffort="1">âš¡</button>
+            <button class="chip-sm ${sug.maxEffort === 2 ? "on" : ""}" data-seffort="2">âš¡âš¡</button>
+            <button class="chip-sm ${sug.maxEffort === 3 ? "on" : ""}" data-seffort="3">âš¡âš¡âš¡</button>
           </div>
         </details>
 
@@ -1804,7 +1804,7 @@ function renderSuggest() {
             <span class="fg-label">Category</span>
             <span class="fg-right">
               ${sug.category ? `<span class="fg-badge">${CATEGORIES.find(c => c.key === sug.category)?.emoji} ${CATEGORIES.find(c => c.key === sug.category)?.label}</span>` : ""}
-              <span class="fg-arrow">▼</span>
+              <span class="fg-arrow">â–¼</span>
             </span>
           </summary>
           <div class="chips" id="s-cat">
@@ -1818,7 +1818,7 @@ function renderSuggest() {
             <span class="fg-label">Vibe</span>
             <span class="fg-right">
               ${sug.moods.length ? `<span class="fg-badge">${sug.moods.length === 1 ? (MOOD_OPTIONS.find(m => m.key === sug.moods[0])?.emoji + " " + MOOD_OPTIONS.find(m => m.key === sug.moods[0])?.label) : sug.moods.length + " selected"}</span>` : ""}
-              <span class="fg-arrow">▼</span>
+              <span class="fg-arrow">â–¼</span>
             </span>
           </summary>
           <div class="chips" id="s-mood">
@@ -1828,8 +1828,8 @@ function renderSuggest() {
       </div>
 
       <div class="btn-row">
-        <button class="btn secondary" id="s-shuffle">🎲 Surprise us</button>
-        <button class="btn secondary" id="s-nearby">📍 Find nearby</button>
+        <button class="btn secondary" id="s-shuffle">ðŸŽ² Surprise us</button>
+        <button class="btn secondary" id="s-nearby">ðŸ“ Find nearby</button>
       </div>
     </section>
 
@@ -1839,26 +1839,26 @@ function renderSuggest() {
   loadSugPhotos();
 }
 
-let coldBannerDismissed = false; // ponytail: module-level, resets on reload — fine while user has zero dates
+let coldBannerDismissed = false; // ponytail: module-level, resets on reload â€” fine while user has zero dates
 
 function shortReason(r) {
   if (r.kind === "exploit") {
-    const gap = r.daysSince > 21 ? ` · last done ${humanGap(r.daysSince)} ago` : ` · done ${r.actTimes}×`;
-    return `${r.avgEnj.toFixed(1)}♥${gap}`;
+    const gap = r.daysSince > 21 ? ` Â· last done ${humanGap(r.daysSince)} ago` : ` Â· done ${r.actTimes}Ã—`;
+    return `${r.avgEnj.toFixed(1)}â™¥${gap}`;
   }
-  if (r.catTimes > 0 && r.catAvg != null) return `New in ${catLabel(r.category)} · you rate it ${r.catAvg.toFixed(1)}♥`;
-  return "A whole new kind of date — pure adventure.";
+  if (r.catTimes > 0 && r.catAvg != null) return `New in ${catLabel(r.category)} Â· you rate it ${r.catAvg.toFixed(1)}â™¥`;
+  return "A whole new kind of date â€” pure adventure.";
 }
 
 function renderSugCards(results) {
   const coldStart = done().length === 0;
   const banner = (coldStart && !coldBannerDismissed) ? `
     <div class="card cold-banner">
-      <button class="banner-x" data-dismiss-cold>✕</button>
-      <h3>${CATALOG.length} hand-picked ideas 🎁</h3>
+      <button class="banner-x" data-dismiss-cold>âœ•</button>
+      <h3>${CATALOG.length} hand-picked ideas ðŸŽ</h3>
       <p>Log dates and this tab learns your taste.</p>
     </div>` : "";
-  if (!results.length) return banner + emptyState("✨", "No ideas match", "Loosen your filters a little.");
+  if (!results.length) return banner + emptyState("âœ¨", "No ideas match", "Loosen your filters a little.");
   const saved = new Set(dates.filter(e => e.status === "idea").map(e => normTitle(e.title)));
   return banner + results.map(r => {
     const payload = escAttr(JSON.stringify({ title: r.title, category: r.category, cost: r.estCost ?? null, effort: r.effort }));
@@ -1866,7 +1866,7 @@ function renderSugCards(results) {
     const reason = coldStart ? (r.desc || r.reason) : shortReason(r);
     return `
     <div class="card sug-card ${r.kind}" data-norm-title="${escAttr(normTitle(r.title))}">
-      ${isSaved ? `<span class="sticker-tag butter">saved ♡</span>` : ""}
+      ${isSaved ? `<span class="sticker-tag butter">saved â™¡</span>` : ""}
       <div class="sug-body">
         <div class="sug-head">
           <h3>${catEmoji(r.category)} ${escHtml(r.title)} ${tierPill({ cost: r.estCost })}</h3>
@@ -1877,9 +1877,9 @@ function renderSugCards(results) {
       </div>
       <div class="sug-actions">
         ${isSaved
-          ? `<button class="heart-btn" data-unsave='${payload}' aria-label="Remove from wishlist">✓</button>`
-          : `<button class="heart-btn" data-save='${payload}' aria-label="Wishlist">♡</button>`}
-        <button class="btn secondary small" data-log='${payload}'>Log →</button>
+          ? `<button class="heart-btn" data-unsave='${payload}' aria-label="Remove from wishlist">âœ“</button>`
+          : `<button class="heart-btn" data-save='${payload}' aria-label="Wishlist">â™¡</button>`}
+        <button class="btn secondary small" data-log='${payload}'>Log â†’</button>
       </div>
     </div>`;
   }).join("");
@@ -1918,7 +1918,7 @@ function wireSuggest() {
     sug.maxEffort = b.dataset.seffort === "" ? null : Number(b.dataset.seffort);
     setOn(v.querySelectorAll("#s-effort .chip-sm"), b);
     const badge = v.querySelector("#s-effort-group summary .fg-badge");
-    if (badge) { badge.textContent = sug.maxEffort ? "⚡".repeat(sug.maxEffort) : "Any"; badge.classList.toggle("muted", !sug.maxEffort); }
+    if (badge) { badge.textContent = sug.maxEffort ? "âš¡".repeat(sug.maxEffort) : "Any"; badge.classList.toggle("muted", !sug.maxEffort); }
     v.querySelector("#s-effort-group").open = false;
     rerun();
   });
@@ -1959,7 +1959,7 @@ function wireSuggest() {
   bind("s-shuffle", "click", () => rerun(true));
   bind("s-nearby", "click", () => {
     if (!navigator.geolocation) { toast("Location not supported on this device"); return; }
-    toast("Getting your location…");
+    toast("Getting your locationâ€¦");
     navigator.geolocation.getCurrentPosition(
       pos => {
         const { latitude: lat, longitude: lng } = pos.coords;
@@ -1973,7 +1973,7 @@ function wireSuggest() {
         const q = (sug.category && categoryQueries[sug.category]) || "date ideas";
         window.open(`https://www.google.com/maps/search/${encodeURIComponent(q)}/@${lat},${lng},14z`, "_blank");
       },
-      () => toast("Couldn't get location — check browser permissions")
+      () => toast("Couldn't get location â€” check browser permissions")
     );
   });
   wireLogButtons();
@@ -1991,7 +1991,7 @@ function wireLogButtons() {
     Object.assign(draft, { title: seed.title, category: seed.category, cost: seed.cost, effort: seed.effort || 3 });
     editingId = null;
     openLogSheet();
-    toast("Pre-filled — save it after your date");
+    toast("Pre-filled â€” save it after your date");
   }));
   v.querySelectorAll("[data-save]").forEach(b => b.addEventListener("click", async () => {
     const seed = JSON.parse(b.dataset.save);
@@ -1999,7 +1999,7 @@ function wireLogButtons() {
     Object.assign(idea, { title: seed.title, category: seed.category, cost: seed.cost, effort: seed.effort || 3, status: "idea" });
     await db.putDate(idea);
     await reload();
-    toast("Saved to wishlist ♡");
+    toast("Saved to wishlist â™¡");
     const host = v.querySelector("#sug-results");
     if (host) { host.innerHTML = renderSugCards(suggest(done(), { ...sug, jitter: false })); wireLogButtons(); loadSugPhotos(); }
   }));
@@ -2070,11 +2070,11 @@ async function onSeed() {
 async function onWipe() {
   const last = await db.getSetting("lastExportAt", 0);
   if (!last || Date.now() - last > 30 * 86400e3) {
-    if (confirm("No recent backup — export before erasing?")) await onExport();
+    if (confirm("No recent backup â€” export before erasing?")) await onExport();
   }
   const cloud = db.getMode() === "cloud";
   const msg = cloud
-    ? "Erase ALL dates and photos in your shared space — for both of you? This cannot be undone."
+    ? "Erase ALL dates and photos in your shared space â€” for both of you? This cannot be undone."
     : "Erase ALL dates and photos? This cannot be undone.";
   if (!confirm(msg)) return;
   if (cloud && !confirm("This erases the shared space for BOTH partners. Continue?")) return;
@@ -2094,7 +2094,7 @@ async function onImportPhotos(e) {
   e.target.value = "";
   if (!files.length) return;
   document.getElementById("sheet").classList.add("hidden");
-  toast("Reading photos…");
+  toast("Reading photosâ€¦");
   const { readExif } = await import("./exif.js");
   // Group all photos taken on the same day into one candidate date entry.
   const byDate = new Map();
@@ -2127,7 +2127,7 @@ function openTriage(items) {
   box.className = "triage";
   box.innerHTML = `
     <div class="triage-head">
-      <strong>${nPhotos} photo${nPhotos > 1 ? "s" : ""} · ${items.length} date${items.length > 1 ? "s" : ""}</strong>
+      <strong>${nPhotos} photo${nPhotos > 1 ? "s" : ""} Â· ${items.length} date${items.length > 1 ? "s" : ""}</strong>
       <span class="muted small">Photos from the same day are grouped. Set a title &amp; category, or skip.</span>
     </div>
     <div class="triage-list">${items.map(triageCard).join("")}</div>
@@ -2201,7 +2201,7 @@ async function importTriage() {
     } catch (err) { console.error(err); }
   }
   await reload();
-  toast(n ? `Imported ${n} date${n > 1 ? "s" : ""} ♥` : "Nothing imported");
+  toast(n ? `Imported ${n} date${n > 1 ? "s" : ""} â™¥` : "Nothing imported");
   if (n) show("history");
 }
 
@@ -2218,7 +2218,7 @@ function myInitial() { return (db.getUser()?.displayName || "You").trim()[0]?.to
 
 // Resolve who rated what. Returns [{ key, mine, initial, name, value }] plus a `mineRated` flag.
 // Falls back to the legacy single `enjoyment` score (attributed to me) when there are no
-// per-person ratings yet — old entries still show their star line and I can still add mine.
+// per-person ratings yet â€” old entries still show their star line and I can still add mine.
 function resolveRatings(e) {
   const mk = myKey();
   const ratings = e.ratings && Object.keys(e.ratings).length ? e.ratings : null;
@@ -2230,8 +2230,8 @@ function resolveRatings(e) {
     }
     lines.sort((a, b) => (a.mine === b.mine ? 0 : a.mine ? -1 : 1)); // me first
   } else if (e.enjoyment) {
-    // legacy: unattributed single score — show it, but not "mine" so tap-to-rate still offers.
-    lines.push({ key: null, mine: false, value: e.enjoyment, initial: "★", name: "" });
+    // legacy: unattributed single score â€” show it, but not "mine" so tap-to-rate still offers.
+    lines.push({ key: null, mine: false, value: e.enjoyment, initial: "â˜…", name: "" });
   }
   return { lines, mineRated: !!(ratings && mk in ratings) };
 }
@@ -2269,7 +2269,7 @@ function relTime(ts) {
 // ---------- small helpers ----------
 // ids are unique app-wide (form ids live in the log sheet, tab ids in #view)
 function bind(id, ev, fn) { const el = document.getElementById(id); if (el) el.addEventListener(ev, fn); }
-// One coarse Free/$/$$/$$$ badge everywhere costs show — kills the mixed
+// One coarse Free/$/$$/$$$ badge everywhere costs show â€” kills the mixed
 // "Free" / shekel-glyph renderings (Release triage backlog, v2.1.0).
 function costBadge(e) {
   const key = e.costTier || tierForCost(e.cost);
@@ -2280,9 +2280,9 @@ function tierPill(e) {
   const key = e.costTier || tierForCost(e.cost);
   return key ? `<span class="tier-pill${key === "free" ? " free" : ""}">${tierLabel(key)}</span>` : "";
 }
-// rating as hearts (♥ filled, ♡ unfilled) — never ★
+// rating as hearts (â™¥ filled, â™¡ unfilled) â€” never â˜…
 function heartsHtml(n) {
-  return `<span class="hearts">${"♥".repeat(n)}<span class="off">${"♡".repeat(5 - n)}</span></span>`;
+  return `<span class="hearts">${"â™¥".repeat(n)}<span class="off">${"â™¡".repeat(5 - n)}</span></span>`;
 }
 function setOn(nodes, active) { nodes.forEach(n => n.classList.toggle("on", n === active)); }
 
@@ -2311,10 +2311,10 @@ function openLightbox(items, startIndex = 0, opts = {}) {
   const box = document.createElement("div");
   box.className = "lightbox" + (autoAdvanceMs ? " slideshow" : "");
   box.innerHTML = `
-    <button class="lb-close" aria-label="Close">✕</button>
-    <button class="lb-nav lb-prev" aria-label="Previous"${multi ? "" : " hidden"}>‹</button>
+    <button class="lb-close" aria-label="Close">âœ•</button>
+    <button class="lb-nav lb-prev" aria-label="Previous"${multi ? "" : " hidden"}>â€¹</button>
     <img class="lb-img" src="" alt=""/>
-    <button class="lb-nav lb-next" aria-label="Next"${multi ? "" : " hidden"}>›</button>
+    <button class="lb-nav lb-next" aria-label="Next"${multi ? "" : " hidden"}>â€º</button>
     <div class="lb-caption"></div>`;
   const imgEl = box.querySelector(".lb-img");
   const capEl = box.querySelector(".lb-caption");
@@ -2339,7 +2339,7 @@ function openLightbox(items, startIndex = 0, opts = {}) {
   box.querySelector(".lb-next").addEventListener("click", e => { e.stopPropagation(); goUser(1); });
   imgEl.addEventListener("click", e => {
     e.stopPropagation();
-    // Full-bleed photo has no "outside" area to tap — the image itself is the
+    // Full-bleed photo has no "outside" area to tap â€” the image itself is the
     // dismiss target (unless tapping jumps to the entry, e.g. slideshow mode).
     if (onTap) { close(); onTap(items[idx]); }
     else close();
@@ -2355,10 +2355,10 @@ function openLightbox(items, startIndex = 0, opts = {}) {
 
 // Highlights slideshow: fullscreen auto-advancing reel of your best photos.
 // Tapping a slide jumps to that date. Same data path a native lockscreen carousel
-// would consume (A.highlightReel) — see the note there.
+// would consume (A.highlightReel) â€” see the note there.
 async function startSlideshow() {
   const reel = A.highlightReel(done());
-  if (!reel.length) { toast("No photos yet — log a date with a photo first."); return; }
+  if (!reel.length) { toast("No photos yet â€” log a date with a photo first."); return; }
   const items = [];
   for (const r of reel) {
     const url = await photoURL(r.photoId);
@@ -2387,7 +2387,7 @@ function resetIdle() {
 }
 function maybeScreensaver() {
   if (document.visibilityState !== "visible") return;
-  if (!document.hasFocus()) return;   // another app/picker is in front — don't count it as idle
+  if (!document.hasFocus()) return;   // another app/picker is in front â€” don't count it as idle
   if (document.querySelector(".lightbox")) return;
   if (!done().some(d => Array.isArray(d.photos) && d.photos.length)) return;
   startSlideshow();
@@ -2445,4 +2445,3 @@ function safeUrl(u) {
   try { const p = new URL(u, location.origin); return (p.protocol === "http:" || p.protocol === "https:") ? p.href : "#"; }
   catch { return "#"; }
 }
-// build-marker: auto-update e2e check
