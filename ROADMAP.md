@@ -365,6 +365,10 @@ Found in the v2.6.0 release validation (2026-08-08, taste-critic on the Twilight
 - ~~**low** — Log form "note to next year" (capsule) chip olive/gold, decide accent vs restyle.~~ ✅ Closed 2026-08-08 as no-change: it IS the standard `--butter` token (used by tier-pill, mood-tag, explore tag, …) and label contrast is 6.70:1 (AA pass, verified). Mock: design/roadmap/capsule-chip.html.
 - **low** — Lightbox/slideshow caption scrim is tuned for dark photos; over light photos it renders mid-tan and caption contrast leans on the text-shadow. Consider an adaptive or stronger scrim.
 
+Deferred from the welcome-onboarding flow (2026-08-08, 9386b92):
+
+- **low** — Welcome screen 3 ("share the code") doesn't auto-advance when the partner joins; the user exits via "Skip for now". Plan: `watchMembers(cb)` in `sync.js` — `onSnapshot` on `spaces/{id}/members` (rules already allow member list reads, see `signOut`), passthrough in `store.js`, attach while screen 3 is mounted / detach on back-skip; on `snap.size >= 2` dismiss welcome + toast "Your partner is here ♥". Extend the sync test's join path to assert the dismissal. ~15 lines + test.
+
 ## Explicitly NOT doing
 
 - **Booking / restaurant marketplace** (Cupla, Fever, OpenTable) — needs
