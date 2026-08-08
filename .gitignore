@@ -9,3 +9,4 @@ firestore-debug.log
 
 # Third-party inspiration images (local reference only, not for redistribution)
 design/inspiration/
+.claude/checkpoint.md

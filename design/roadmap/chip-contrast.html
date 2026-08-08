@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vibe-chip contrast pass — 3 themes</title>
+<style>
+  body { margin: 0; padding: 24px; font: 14px/1.5 system-ui, sans-serif; background: #0d0b14; color: #eee; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  .note { color: #999; font-size: 13px; max-width: 640px; margin-bottom: 20px; }
+  .theme { border-radius: 14px; padding: 18px; margin-bottom: 18px; }
+  .theme h2 { margin: 0 0 12px; font-size: 15px; }
+  .row { display: flex; gap: 24px; flex-wrap: wrap; }
+  .col { flex: 1; min-width: 260px; }
+  .label { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; opacity: .7; margin-bottom: 8px; }
+  .card { border-radius: 12px; padding: 14px; }
+  .sugs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .sug { font-size: 12px; border-radius: 999px; padding: 4px 11px; font-family: "Segoe Script", "Comic Sans MS", cursive; }
+  .ratio { font-size: 12px; margin-top: 8px; font-family: ui-monospace, monospace; }
+  .pass { color: #7ed3ab; } .warn-r { color: #eec97a; }
+  .vars { font: 12px ui-monospace, monospace; margin-top: 10px; opacity: .85; }
+</style>
+</head>
+<body>
+<h1>Vibe suggestion chips (.vibe-sug) — contrast pass</h1>
+<p class="note">Chip = 12px cursive text, <code>color: var(--muted)</code> on <code>background: var(--card-2)</code>.
+Note: all three CURRENT pairs technically pass WCAG AA (≥4.5:1), but the small cursive glyphs make the
+margin feel thin — dusk sits at 4.72. PROPOSED adds a per-theme <code>--chip-fg</code> at ≥6:1 headroom,
+staying inside each palette (a lightened tint of the theme's own muted hue).</p>
+<div id="themes"></div>
+<script>
+const themes = [
+  { name: "Dusk plum (default)", card: "#3b2a37", card2: "#4a3444", cur: "#c99bb0", prop: "#d9b3c6", text: "#f5e6ee",
+    curVar: "--muted: #c99bb0", propVar: "--chip-fg: #d9b3c6" },
+  { name: "Candle", card: "#362419", card2: "#443023", cur: "#c8a48c", prop: "#dcb8a2", text: "#f7ecdf",
+    curVar: "--muted: #c8a48c", propVar: "--chip-fg: #dcb8a2" },
+  { name: "Twilight", card: "#251d3d", card2: "#2f2549", cur: "#a196c0", prop: "#c2b8dd", text: "#eae6f2",
+    curVar: "--muted: #a196c0", propVar: "--chip-fg: #c2b8dd" },
+];
+const words = ["cozy", "spontaneous", "giggly", "romantic", "chill"];
+function lum(hex){const c=hex.slice(1);const[r,g,b]=[0,2,4].map(i=>parseInt(c.slice(i,i+2),16)/255)
+  .map(v=>v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4));return .2126*r+.7152*g+.0722*b}
+function cr(a,b){const[h,l]=[lum(a),lum(b)].sort((x,y)=>y-x);return (h+.05)/(l+.05)}
+function block(fg,bg,label,varLine){
+  const r = cr(fg,bg);
+  return `<div class="col"><div class="label">${label}</div>
+    <div class="card" style="background:${bg}"><div class="sugs">
+      ${words.map(w=>`<span class="sug" style="color:${fg};background:${bg}">${w}</span>`).join("")}
+    </div></div>
+    <div class="ratio ${r>=4.5?"pass":"warn-r"}">${fg} on ${bg} — ${r.toFixed(2)}:1 ${r>=4.5?"✓ AA":"✗ below AA"}</div>
+    <div class="vars">${varLine}</div></div>`;
+}
+document.getElementById("themes").innerHTML = themes.map(t=>`
+  <div class="theme" style="background:${t.card};color:${t.text}">
+    <h2>${t.name}</h2>
+    <div class="row">
+      ${block(t.cur, t.card2, "Current", t.curVar + " (shared var)")}
+      ${block(t.prop, t.card2, "Proposed", t.propVar + " (new, chip-only)")}
+    </div>
+  </div>`).join("");
+</script>
+</body>
+</html>

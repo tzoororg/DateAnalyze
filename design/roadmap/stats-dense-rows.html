@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stats dense rows — CURRENT vs PROPOSED</title>
+<style>
+/* Tokens copied verbatim from css/styles.css (Dusk plum default) */
+:root {
+  --bg: #2a1b26; --bg-soft: #33222e; --card: #3b2a37; --card-2: #4a3444;
+  --line: #54394c; --text: #f5e6ee; --muted: #c99bb0;
+  --accent: #ff7fa2; --accent-2: #ff9fba;
+  --good: #7ed3ab; --warn: #eec97a;
+  --pink-bg: #4a2a38; --mint-bg: #2e4a3e; --mint-fg: #8fd6b5;
+  --butter-bg: #4a3d22; --butter-fg: #eec97a;
+  --radius: 18px; --shadow: 0 6px 16px rgba(0,0,0,.35);
+  --cursive: "Segoe Script", "Comic Sans MS", cursive;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 28px 16px; background: #1c1219; color: var(--text);
+  font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+  display: flex; flex-wrap: wrap; gap: 28px; justify-content: center; align-items: flex-start;
+}
+.frame {
+  width: 390px; flex: none; border-radius: 28px; padding: 18px 16px 26px;
+  background: radial-gradient(120% 60% at 50% 0%, var(--bg-soft), var(--bg));
+  box-shadow: 0 12px 34px rgba(0,0,0,.5); position: relative;
+}
+.frame-label {
+  text-align: center; font: 700 13px/1 sans-serif; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--muted); margin: 0 0 6px;
+}
+.frame-label.win { color: var(--good); }
+.app-title { font: 700 26px var(--cursive); color: var(--accent); margin: 0 0 8px; transform: rotate(-2deg); }
+.section-title { font-size: 12px; text-transform: uppercase; letter-spacing: .14em; font-weight: 800; color: var(--muted); margin: 22px 4px 10px; }
+.card {
+  background: var(--card); border-radius: var(--radius); padding: 16px;
+  box-shadow: var(--shadow); margin-bottom: 14px; position: relative;
+}
+.card.tight { padding: 12px 14px; }
+.sticker-tag {
+  position: absolute; top: -9px; right: 12px; padding: 3px 10px; border-radius: 10px;
+  font: 700 12px var(--cursive); transform: rotate(-3deg);
+  box-shadow: 0 3px 8px rgba(0,0,0,.15);
+}
+.sticker-tag.mint { background: var(--mint-bg); color: var(--mint-fg); }
+.sticker-tag.butter { background: var(--butter-bg); color: var(--butter-fg); }
+.tier-pill { display: inline-block; background: var(--butter-bg); color: var(--butter-fg); font-size: 11px; font-weight: 800; padding: 1px 7px; border-radius: 8px; vertical-align: 1px; letter-spacing: .5px; }
+.tier-pill.free { background: var(--mint-bg); color: var(--mint-fg); }
+.hearts { color: var(--accent); font-weight: 800; letter-spacing: 1px; }
+.hearts .off { color: var(--muted); opacity: .7; }
+
+/* CURRENT rows (as shipped) */
+.entry { display: flex; gap: 12px; align-items: center; padding: 6px 0; }
+.entry .thumb { width: 52px; height: 52px; border-radius: 14px; background: var(--card-2); display: grid; place-items: center; font-size: 22px; flex: none; }
+.entry .meta { flex: 1; min-width: 0; }
+.entry .meta h4 { margin: 0; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.entry .meta .sub { color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* PROPOSED: dense single-line ranked rows */
+.rank-row {
+  display: flex; align-items: center; gap: 9px; padding: 7px 0;
+  border-bottom: 1px dashed var(--line); cursor: pointer;
+}
+.rank-row:last-child, details .rank-row:last-child { border-bottom: none; }
+.rank-row .rank {
+  flex: none; width: 24px; height: 24px; border-radius: 8px; display: grid; place-items: center;
+  font: 800 12px/1 sans-serif; background: var(--card-2); color: var(--muted);
+  transform: rotate(-3deg); /* sticker tilt */
+}
+.rank-row:nth-child(1) .rank { background: var(--accent); color: #fff; box-shadow: 0 3px 8px rgba(232,87,126,.35); }
+.rank-row:nth-child(2) .rank { background: var(--butter-bg); color: var(--butter-fg); }
+.rank-row:nth-child(3) .rank { background: var(--mint-bg); color: var(--mint-fg); }
+.rank-row .emoji { flex: none; font-size: 16px; }
+.rank-row .title {
+  flex: 1; min-width: 0; font-size: 14.5px; font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.rank-row .metric { flex: none; font-size: 12.5px; font-weight: 800; color: var(--muted); white-space: nowrap; }
+.rank-row .metric .hot { color: var(--accent); }
+.rank-row .metric .val { color: var(--good); }
+
+/* top-3 + "more" expander — native <details>, no JS */
+details.more { margin: 0; }
+details.more > summary {
+  list-style: none; text-align: center; cursor: pointer;
+  font: 700 13px var(--cursive); color: var(--accent-2); padding: 8px 0 2px;
+}
+details.more > summary::-webkit-details-marker { display: none; }
+details.more > summary .closed-label::before { content: "+ 2 more ›"; }
+details.more[open] > summary .closed-label::before { content: "‹ show less"; }
+details.more[open] > summary { border-top: 1px dashed var(--line); margin-top: 2px; }
+details.more .rank-row .rank { background: var(--card-2); color: var(--muted); }
+
+.note { width: 390px; flex: none; color: var(--muted); font-size: 13px; margin: -14px 4px 0; }
+</style>
+</head>
+<body>
+
+<!-- ============ CURRENT ============ -->
+<div>
+<div class="frame">
+  <p class="frame-label">Current</p>
+  <h1 class="app-title">Insights ♥</h1>
+
+  <h3 class="section-title">Best value for money</h3>
+  <div class="card tight">
+    <div class="entry"><div class="thumb">🌅</div><div class="meta"><h4>Sunset picnic at the park</h4><div class="sub"><span class="tier-pill free">FREE</span> · <span class="hearts">♥♥♥♥♥</span></div></div></div>
+    <div class="entry"><div class="thumb">🏠</div><div class="meta"><h4>Homemade pasta night</h4><div class="sub"><span class="tier-pill">$</span> · <span class="hearts">♥♥♥♥♥</span></div></div></div>
+    <div class="entry"><div class="thumb">🥾</div><div class="meta"><h4>Waterfall trail hike</h4><div class="sub"><span class="tier-pill free">FREE</span> · <span class="hearts">♥♥♥♥<span class="off">♡</span></span></div></div></div>
+    <div class="entry"><div class="thumb">🍜</div><div class="meta"><h4>Ramen at the new place</h4><div class="sub"><span class="tier-pill">$</span> · <span class="hearts">♥♥♥♥<span class="off">♡</span></span></div></div></div>
+    <div class="entry"><div class="thumb">🎨</div><div class="meta"><h4>Pottery painting cafe</h4><div class="sub"><span class="tier-pill">$$</span> · <span class="hearts">♥♥♥♥<span class="off">♡</span></span></div></div></div>
+  </div>
+
+  <h3 class="section-title">Most repeat-worthy</h3>
+  <div class="card tight">
+    <div class="entry"><div class="thumb">🍜</div><div class="meta"><h4>Ramen at the new place</h4><div class="sub">4.7♥ · done 3×</div></div></div>
+    <div class="entry"><div class="thumb">🏠</div><div class="meta"><h4>Movie fort night</h4><div class="sub">4.5♥ · done 2×</div></div></div>
+    <div class="entry"><div class="thumb">🌅</div><div class="meta"><h4>Sunset picnic at the park</h4><div class="sub">4.5♥ · done 2×</div></div></div>
+    <div class="entry"><div class="thumb">🎳</div><div class="meta"><h4>Retro bowling</h4><div class="sub">4.2♥ · done 2×</div></div></div>
+    <div class="entry"><div class="thumb">🥾</div><div class="meta"><h4>Waterfall trail hike</h4><div class="sub">4.0♥ · done 1×</div></div></div>
+  </div>
+</div>
+<p class="note">Two 5-row lists at 64px per row ≈ 660px of scroll before Adventure balance appears.</p>
+</div>
+
+<!-- ============ PROPOSED ============ -->
+<div>
+<div class="frame">
+  <p class="frame-label win">Proposed</p>
+  <h1 class="app-title">Insights ♥</h1>
+
+  <h3 class="section-title">Best value for money</h3>
+  <div class="card tight">
+    <span class="sticker-tag mint">smart spender!</span>
+    <div class="rank-row"><span class="rank">1</span><span class="emoji">🌅</span><span class="title">Sunset picnic at the park</span><span class="metric"><span class="hot">♥5.0</span> · <span class="val">free</span></span></div>
+    <div class="rank-row"><span class="rank">2</span><span class="emoji">🏠</span><span class="title">Homemade pasta night</span><span class="metric"><span class="hot">♥5.0</span> · <span class="val">$</span></span></div>
+    <div class="rank-row"><span class="rank">3</span><span class="emoji">🥾</span><span class="title">Waterfall trail hike</span><span class="metric"><span class="hot">♥4.0</span> · <span class="val">free</span></span></div>
+    <details class="more">
+      <summary><span class="closed-label"></span></summary>
+      <div class="rank-row"><span class="rank">4</span><span class="emoji">🍜</span><span class="title">Ramen at the new place</span><span class="metric"><span class="hot">♥4.0</span> · <span class="val">$</span></span></div>
+      <div class="rank-row"><span class="rank">5</span><span class="emoji">🎨</span><span class="title">Pottery painting cafe</span><span class="metric"><span class="hot">♥4.0</span> · <span class="val">$$</span></span></div>
+    </details>
+  </div>
+
+  <h3 class="section-title">Most repeat-worthy</h3>
+  <div class="card tight">
+    <span class="sticker-tag butter">do it again!</span>
+    <div class="rank-row"><span class="rank">1</span><span class="emoji">🍜</span><span class="title">Ramen at the new place</span><span class="metric"><span class="hot">♥4.7</span> · 3×</span></div>
+    <div class="rank-row"><span class="rank">2</span><span class="emoji">🏠</span><span class="title">Movie fort night</span><span class="metric"><span class="hot">♥4.5</span> · 2×</span></div>
+    <div class="rank-row"><span class="rank">3</span><span class="emoji">🌅</span><span class="title">Sunset picnic at the park</span><span class="metric"><span class="hot">♥4.5</span> · 2×</span></div>
+    <details class="more">
+      <summary><span class="closed-label"></span></summary>
+      <div class="rank-row"><span class="rank">4</span><span class="emoji">🎳</span><span class="title">Retro bowling</span><span class="metric"><span class="hot">♥4.2</span> · 2×</span></div>
+      <div class="rank-row"><span class="rank">5</span><span class="emoji">🥾</span><span class="title">Waterfall trail hike</span><span class="metric"><span class="hot">♥4.0</span> · 1×</span></div>
+    </details>
+  </div>
+
+  <h3 class="section-title">Adventure balance</h3>
+  <div class="card" style="display:flex;align-items:center;gap:16px">
+    <div style="width:84px;height:84px;flex:none;border-radius:50%;background:conic-gradient(var(--accent) 0 62%, var(--card-2) 62% 100%);display:grid;place-items:center">
+      <div style="width:56px;height:56px;border-radius:50%;background:var(--card);display:grid;place-items:center;font-weight:800;font-size:14px">62%</div>
+    </div>
+    <div style="font-size:14px"><strong>4/6</strong> of your recent dates explored a new category.
+      <p style="color:var(--muted);font-size:13px;margin:6px 0 0">Now visible without scrolling past the lists.</p></div>
+  </div>
+</div>
+<p class="note">Dense rows: rank sticker · emoji · title · metric on one 38px line. Top-3 + native
+&lt;details&gt; expander (no JS) — each list drops from ~330px to ~150px collapsed, and Adventure
+balance fits on the same screen.</p>
+</div>
+
+</body>
+</html>

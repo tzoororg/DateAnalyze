@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Album photo-less tile — CURRENT vs PROPOSED</title>
+<style>
+/* ---- real DateAnalyze tokens (css/styles.css) ---- */
+:root {
+  --bg: #2a1b26; --bg-soft: #33222e; --card: #3b2a37; --card-2: #4a3444;
+  --line: #54394c; --text: #f5e6ee; --muted: #c99bb0;
+  --accent: #ff7fa2; --accent-2: #ff9fba;
+  --mint-bg: #2e4a3e; --mint-fg: #8fd6b5;
+  --butter-bg: #4a3d22; --butter-fg: #eec97a;
+  --radius: 18px; --shadow: 0 6px 16px rgba(0,0,0,.35);
+  --cursive: "Segoe Script", "Comic Sans MS", cursive;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 24px; color: var(--text);
+  background: radial-gradient(120% 60% at 50% 0%, var(--bg-soft), var(--bg)) fixed;
+  font: 15px/1.4 system-ui, sans-serif; min-height: 100vh;
+  display: flex; gap: 28px; flex-wrap: wrap; justify-content: center; align-items: flex-start;
+}
+.frame { width: 390px; }
+.frame > h2 { font: 700 22px var(--cursive); color: var(--accent); transform: rotate(-2deg); margin: 0 0 4px 6px; }
+.frame > p { color: var(--muted); font-size: 12.5px; margin: 0 0 14px 6px; }
+.phone { border: 2px solid var(--line); border-radius: 26px; padding: 14px 12px; }
+
+/* ---- shared Album styles, copied from styles.css ---- */
+.card { background: var(--card); border: none; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 14px; position: relative; overflow: hidden; }
+.hist-ledge { display: flex; min-height: 96px; cursor: pointer; }
+.hist-ledge .shot { width: 148px; flex: none; position: relative; overflow: hidden; background: var(--card-2); }
+.hist-ledge .shot img.cover { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.hist-ledge .shot .cat-emoji { display: grid; place-items: center; height: 100%; font-size: 34px; }
+.hist-ledge .body { flex: 1; min-width: 0; padding: 12px 16px 12px 14px; display: flex; flex-direction: column; justify-content: center; gap: 3px; }
+.tape-sm { align-self: flex-start; background: rgba(253,246,238,.92); padding: 2px 10px; transform: rotate(-2deg); font: 400 11.5px var(--cursive); color: #5a4636; box-shadow: 0 2px 6px rgba(0,0,0,.3); margin-bottom: 2px; }
+.hist-ledge h4 { margin: 0; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hist-ledge .sub { color: var(--muted); font-size: 12.5px; }
+.hearts { color: var(--accent); font-size: 13px; margin-left: 2px; }
+.tier-pill { display: inline-block; background: var(--mint-bg); color: var(--mint-fg); font-size: 11px; font-weight: 800; padding: 1px 7px; border-radius: 8px; vertical-align: 1px; letter-spacing: .5px; }
+
+/* expanded photo-less card (hero) */
+.hist-hero { height: 160px; position: relative; overflow: hidden; background: var(--card-2); }
+.hist-hero::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 110px; background: linear-gradient(180deg, transparent, rgba(15,6,12,.8)); pointer-events: none; }
+.hist-hero-emoji { position: absolute; inset: 0; display: grid; place-items: center; font-size: 40px; }
+.stk { position: absolute; z-index: 2; }
+.stk.tape { top: 10px; left: 12px; transform: rotate(-2deg); background: rgba(253,246,238,.92); padding: 4px 12px; box-shadow: 0 3px 8px rgba(0,0,0,.3); font: 400 12.5px var(--cursive); color: #5a4636; }
+.stk.cat { top: 10px; right: 12px; transform: rotate(6deg); background: #fff; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-size: 20px; border: 2.5px solid var(--accent); box-shadow: 0 4px 10px rgba(0,0,0,.35); }
+.hist-hero-title { position: absolute; left: 16px; right: 16px; bottom: 14px; z-index: 2; }
+.hist-hero-title h3 { margin: 0; color: #fff; font-size: 22px; text-shadow: 0 2px 8px rgba(0,0,0,.6); }
+.hist-hero-title .sub { color: #f0d9e2; font-size: 13px; font-weight: 600; }
+.xbody { padding: 12px 16px 16px; color: var(--muted); font-size: 13px; }
+
+/* photo demo slab (stand-in for a real photo) */
+.photo-demo { position: absolute; inset: 0; background: linear-gradient(160deg, #6b4256, #33222e 70%); }
+.photo-demo::after { content: "📷 photo"; position: absolute; inset: 0; display: grid; place-items: center; color: rgba(255,255,255,.35); font-size: 13px; }
+
+/* callouts */
+.mark { position: absolute; z-index: 5; font: 700 11px var(--cursive); color: var(--butter-fg); background: var(--butter-bg); padding: 2px 8px; border-radius: 8px; transform: rotate(-2deg); box-shadow: 0 2px 6px rgba(0,0,0,.4); }
+.note { color: var(--muted); font-size: 12px; margin: 10px 6px 0; }
+
+/* ---- PROPOSED: one gradient emoji tile everywhere ----
+   reuses the existing token gradient (dn-banner: linear-gradient(135deg, var(--card), var(--card-2)))
+   + a soft accent wash so the tile reads deliberate, not "image failed to load" */
+.grad-tile {
+  display: grid; place-items: center; height: 100%;
+  background: linear-gradient(135deg, var(--card-2), var(--card) 60%),
+              radial-gradient(80% 80% at 30% 20%, rgba(255,127,162,.18), transparent);
+  background-blend-mode: normal;
+}
+.grad-tile .em { font-size: 34px; filter: drop-shadow(0 3px 6px rgba(0,0,0,.4)); }
+.pro .hist-hero .grad-tile { position: absolute; inset: 0; }
+.pro .hist-hero .grad-tile .em { font-size: 48px; }
+</style>
+</head>
+<body>
+
+<div class="frame cur">
+  <h2>Current</h2>
+  <p>Photo-less entries render two different ways in the same list.</p>
+  <div class="phone">
+
+    <!-- row with a photo, for context -->
+    <div class="card">
+      <div class="hist-ledge">
+        <div class="shot"><div class="photo-demo"></div></div>
+        <div class="body">
+          <span class="tape-sm">Jul 18</span>
+          <h4>Ramen night</h4>
+          <div class="sub">Food &amp; Drink · <span class="tier-pill">$$</span><span class="hearts">♥♥♥♥♡</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VARIANT A: collapsed photo-less row — flat card-2 slab, bare centered emoji -->
+    <div class="card">
+      <span class="mark" style="top:-6px;left:10px">variant A — bare emoji slab</span>
+      <div class="hist-ledge">
+        <div class="shot"><div class="cat-emoji">🌳</div></div>
+        <div class="body">
+          <span class="tape-sm">Jul 12</span>
+          <h4>Park walk</h4>
+          <div class="sub">Outdoors · <span class="tier-pill">Free</span><span class="hearts">♥♥♥♡♡</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VARIANT B: expanded photo-less card — small emoji floating in empty hero space -->
+    <div class="card">
+      <span class="mark" style="top:-6px;left:10px">variant B — emoji lost in empty hero</span>
+      <div class="hist-hero">
+        <div class="hist-hero-emoji">🎬</div>
+        <span class="stk tape">Fri, Jul 4</span>
+        <span class="stk cat">🎬</span>
+        <div class="hist-hero-title">
+          <h3>Movie at home</h3>
+          <div class="sub">At home · Free</div>
+        </div>
+      </div>
+      <div class="xbody">♥♥♥♥♥ · both rated</div>
+    </div>
+
+  </div>
+  <p class="note">Variant A: <code>ui.js:1257</code> (<code>.shot .cat-emoji</code>, flat <code>--card-2</code>). Variant B: <code>ui.js:1350</code> (<code>.hist-hero-emoji</code>, 40px emoji floating in a 160px empty hero — also doubles as the category sticker right next to it).</p>
+</div>
+
+<div class="frame pro">
+  <h2>Proposed</h2>
+  <p>One gradient emoji tile for every photo-less entry, collapsed or expanded.</p>
+  <div class="phone">
+
+    <div class="card">
+      <div class="hist-ledge">
+        <div class="shot"><div class="photo-demo"></div></div>
+        <div class="body">
+          <span class="tape-sm">Jul 18</span>
+          <h4>Ramen night</h4>
+          <div class="sub">Food &amp; Drink · <span class="tier-pill">$$</span><span class="hearts">♥♥♥♥♡</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- collapsed: same slab, now the shared gradient tile -->
+    <div class="card">
+      <div class="hist-ledge">
+        <div class="shot"><div class="grad-tile"><span class="em">🌳</span></div></div>
+        <div class="body">
+          <span class="tape-sm">Jul 12</span>
+          <h4>Park walk</h4>
+          <div class="sub">Outdoors · <span class="tier-pill">Free</span><span class="hearts">♥♥♥♡♡</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- expanded: hero uses the SAME gradient tile, larger emoji; category sticker no longer duplicates it -->
+    <div class="card">
+      <div class="hist-hero">
+        <div class="grad-tile"><span class="em">🎬</span></div>
+        <span class="stk tape">Fri, Jul 4</span>
+        <div class="hist-hero-title">
+          <h3>Movie at home</h3>
+          <div class="sub">At home · Free</div>
+        </div>
+      </div>
+      <div class="xbody">♥♥♥♥♥ · both rated</div>
+    </div>
+
+  </div>
+  <p class="note">One <code>.grad-tile</code> class: <code>linear-gradient(135deg, var(--card-2), var(--card))</code> + faint accent wash (same gradient family as <code>.dn-banner</code>). Emoji 34px in the row slab, 48px in the hero. The duplicate <code>.stk.cat</code> circle drops on photo-less heroes — the tile IS the category.</p>
+</div>
+
+</body>
+</html>

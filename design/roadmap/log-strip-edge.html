@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Log strip edge — mock</title>
+<style>
+  /* Real tokens from css/styles.css (default pink theme) */
+  :root {
+    --bg: #2a1b26;
+    --card: #3b2a37;
+    --card-2: #4a3444;
+    --line: #54394c;
+    --text: #f5e6ee;
+    --muted: #c99bb0;
+    --accent: #ff7fa2;
+    --accent-2: #ff9fba;
+    --cursive: "Segoe Script", "Comic Sans MS", cursive;
+    --shadow: 0 6px 18px rgba(0,0,0,.35);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; padding: 24px 16px 60px; }
+  h1 { font: 700 24px var(--cursive); color: var(--accent); transform: rotate(-1deg); }
+  h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); margin: 36px 0 6px; }
+  .note { font-size: 13px; color: var(--muted); max-width: 560px; margin: 0 0 12px; line-height: 1.45; }
+  .rec { border-left: 3px solid var(--accent); padding-left: 10px; }
+
+  /* Faithful copy of the Log form context: fields column + meter column */
+  .card { background: var(--card); border-radius: 18px; padding: 14px; max-width: 420px; box-shadow: var(--shadow); }
+  .form-grid { display: flex; gap: 12px; align-items: stretch; }
+  .fields { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .qrow { display: flex; gap: 8px; align-items: center; }
+  .qrow input[type=date] { width: 150px; flex: none; padding: 9px 8px; font-size: 13px; border-radius: 999px; background: var(--card-2); border: 1.5px solid var(--line); color: var(--text); }
+  .cat-current { flex: 1; min-width: 0; padding-left: 6px; font: 700 15px var(--cursive); color: var(--accent-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .cat-strip-wrap { position: relative; margin: 10px 0; }
+  .cat-strip { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+  .cat-strip::-webkit-scrollbar { display: none; }
+  .cat-chip { flex: none; display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 999px; background: var(--card-2); border: 1.5px solid var(--line); font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; cursor: pointer; }
+  .cat-chip .em { font-size: 15px; }
+  .cat-chip.on { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 0 0 3px rgba(255,127,162,.35); }
+
+  /* meter column (static) */
+  .meter-col { flex: none; width: 76px; display: flex; flex-direction: column; align-items: center; background: var(--card-2); border-radius: 16px; padding: 10px 6px; gap: 6px; }
+  .meter-col .end { font-size: 20px; line-height: 1; }
+  .meter-col .end-lbl { font-size: 9.5px; color: var(--muted); font-weight: 700; text-align: center; line-height: 1.25; }
+  .vtrack { flex: 1; width: 8px; min-height: 150px; border-radius: 99px; background: var(--line); position: relative; margin: 6px 0; }
+  .vtrack .fill { position: absolute; left: 0; right: 0; bottom: 0; height: 60%; background: linear-gradient(0deg, #8a5a6a, var(--accent)); border-radius: 99px; }
+  .vtrack .thumb { position: absolute; left: 50%; top: 40%; transform: translate(-50%,-50%); width: 44px; height: 44px; border-radius: 50%; background: var(--card); border: 3px solid var(--accent); display: grid; place-items: center; font-size: 21px; box-shadow: var(--shadow); }
+
+  /* ---- A. CURRENT: fade mask ---- */
+  .v-current .cat-strip { padding: 2px 110px 6px 2px; }
+  .v-current .cat-fade { position: absolute; right: 0; top: 0; bottom: 6px; width: 120px; background: linear-gradient(90deg, transparent, var(--card) 30%, var(--card) 100%); pointer-events: none; }
+
+  /* ---- B. PROPOSED: hard edge + inset shadow + scroll-snap ---- */
+  .v-hard .cat-strip {
+    padding: 2px 2px 6px;
+    scroll-snap-type: x proximity;
+    scroll-padding-right: 8px;
+    border-radius: 14px;
+    /* hard clip at the column boundary; the inset shadow signals "more" */
+    mask: none;
+  }
+  .v-hard .cat-chip { scroll-snap-align: end; }
+  .v-hard .cat-edge {
+    position: absolute; right: 0; top: 0; bottom: 6px; width: 14px; pointer-events: none;
+    border-radius: 0 14px 14px 0;
+    box-shadow: inset -10px 0 8px -6px rgba(0,0,0,.45);
+  }
+
+  /* ---- C. PROPOSED: edge chevron affordance ---- */
+  .v-chev .cat-strip { padding: 2px 30px 6px 2px; }
+  .v-chev .cat-fade { position: absolute; right: 0; top: 0; bottom: 6px; width: 46px; background: linear-gradient(90deg, transparent, var(--card) 60%); pointer-events: none; }
+  .v-chev .cat-more {
+    position: absolute; right: -2px; top: 50%; transform: translateY(calc(-50% - 2px));
+    width: 24px; height: 24px; border-radius: 50%; background: var(--card-2); border: 1.5px solid var(--line);
+    display: grid; place-items: center; color: var(--accent-2); font-size: 12px; font-weight: 800; pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<h1>Log category strip — right edge treatments</h1>
+<p class="note">Context: the strip's right edge meets the again-o-meter column. Current fade needs 110px of dead padding and still slices a chip mid-word under the gradient. Static mock; strips scroll for comparison.</p>
+
+<h2>A · Current — fade mask</h2>
+<p class="note">120px gradient to <code>--card</code>. The sliced chip ("Movie / Sh…") ghosts through the fade, and the fade color is the card's, not the meter column's (--card-2), so the boundary reads muddy.</p>
+<div class="card v-current">
+  <div class="form-grid">
+    <div class="fields">
+      <div class="qrow"><input type="date" value="2026-08-07"><span class="cat-current">Movie / Show</span></div>
+      <div class="cat-strip-wrap">
+        <div class="cat-strip">
+          <button class="cat-chip"><span class="em">🍽️</span>Dining</button>
+          <button class="cat-chip"><span class="em">🌳</span>Outdoors</button>
+          <button class="cat-chip on"><span class="em">🎬</span>Movie / Show</button>
+          <button class="cat-chip"><span class="em">✈️</span>Travel</button>
+          <button class="cat-chip"><span class="em">🎨</span>Creative / Class</button>
+          <button class="cat-chip"><span class="em">🏠</span>At home</button>
+          <button class="cat-chip"><span class="em">🍸</span>Nightlife</button>
+          <button class="cat-chip"><span class="em">🏛️</span>Culture</button>
+          <button class="cat-chip"><span class="em">🏃</span>Sport / Active</button>
+          <button class="cat-chip"><span class="em">🧘</span>Wellness / Spa</button>
+          <button class="cat-chip"><span class="em">💝</span>Special / Other</button>
+        </div>
+        <div class="cat-fade"></div>
+      </div>
+    </div>
+    <div class="meter-col"><span class="end">😍</span><span class="end-lbl">take me<br>again!</span>
+      <div class="vtrack"><div class="fill"></div><div class="thumb">🙂</div></div>
+      <span class="end">🙅</span><span class="end-lbl">never<br>again</span>
+    </div>
+  </div>
+</div>
+
+<h2 class="rec">B · Proposed — hard edge + inset shadow + scroll-snap (recommended)</h2>
+<p class="note">Chips clip cleanly at the column edge; a 14px inset shadow reads as depth ("the strip continues under here"), and <code>scroll-snap-align: end</code> means at rest a chip always lands whole — no mid-word slice. Also frees the 110px dead padding: one more full chip visible.</p>
+<div class="card v-hard">
+  <div class="form-grid">
+    <div class="fields">
+      <div class="qrow"><input type="date" value="2026-08-07"><span class="cat-current">Movie / Show</span></div>
+      <div class="cat-strip-wrap">
+        <div class="cat-strip">
+          <button class="cat-chip"><span class="em">🍽️</span>Dining</button>
+          <button class="cat-chip"><span class="em">🌳</span>Outdoors</button>
+          <button class="cat-chip on"><span class="em">🎬</span>Movie / Show</button>
+          <button class="cat-chip"><span class="em">✈️</span>Travel</button>
+          <button class="cat-chip"><span class="em">🎨</span>Creative / Class</button>
+          <button class="cat-chip"><span class="em">🏠</span>At home</button>
+          <button class="cat-chip"><span class="em">🍸</span>Nightlife</button>
+          <button class="cat-chip"><span class="em">🏛️</span>Culture</button>
+          <button class="cat-chip"><span class="em">🏃</span>Sport / Active</button>
+          <button class="cat-chip"><span class="em">🧘</span>Wellness / Spa</button>
+          <button class="cat-chip"><span class="em">💝</span>Special / Other</button>
+        </div>
+        <div class="cat-edge"></div>
+      </div>
+    </div>
+    <div class="meter-col"><span class="end">😍</span><span class="end-lbl">take me<br>again!</span>
+      <div class="vtrack"><div class="fill"></div><div class="thumb">🙂</div></div>
+      <span class="end">🙅</span><span class="end-lbl">never<br>again</span>
+    </div>
+  </div>
+</div>
+
+<h2>C · Proposed — short fade + chevron affordance</h2>
+<p class="note">Keeps a (much shorter, 46px) fade but adds a small "›" bead overlapping the edge. Explicit affordance, but it's a third visual element crowding a 12px gap next to the meter column, and it looks tappable while being decorative. Sticker Book tolerates ornament; a fake button it does not.</p>
+<div class="card v-chev">
+  <div class="form-grid">
+    <div class="fields">
+      <div class="qrow"><input type="date" value="2026-08-07"><span class="cat-current">Movie / Show</span></div>
+      <div class="cat-strip-wrap">
+        <div class="cat-strip">
+          <button class="cat-chip"><span class="em">🍽️</span>Dining</button>
+          <button class="cat-chip"><span class="em">🌳</span>Outdoors</button>
+          <button class="cat-chip on"><span class="em">🎬</span>Movie / Show</button>
+          <button class="cat-chip"><span class="em">✈️</span>Travel</button>
+          <button class="cat-chip"><span class="em">🎨</span>Creative / Class</button>
+          <button class="cat-chip"><span class="em">🏠</span>At home</button>
+          <button class="cat-chip"><span class="em">🍸</span>Nightlife</button>
+          <button class="cat-chip"><span class="em">🏛️</span>Culture</button>
+          <button class="cat-chip"><span class="em">🏃</span>Sport / Active</button>
+          <button class="cat-chip"><span class="em">🧘</span>Wellness / Spa</button>
+          <button class="cat-chip"><span class="em">💝</span>Special / Other</button>
+        </div>
+        <div class="cat-fade"></div>
+        <div class="cat-more">›</div>
+      </div>
+    </div>
+    <div class="meter-col"><span class="end">😍</span><span class="end-lbl">take me<br>again!</span>
+      <div class="vtrack"><div class="fill"></div><div class="thumb">🙂</div></div>
+      <span class="end">🙅</span><span class="end-lbl">never<br>again</span>
+    </div>
+  </div>
+</div>
+
+<h2>Verdict</h2>
+<p class="note rec"><strong>B.</strong> It removes the sliced-chip artifact at rest (snap), reclaims ~110px of scroll padding, and replaces a 120px paint over content with a 14px shadow — smaller diff than the current treatment. Caveat: <em>during</em> a drag a chip can still sit half-clipped (snap only settles at rest); if that mid-drag frame is the actual complaint, no edge treatment fixes it and current is fine. C is not recommended: decorative element that reads as a button.</p>
+</body>
+</html>
