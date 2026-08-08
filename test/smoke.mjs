@@ -17,6 +17,20 @@ const check = (name, ok, detail = "") => {
   if (!ok) failures++;
 };
 
+// SW auto-update contract (phone staleness): the install must bypass browser
+// AND CDN caches, runtime match must ignore the version query, and the page
+// must reload itself when a new SW takes over. Static checks — the full SW
+// lifecycle isn't reachable from ?shot= mode.
+{
+  const swText = await (await fetch(`${BASE}/sw.js`)).text();
+  const appText = await (await fetch(`${BASE}/app.js`)).text();
+  const c1 = swText.includes('cache: "reload"') && swText.includes('"?v=" + CACHE');
+  const c2 = swText.includes("ignoreSearch");
+  const c3 = appText.includes("controllerchange");
+  console.log(`${c1 && c2 && c3 ? "ok  " : "FAIL"} SW install busts caches, match ignores ?v, page reloads on controllerchange`);
+  if (!(c1 && c2 && c3)) failures++;
+}
+
 const cdp = await launchChrome({ port: 9224 });
 const tabs = [];
 const shotTab = async (state, height = 1400) => {

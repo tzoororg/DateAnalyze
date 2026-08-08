@@ -40,7 +40,13 @@ self.addEventListener("message", e => {
 });
 
 self.addEventListener("install", e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  // "?v=" + CACHE busts the CDN edge cache and { cache: "reload" } the browser
+  // HTTP cache — without both, a fresh SW fills its cache with files GitHub
+  // Pages served up to 10 min stale (max-age=600), shipping the OLD build
+  // under the NEW cache name.
+  e.waitUntil(caches.open(CACHE)
+    .then(c => c.addAll(SHELL.map(u => new Request(u + "?v=" + CACHE, { cache: "reload" }))))
+    .then(() => self.skipWaiting()));
 });
 
 self.addEventListener("activate", e => {
@@ -92,7 +98,8 @@ self.addEventListener("fetch", e => {
   // Match only OUR cache — caches.match() searches every cache on the origin
   // and would serve stale files from an old (or the other channel's) cache.
   e.respondWith(
-    caches.open(CACHE).then(c => c.match(request).then(hit => hit || fetch(request).then(res => {
+    // ignoreSearch: shell files are cached under "?v=<CACHE>" URLs (see install)
+    caches.open(CACHE).then(c => c.match(request, { ignoreSearch: true }).then(hit => hit || fetch(request).then(res => {
       c.put(request, res.clone()).catch(() => {});
       return res;
     }).catch(() => c.match("./index.html"))))

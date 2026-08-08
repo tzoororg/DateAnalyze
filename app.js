@@ -67,4 +67,12 @@ if ("serviceWorker" in navigator && !shot) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("sw.js").catch(e => console.warn("SW registration failed:", e));
   });
+  // When a NEW SW takes over (deploy landed while the app was open or since
+  // last visit), reload once so the page runs the new build immediately —
+  // no manual refresh. hadController skips the very first install's claim().
+  let hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (hadController) location.reload();
+    hadController = true;
+  });
 }
