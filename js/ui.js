@@ -2445,3 +2445,4 @@ function safeUrl(u) {
   try { const p = new URL(u, location.origin); return (p.protocol === "http:" || p.protocol === "https:") ? p.href : "#"; }
   catch { return "#"; }
 }
+// build-marker: auto-update e2e check
