@@ -524,9 +524,11 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); bo
 .lb-next { right: 10px; }
 .lb-caption {
   position: absolute; left: 0; right: 0; bottom: 0; z-index: 1;
-  padding: 40px 20px calc(16px + var(--safe-b));
-  background: linear-gradient(0deg, rgba(0,0,0,.75), transparent);
-  color: #fff; font-size: 14px; text-shadow: 0 1px 4px rgba(0,0,0,.9);
+  padding: 72px 20px calc(16px + var(--safe-b));
+  /* Eased multi-stop scrim: photo-independent caption contrast (light photos
+     turned the old 2-stop gradient mid-tan). Extra tail stop avoids OLED banding. */
+  background: linear-gradient(0deg, rgba(0,0,0,.82), rgba(0,0,0,.66) 28%, rgba(0,0,0,.42) 55%, rgba(0,0,0,.16) 80%, rgba(0,0,0,.07) 91%, transparent);
+  color: #fff; font-size: 14px; text-shadow: 0 1px 3px rgba(0,0,0,.7);
 }
 /* Slideshow mode: gentle cross-fade between slides + tap-to-open affordance. */
 .lightbox.slideshow .lb-img { cursor: pointer; transition: opacity .6s ease; }
@@ -587,12 +589,14 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); bo
 .from-photo { align-self: flex-start; display: inline-flex; align-items: center; gap: 5px; margin: 8px 0 -2px; background: var(--card-2); color: var(--accent); border: 1px solid var(--line); border-radius: 999px; padding: 4px 11px; font-size: 12px; font-weight: 700; }
 .from-photo button { background: none; border: none; padding: 0; font: inherit; color: inherit; text-decoration: underline; cursor: pointer; }
 .cat-strip-wrap { position: relative; margin: 10px 0; }
-.cat-strip { display: flex; gap: 8px; overflow-x: auto; padding: 2px 110px 6px 2px; scrollbar-width: none; } /* right padding lets the last chip scroll clear of the fade mask */
+.cat-strip { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 6px; scrollbar-width: none; scroll-snap-type: x proximity; } /* snap: chips rest whole at the clipped edge */
 .cat-strip::-webkit-scrollbar { display: none; }
-.cat-chip { flex: none; display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 999px; background: var(--card-2); border: 1.5px solid var(--line); font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; cursor: pointer; }
+.cat-chip { flex: none; scroll-snap-align: end; display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 999px; background: var(--card-2); border: 1.5px solid var(--line); font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; cursor: pointer; }
 .cat-chip .em { font-size: 15px; }
 .cat-chip.on { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 0 0 3px rgba(255, 127, 162, .35); }
-.cat-fade { position: absolute; right: 0; top: 0; bottom: 6px; width: 120px; background: linear-gradient(90deg, transparent, var(--card) 30%, var(--card) 100%); pointer-events: none; }
+/* Hard-clip edge: inset shadow + 1px seam reads as a deliberate boundary
+   (the old fade toward --card sat against a --card-2 column and read muddy). */
+.cat-fade { position: absolute; right: 0; top: 0; bottom: 0; width: 14px; background: linear-gradient(90deg, transparent, rgba(0,0,0,.6)); border-right: 1px solid var(--line); pointer-events: none; }
 .fields-bottom { margin-top: 10px; }
 .blocklabel { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); margin: 14px 2px 8px; }
 .seg4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
