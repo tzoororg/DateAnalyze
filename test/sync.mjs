@@ -74,6 +74,13 @@ try {
                  await b.evaluate(`import("./js/store.js").then(s => s.getMode())`)];
   check("both phones in cloud mode", modes[0] === "cloud" && modes[1] === "cloud", modes.join(","));
 
+  // 2d. watchMembers on phone A sees the partner arrive (welcome auto-advance, board G2)
+  const memberCount = await a.evaluate(`import("./js/store.js").then(s => new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error("watchMembers timeout")), 10000);
+    const un = s.watchMembers(size => { if (size >= 2) { clearTimeout(t); un(); resolve(size); } });
+  })).catch(e => "ERR " + (e.message || e))`);
+  check("watchMembers reports both members", memberCount >= 2, String(memberCount));
+
   // 2b. regenerate: fresh server code, same E2EE key, old invite doc retired
   const oldServerCode = code.split(".")[0];
   const oldKeySuffix = code.split(".")[1];

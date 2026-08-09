@@ -375,6 +375,14 @@ export async function setMyPushToken(token) {
 
 export function getSpaceId() { return spaceId; }
 
+// Live member count for the current space (welcome screen 3 auto-advance).
+// Returns an unsubscribe function; no-op if not attached to a space.
+export function watchMembers(cb) {
+  if (!sdk || !spaceId) return () => {};
+  return sdk.onSnapshot(sdk.collection(sdk.fs, "spaces", spaceId, "members"),
+    snap => cb(snap.size));
+}
+
 // Current user's Firebase ID token, for authenticating to our own workers
 // (push-worker verifies this server-side against the space membership).
 export async function getIdToken() {

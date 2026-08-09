@@ -29,7 +29,6 @@ Reference (not tracked as work): [COMPETITOR_SCAN_2026.md](../plans/active/COMPE
 | ID | Goal | Status | Priority | Source | Notes |
 |---|---|---|---|---|---|
 | G1 | Dark-theme contrast pass on chip text (all 3 themes) | active | med | v2.6.0 validation | Twilight vibe chips muted-on-muted, below AA |
-| G2 | Welcome screen 3 auto-advance when partner joins | active | low | 2026-08-08 (9386b92) | `watchMembers(cb)` in sync.js, ~15 lines + sync-test assert; spec in ARCHIVE.md §Deferred |
 | G3 | Adaptive/stronger lightbox caption scrim over light photos | active | low | v2.6.0 validation | Scrim tuned for dark photos only |
 | G4 | Log category strip: residual sliced-chip look at meter column | parked | low | design-audit 2026-08-08 | Revisit only with a mock proposing a cleaner treatment |
 | G5 | Decide on Heroku connection | active | med | ex-TODO | Discussion item |

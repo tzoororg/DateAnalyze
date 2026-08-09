@@ -434,7 +434,10 @@ async function maybeShowWelcome() {
 function showWelcome() { document.getElementById("welcomeView").classList.remove("hidden"); }
 function hideWelcome() { document.getElementById("welcomeView").classList.add("hidden"); }
 
+let unwatchMembers = null; // active only while welcome screen 3 is mounted
+
 async function dismissWelcome(tab = "home") {
+  unwatchMembers?.(); unwatchMembers = null;
   await db.setSetting("welcomeDismissed", true);
   hideWelcome();
   show(tab);
@@ -446,6 +449,7 @@ function welcomeFirstName() {
 }
 
 function renderWelcomeScreen(screen, code = "") {
+  unwatchMembers?.(); unwatchMembers = null;
   const el = document.getElementById("welcomeView");
   if (screen === 1) {
     el.innerHTML = `
@@ -506,6 +510,11 @@ function renderWelcomeScreen(screen, code = "") {
     document.getElementById("wCodeTile").addEventListener("click", () => copyWelcomeCode(code));
     document.getElementById("wShareBtn").addEventListener("click", () => shareWelcomeCode(code));
     document.getElementById("wSkipBtn").addEventListener("click", () => dismissWelcome());
+    unwatchMembers = db.watchMembers(size => {
+      if (size < 2) return;
+      dismissWelcome();
+      toast("Your partner is here ♥");
+    });
   }
 }
 

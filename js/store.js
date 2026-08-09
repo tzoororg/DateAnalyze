@@ -143,6 +143,7 @@ export async function wipeAll() { return backend.wipeAll(); }
 export async function getPushToken(vapidKey, swReg) { return cloud ? cloud.getPushToken(vapidKey, swReg) : null; }
 export async function setMyPushToken(token) { return cloud ? cloud.setMyPushToken(token) : null; }
 export function getSpaceId() { return cloud && mode === "cloud" ? cloud.getSpaceId() : null; }
+export function watchMembers(cb) { return mode === "cloud" && cloud ? cloud.watchMembers(cb) : () => {}; }
 export async function getIdToken() { return cloud ? cloud.getIdToken() : null; }
 
 // Retroactively upload this device's local photos to the shared space (cloud-only).

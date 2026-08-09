@@ -53,12 +53,11 @@ Still open from these sweeps → board G1 (chip contrast), G3 (scrim), G4 (strip
 
 ## Deferred specs (referenced by the board)
 
-**Welcome screen 3 auto-advance (board G2, from 2026-08-08, 9386b92):**
-`watchMembers(cb)` in `sync.js` — `onSnapshot` on `spaces/{id}/members` (rules
-already allow member-list reads, see `signOut`), passthrough in `store.js`,
-attach while screen 3 is mounted / detach on back-skip; on `snap.size >= 2`
-dismiss welcome + toast "Your partner is here ♥". Extend the sync test's join
-path to assert the dismissal. ~15 lines + test.
+**Welcome screen 3 auto-advance (board G2):** ✅ 2026-08-09 — `watchMembers(cb)`
+in `sync.js` (`onSnapshot` on `spaces/{id}/members`), passthrough in `store.js`,
+attached while welcome screen 3 is mounted / detached on back/skip/dismiss; on
+size ≥ 2 dismisses welcome + toast "Your partner is here ♥". Sync test asserts
+the member count fires on the creator's phone after the join.
 
 ## Closed TODO.md items
 
