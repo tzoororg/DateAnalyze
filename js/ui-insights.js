@@ -235,7 +235,7 @@ function render() {
     <h3 class="section-title">Adventure balance</h3>
     <div class="card" style="display:flex;align-items:center;gap:16px">
       <div style="width:120px;flex:none">${C.balanceDonut(exp.novelCount, Math.max(0, s.count - exp.novelCount))}</div>
-      <div><strong>${exp.recentNew}/${exp.recentTotal}</strong> of your recent dates explored a new category.
+      <div><strong>${exp.recentNew}/${exp.recentTotal}</strong> of your last ${exp.recentTotal} dates were a first in their category.
       <p class="muted small" style="margin:6px 0 0">You've tried ${exp.novelCount} of ${s.totalCategories} categories. The Suggest tab keeps this balanced.</p></div>
     </div>
   `;

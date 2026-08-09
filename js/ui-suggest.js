@@ -103,7 +103,8 @@ function shortReason(r) {
     const gap = r.daysSince > 21 ? ` · last done ${humanGap(r.daysSince)} ago` : ` · done ${r.actTimes}×`;
     return `${r.avgEnj.toFixed(1)}♥${gap}`;
   }
-  if (r.catTimes > 0 && r.catAvg != null) return `New in ${catLabel(r.category)} · you rate it ${r.catAvg.toFixed(1)}♥`;
+  // the card already prefixes explore results with "New ·" — don't repeat it here
+  if (r.catTimes > 0 && r.catAvg != null) return `you rate ${catLabel(r.category)} ${r.catAvg.toFixed(1)}♥`;
   return "A whole new kind of date — pure adventure.";
 }
 

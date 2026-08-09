@@ -74,7 +74,7 @@ export function balanceDonut(newCount, repeatCount) {
     <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="var(--accent-2)" stroke-width="16"
       stroke-dasharray="${dash.toFixed(1)} ${(C - dash).toFixed(1)}" transform="rotate(-90 ${cx} ${cy})" stroke-linecap="round"/>
     <text x="${cx}" y="${cy - 2}" text-anchor="middle" font-size="22" font-weight="800" fill="var(--text)">${Math.round(frac * 100)}%</text>
-    <text x="${cx}" y="${cy + 16}" text-anchor="middle" font-size="10" fill="var(--muted)">new</text>
+    <text x="${cx}" y="${cy + 16}" text-anchor="middle" font-size="10" fill="var(--muted)">new all-time</text>
   </svg>`;
 }
 

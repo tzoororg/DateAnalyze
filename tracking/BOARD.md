@@ -33,6 +33,12 @@ Reference (not tracked as work): [COMPETITOR_SCAN_2026.md](../plans/active/COMPE
 | G4 | Log category strip: residual sliced-chip look at meter column | parked | low | design-audit 2026-08-08 | Revisit only with a mock proposing a cleaner treatment |
 | G5 | Decide on Heroku connection | active | med | ex-TODO | Discussion item |
 | G6 | Plan-usage estimations discussion | active | low | ex-TODO | Discussion item |
+| G7 | Ideas cards: cost pill wraps to a second line on long titles | active | low | v2.7.0 validation | Ragged list — some cards inline, some wrapped |
+| G8 | Settings sheet: expanded group content misaligned with collapsed rows | active | low | v2.7.0 validation | Left/right edges don't line up when a `<details>` is open |
+| G9 | Wrapped card: ~100px dead band above the "MADE WITH US" footer | active | low | v2.7.0 validation | Stats tab, top card |
+| G10 | Lightbox chrome is generic Material (grey circle buttons, plain caption strip) | active | med | v2.7.0 design audit | Restyle to Sticker Book button language |
+| G11 | Gallery grid: only half the tiles carry a title caption | active | med | v2.7.0 design audit | Siblings must share treatment — all or none |
+| G12 | Settings slideshow row fronted by an inscrutable ⌨ emoji | active | low | v2.7.0 design audit | Swap for a readable icon or an inline value label |
 
 ## Issues
 

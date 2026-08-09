@@ -1132,7 +1132,7 @@ async function renderList() {
   if (!logged.length) {
     host.innerHTML = `<div class="empty2"><div class="big">💌</div><h3>Your story starts here</h3>
       <span class="alt">tap <b class="fab-hint">＋</b> to log your first date ↘</span>
-      <span class="alt">just looking? <b>Add sample dates</b> from the ⋯ menu</span></div>`;
+      <span class="alt">just looking? <b>Add sample dates</b> from Settings ⚙</span></div>`;
     return;
   }
   const sorted = [...logged].sort((a, b) => entryTimeMs(b) - entryTimeMs(a)).slice(0, 5);
@@ -1145,7 +1145,7 @@ async function renderList() {
     <div class="card home-card" data-open="${escAttr(e.id)}">
       <div class="home-photos" data-photos="${escAttr((e.photos || []).join(","))}" data-cat="${escAttr(e.category)}"></div>
       <span class="stk tape">${fmtDate(e.date)}</span>
-      <span class="stk cat">${catEmoji(e.category)}</span>
+      ${(e.photos || []).length ? `<span class="stk cat">${catEmoji(e.category)}</span>` : ""}
       ${e.vibe ? `<span class="stk vibe">${escHtml(e.vibe)}</span>` : ""}
       ${r ? `<span class="stk hearts">${"♥".repeat(r.value)}${"♡".repeat(5 - r.value)}</span>` : ""}
       <span class="stk caption">${escHtml(e.title)}<span class="sub">${catLabel(e.category)}${cost ? " · " + cost : ""}</span></span>
