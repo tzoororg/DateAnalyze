@@ -39,6 +39,7 @@ Reference (not tracked as work): [COMPETITOR_SCAN_2026.md](../plans/active/COMPE
 | G10 | Lightbox chrome is generic Material (grey circle buttons, plain caption strip) | active | med | v2.7.0 design audit | Restyle to Sticker Book button language |
 | G11 | Gallery grid: only half the tiles carry a title caption | active | med | v2.7.0 design audit | Siblings must share treatment — all or none |
 | G12 | Settings slideshow row fronted by an inscrutable ⌨ emoji | active | low | v2.7.0 design audit | Swap for a readable icon or an inline value label |
+| G13 | Styled invite-code entry (replace native `prompt()`) | active | med | [#19](https://github.com/tzoororg/DateAnalyze/issues/19) | Priority: Important × Not urgent — pairing polish, no data loss. Mock: [invite-code-entry.html](../design/roadmap/invite-code-entry.html). In-app code screen in `renderWelcomeScreen()` + settings bottom sheet; validate with `parseInviteCode()`, drop `prompt()` in `onWelcomeJoin`/`onSyncJoin` |
 
 ## Issues
 

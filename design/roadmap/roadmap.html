@@ -43,6 +43,16 @@
   and neither is #12 (iOS support) — platform work with no UI to mock, see <a href="../plans/done/IOS_PLAN.md">plans/done/IOS_PLAN.md</a>.</p>
 </header>
 
+<section class="point" id="i19">
+  <span class="crumb">Feedback #19 · Onboarding / settings — pairing</span>
+  <h2>Styled invite-code entry <span class="badge med">Small</span><span class="badge parked" style="background:#e3f6e8;color:#2e7d4f">User request · #19</span></h2>
+  <p class="what">Joining a partner's space pops the browser's native <code>prompt()</code> — a grey OS dialog that breaks the Sticker Book look right at the make-or-break pairing moment, with no paste button, no format hint, and no validation until submit. Replace it with an onboarding-matching screen: big code field, one-tap paste, inline validation as they type. <b>Priority: Important × Not urgent</b> — pairing is the trust moment, but no data loss and a functional workaround exists.</p>
+  <p class="touches">Touches: <code>js/ui.js renderWelcomeScreen()</code> (new screen 4) + <code>onWelcomeJoin</code>/<code>onSyncJoin</code> · validate with <code>parseInviteCode()</code> (already in <code>js/sync-codec.js</code>) — no schema or wire-format change</p>
+  <div class="ba">
+    <div class="col after" style="flex:0 0 auto"><h3>Before → After</h3><figure><a href="invite-code-entry.html">▶ Open before/after mock (invite-code-entry.html)</a><figcaption>Native prompt() vs. a styled in-app code screen with paste + inline ✓ validation</figcaption></figure></div>
+  </div>
+</section>
+
 <section class="point" id="p16">
   <span class="crumb">Roadmap #16 · Log / edit form</span>
   <h2>Auto-fill “When” from a photo <span class="badge small">Tiny</span><span class="badge parked" style="background:#e3f6e8;color:#2e7d4f">User request · #16</span></h2>

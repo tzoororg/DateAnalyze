@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Us — #19 styled invite-code entry mock</title>
+<style>
+  /* Light theme values pulled from css/styles.css so the mock is faithful. */
+  :root {
+    --bg:#ffd9e4; --bg-soft:#ffe6ee; --card:#ffffff; --card-2:#ffeff4;
+    --accent:#e8577e; --accent-2:#ff8fb0; --text:#3a2b33; --muted:#9a7f8c;
+    --line:#f4c9d8; --warn:#e8a13a; --radius:20px;
+    --shadow:0 8px 24px rgba(180,60,110,.12);
+    --cursive:"Segoe Script","Bradley Hand",cursive;
+  }
+  * { box-sizing:border-box; }
+  body { font:14px/1.5 system-ui,sans-serif; color:var(--text);
+    background:radial-gradient(120% 60% at 50% 0%, var(--bg-soft), var(--bg)) fixed;
+    margin:0; padding:28px 16px 60px; }
+  .page { max-width:820px; margin:0 auto; }
+  h1 { font-size:22px; margin:0 0 4px; color:var(--text); }
+  h1 .heart { color:var(--accent); }
+  .sub { color:#7a5a68; max-width:74ch; margin:0 0 26px; }
+  .ba { display:flex; gap:26px; flex-wrap:wrap; align-items:flex-start; }
+  .col { flex:1 1 300px; }
+  .col h3 { font-size:12px; letter-spacing:1px; text-transform:uppercase; margin:0 0 10px; }
+  .col.before h3 { color:var(--muted); } .col.after h3 { color:var(--accent); }
+
+  /* phone frame */
+  .phone { background:radial-gradient(120% 60% at 50% 0%, var(--bg-soft), var(--bg));
+    border-radius:26px; padding:22px 18px 26px; box-shadow:var(--shadow);
+    border:1px solid var(--line); min-height:360px; position:relative; }
+
+  /* --- BEFORE: native prompt() over a dimmed screen --- */
+  .dim { filter:blur(1px) brightness(.9); opacity:.65; }
+  .ob-hero { text-align:center; margin-bottom:18px; }
+  .w-heart { font-size:40px; }
+  .ob-hero h2 { margin:6px 0 4px; font-size:20px; }
+  .w-sub { color:#7a5a68; margin:0; font-size:13px; }
+  .native { position:absolute; left:50%; top:46%; transform:translate(-50%,-50%);
+    width:88%; background:#f3f3f3; border:1px solid #bcbcbc; border-radius:8px;
+    box-shadow:0 10px 30px rgba(0,0,0,.3); font:13px system-ui,sans-serif; color:#222; overflow:hidden; }
+  .native .titlebar { background:#e2e2e2; padding:8px 12px; font-size:12px; color:#555; border-bottom:1px solid #cfcfcf; }
+  .native .body { padding:14px 12px; }
+  .native input { width:100%; padding:6px 8px; border:1px solid #9c9c9c; border-radius:3px; font-size:13px; margin-top:8px; }
+  .native .btns { text-align:right; padding:10px 12px; background:#ececec; border-top:1px solid #cfcfcf; }
+  .native .btns button { font:13px system-ui; padding:5px 14px; margin-left:6px; border:1px solid #9c9c9c; border-radius:4px; background:#fafafa; }
+  .native .btns .ok { background:#0a67d3; color:#fff; border-color:#0a5cbb; }
+
+  /* --- AFTER: styled in-app code entry screen --- */
+  .ob-stack { display:flex; flex-direction:column; gap:14px; margin-top:8px; }
+  .code-input { width:100%; text-align:center; letter-spacing:.28em; text-transform:uppercase;
+    font:800 26px/1 system-ui,sans-serif; color:var(--accent); background:var(--card);
+    border:2px dashed var(--accent-2); border-radius:var(--radius); padding:18px 12px;
+    box-shadow:var(--shadow); outline:none; caret-color:var(--accent); }
+  .code-input::placeholder { color:var(--accent-2); letter-spacing:.2em; opacity:.7; }
+  .code-hint { text-align:center; font-size:12px; color:#7a5a68; margin:-4px 0 0; }
+  .valid { display:flex; align-items:center; justify-content:center; gap:6px;
+    font-size:12px; font-weight:700; color:#2e7d4f; }
+  .btn { width:100%; padding:13px; border:none; border-radius:999px; font:700 15px system-ui;
+    background:var(--accent); color:#fff; box-shadow:var(--shadow); }
+  .btn.ghost { background:var(--card); color:var(--muted); box-shadow:none; border:1px solid var(--line); }
+  .paste { display:flex; align-items:center; justify-content:center; gap:6px;
+    background:var(--card-2); color:var(--accent); border:1px solid var(--line);
+    border-radius:999px; padding:9px; font-size:13px; font-weight:700; }
+  .p-back { display:inline-block; margin-bottom:8px; font-size:13px; color:var(--muted); background:none; border:none; }
+
+  .note { margin-top:22px; font-size:13px; color:#7a5a68; background:#fff; border-radius:14px; padding:14px 16px; box-shadow:var(--shadow); }
+  .note code { background:var(--card-2); border-radius:4px; padding:1px 5px; }
+  .badge { display:inline-block; font-size:12px; font-weight:600; border-radius:20px; padding:2px 10px; margin-left:6px; background:#e3f6e8; color:#2e7d4f; }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Us <span class="heart">♥</span> — #19 · styled invite-code entry <span class="badge">Small</span></h1>
+  <p class="sub">Joining a partner's space currently pops the browser's native <code>prompt()</code> —
+  a grey OS dialog that breaks the Sticker Book look right at the make-or-break pairing moment, with
+  no paste button, no format hint, and no validation until submit. Replace it with a screen that
+  matches the rest of onboarding: big code field, one-tap paste, and inline validation as they type.</p>
+
+  <div class="ba">
+    <div class="col before">
+      <h3>Before — native prompt() over the app</h3>
+      <div class="phone">
+        <div class="dim">
+          <div class="ob-hero">
+            <div class="w-heart">👋</div>
+            <h2>You're in</h2>
+            <p class="w-sub">Connect your two phones — one starts, the other joins with a code.</p>
+          </div>
+        </div>
+        <div class="native">
+          <div class="titlebar">tzoororg.github.io says</div>
+          <div class="body">Enter the code from your partner:
+            <input value="" placeholder=""/>
+          </div>
+          <div class="btns"><button>Cancel</button><button class="ok">OK</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col after">
+      <h3>After — in-app code screen (Sticker Book)</h3>
+      <div class="phone">
+        <button class="p-back">‹ Back</button>
+        <div class="ob-hero">
+          <div class="w-heart">🔑</div>
+          <h2>Enter your code</h2>
+          <p class="w-sub">Paste the 6-character code your partner sent you.</p>
+        </div>
+        <div class="ob-stack">
+          <input class="code-input" value="7QK2F9" readonly/>
+          <div class="valid">✓ Code looks good</div>
+          <div class="paste">📋 Paste from clipboard</div>
+          <button class="btn">Join our space 💞</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>Where it plugs in.</b> Add a screen-4 branch to <code>renderWelcomeScreen()</code> in
+    <code>js/ui.js</code> (same <code>.ob</code>/<code>.ob-stack</code> shell as the other welcome
+    screens), reached from <code>onWelcomeJoin()</code> instead of calling <code>prompt()</code>.
+    Validate on input with <code>parseInviteCode()</code> (already in <code>js/sync-codec.js</code>) —
+    show the ✓ / a gentle error inline, enable Join only when it parses. The same styled field replaces
+    the <code>prompt()</code> in <code>onSyncJoin()</code> (settings "I have a code") as a bottom sheet.
+    No schema or wire-format change; validation reuses shipped code.
+  </div>
+</div>
+</body>
+</html>
